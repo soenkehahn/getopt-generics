@@ -47,3 +47,6 @@ instance ToOption Bool where
 
 instance ToOption Int where
   toOpt name = option auto (long name)
+
+instance ToOption a => ToOption (Maybe a) where
+  toOpt name = optional (toOpt name)

@@ -14,11 +14,15 @@ spec = do
   describe "withArguments" $ do
     it "parses command line arguments" $ do
       withArgs (words "--bar 4 --baz foo") $ withArguments $ \ options ->
-        options `shouldBe` Foo 4 "foo" False
+        options `shouldBe` Foo (Just 4) "foo" False
+
+    it "allows optional arguments" $ do
+      withArgs (words "--baz foo") $ withArguments $ \ options ->
+        options `shouldBe` Foo Nothing "foo" False
 
 data Foo
   = Foo {
-    bar :: Int,
+    bar :: Maybe Int,
     baz :: String,
     huhu :: Bool
   }
