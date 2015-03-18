@@ -10,7 +10,6 @@
 module Main where
 
 import Generics.SOP
-import Safe
 import qualified GHC.Generics as GHC
 import Options.Applicative
 
@@ -62,5 +61,4 @@ instance ToOption Bool where
   toOpt name = switch (long name)
 
 instance ToOption Int where
-  toOpt name =
-    readMay <$> strOption (long name)
+  toOpt name = option auto (long name)
