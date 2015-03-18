@@ -1,52 +1,56 @@
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ConstraintKinds       #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
 
 module System.Console.Args.Generics (withArguments) where
 
-import Generics.SOP
-import Options.Applicative
+import           Generics.SOP
+import           Options.Applicative
 
-withArguments :: (Generic a, HasDatatypeInfo a, All2 ToOption (Code a)) =>
+withArguments :: (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
   (a -> IO ()) -> IO ()
-withArguments action = execParser opts >>= action
+withArguments action =
+    execParser opts >>= action
   where
     opts = info parser fullDesc
 
-parser :: forall a . (Generic a, HasDatatypeInfo a, All2 ToOption (Code a)) =>
+parser :: forall a . (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
        Parser a
 parser = case datatypeInfo (Proxy :: Proxy a) of
-    ADT _ _ cs -> to <$> SOP <$> parser' cs
-    Newtype _ _ c -> to <$> SOP <$> parser' (c :* Nil)
-  where
-    parser' :: NP ConstructorInfo (Code a) -> Parser (NS (NP I) (Code a))
-    parser' (Record _ fields :* Nil) = Z <$> parser'' fields
-    parser' _cs = undefined
+    ADT _ _ cs -> parseRecord cs
+    Newtype _ _ c -> parseRecord (c :* Nil)
 
-    parser'' :: (All ToOption xs) => NP FieldInfo xs -> Parser (NP I xs)
-    parser'' Nil = pure Nil
-    parser'' (field :* r) =
-      (:*) <$> (I <$> goField field) <*> (parser'' r)
+parseRecord :: (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
+  NP ConstructorInfo (Code a) -> Parser a
+parseRecord (Record _ fields :* Nil) = to <$> SOP <$> Z <$> parseFields fields
+parseRecord _ = undefined
 
-goField :: (ToOption a) => FieldInfo a -> Parser a
-goField (FieldInfo field) = toOpt field
+parseFields :: (All HasOptParser xs) => NP FieldInfo xs -> Parser (NP I xs)
+parseFields Nil = pure Nil
+parseFields (field :* r) =
+  (:*) <$> (I <$> parseField field) <*> (parseFields r)
 
-class ToOption a where
-  toOpt :: String -> Parser a
+parseField :: (HasOptParser a) => FieldInfo a -> Parser a
+parseField (FieldInfo field) = getOptParser field
 
-instance ToOption String where
-  toOpt name = strOption (long name)
+class HasOptParser a where
+  getOptParser :: String -> Parser a
 
-instance ToOption Bool where
-  toOpt name = switch (long name)
+instance HasOptParser String where
+  getOptParser name = strOption (long name)
 
-instance ToOption Int where
-  toOpt name = option auto (long name)
+instance HasOptParser Bool where
+  getOptParser name = switch (long name)
 
-instance ToOption a => ToOption (Maybe a) where
-  toOpt name = optional (toOpt name)
+instance HasOptParser Int where
+  getOptParser name = option auto (long name)
+
+instance HasOptParser a => HasOptParser (Maybe a) where
+  getOptParser name = optional (getOptParser name)
