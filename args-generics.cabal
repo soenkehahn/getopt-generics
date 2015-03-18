@@ -1,11 +1,11 @@
-name: runstaskell
+name: args-generics
 version: 0.1
 cabal-version: >= 1.2
 license: BSD3
 license-file: LICENSE
-author: Renhui Shen, Sönke Hahn
+author: Linh Nguyen, Sönke Hahn
 copyright: Zalora South East Asia Pte Ltd
-maintainer: soenke.hahn@zalora.com
+maintainer: linh.nguyen@zalora.com, soenke.hahn@zalora.com
 build-type: Simple
 
 library
@@ -16,6 +16,7 @@ library
   build-depends:
       base == 4.*
     , generics-sop
+    , optparse-applicative
 
 test-suite spec
   type:
@@ -28,5 +29,7 @@ test-suite spec
     Spec.hs
   build-depends:
       base == 4.*
+    , generics-sop
+    , optparse-applicative
 
     , hspec
