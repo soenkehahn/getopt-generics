@@ -33,3 +33,4 @@ test-suite spec
     , optparse-applicative
 
     , hspec
+    , silently
