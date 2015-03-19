@@ -13,24 +13,37 @@ module System.Console.Args.Generics (withArguments) where
 
 import           Generics.SOP
 import           Options.Applicative
+import           System.Exit
+import           System.IO
 
 withArguments :: (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
   (a -> IO ()) -> IO ()
-withArguments action =
-    execParser opts >>= action
-  where
-    opts = info parser fullDesc
+withArguments action = do
+  case parser of
+    Left errorMessage -> do
+      hPutStrLn stderr errorMessage
+      exitWith $ ExitFailure 1
+    Right p -> execParser (info p fullDesc) >>= action
 
 parser :: forall a . (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
-       Parser a
+       Either String (Parser a)
 parser = case datatypeInfo (Proxy :: Proxy a) of
-    ADT _ _ cs -> parseRecord cs
-    Newtype _ _ c -> parseRecord (c :* Nil)
+    ADT _ typeName cs -> parseRecord typeName cs
+    Newtype _ typeName c -> parseRecord typeName (c :* Nil)
 
 parseRecord :: (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
-  NP ConstructorInfo (Code a) -> Parser a
-parseRecord (Record _ fields :* Nil) = to <$> SOP <$> Z <$> parseFields fields
-parseRecord _ = undefined
+  DatatypeName -> NP ConstructorInfo (Code a) -> Either String (Parser a)
+parseRecord typeName meta = case meta of
+    (Record _ fields :* Nil) ->
+      Right (to <$> SOP <$> Z <$> parseFields fields)
+    (_ :* _ :* _) -> err "sum-types"
+    Nil -> err "empty data types"
+    (Infix{} :* Nil) -> err "infix constructors"
+    (Constructor{} :* Nil) -> err "constructors without field labels"
+  where
+    err :: String -> Either String (Parser a)
+    err message =
+      Left ("args-generics doesn't support " ++ message ++ " (" ++ typeName ++ ").")
 
 parseFields :: (All HasOptParser xs) => NP FieldInfo xs -> Parser (NP I xs)
 parseFields Nil = pure Nil
