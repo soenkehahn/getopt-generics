@@ -39,6 +39,13 @@ spec = do
         output `shouldContain` "Invalid"
         output `shouldContain` "--no-such-option"
 
+    it "implements --help" $ do
+      output <- capture_ $
+        withArgs ["--help"] $ withArguments $ \ (_ :: Foo) ->
+          throwIO (ErrorCall "action")
+      output `shouldContain` "Usage"
+      output `shouldContain` "--bar"
+
 
 data Foo
   = Foo {

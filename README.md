@@ -6,7 +6,6 @@ Early draft.
 
 ## todos
 
-- implement --help
 - look into simplifying constraints for users (shouldn't GHC.Generic be enough?)
 - get rid of optparse-applicative
 - implement support for short options

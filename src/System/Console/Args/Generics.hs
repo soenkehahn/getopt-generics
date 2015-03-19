@@ -11,8 +11,10 @@
 
 module System.Console.Args.Generics (withArguments) where
 
+import           Control.Exception
 import           Generics.SOP
 import           Options.Applicative
+import           System.Environment
 import           System.Exit
 import           System.IO
 
@@ -23,7 +25,26 @@ withArguments action = do
     Left errorMessage -> do
       hPutStrLn stderr errorMessage
       exitWith $ ExitFailure 1
-    Right p -> execParser (info p fullDesc) >>= action
+    Right p -> do
+      args <- getArgs
+      let parserResult = execParserPure
+            (prefs idm)
+            (info (helper <*> p) fullDesc)
+            args
+      case parserResult of
+        Success a -> action a
+        Failure failure -> do
+          progName <- getProgName
+          let (message, exitCode) = renderFailure failure progName
+          case exitCode of
+            ExitFailure _ -> do
+              hPutStrLn stderr message
+              exitWith exitCode
+            ExitSuccess -> do
+              -- invocation with --help
+              putStrLn message
+        CompletionInvoked _ ->
+          throwIO $ ErrorCall "completion not reported"
 
 parser :: forall a . (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
        Either String (Parser a)
