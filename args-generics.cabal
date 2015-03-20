@@ -1,18 +1,28 @@
 name: args-generics
 version: 0.1
-cabal-version: >= 1.2
+category: Console, System
+synopsis: Simple command line argument parsing
+description:
+  "args-generics" tries to make it very simple to create command line
+  interfaces. Users just specify a simple data type (and derive some type
+  classes for that type) and "args-generics" creates a command line argument
+  parser.
 license: BSD3
 license-file: LICENSE
 author: Linh Nguyen, Sönke Hahn
 copyright: Zalora South East Asia Pte Ltd
 maintainer: linh.nguyen@zalora.com, soenke.hahn@zalora.com
+
+cabal-version: >= 1.8
 build-type: Simple
 
 library
   hs-source-dirs:
     src
   ghc-options:
-    -Wall -threaded -fno-warn-name-shadowing
+    -Wall -fno-warn-name-shadowing
+  exposed-modules:
+    System.Console.Args.Generics
   build-depends:
       base == 4.*
     , generics-sop
@@ -22,15 +32,19 @@ test-suite spec
   type:
     exitcode-stdio-1.0
   hs-source-dirs:
-    src, test
+    test
   ghc-options:
     -Wall -threaded -fno-warn-name-shadowing -O0
   main-is:
     Spec.hs
   build-depends:
       base == 4.*
+    , args-generics
     , generics-sop
-    , optparse-applicative
 
     , hspec
     , silently
+
+source-repository head
+  type:     git
+  location: git://github.com/zalora/args-generics
