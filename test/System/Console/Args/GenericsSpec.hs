@@ -47,8 +47,7 @@ spec = do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
           withArgs [] $
             withArguments $ \ (_ :: Foo) -> return ()
-        output `shouldContain` "missing"
-        output `shouldContain` "--baz"
+        output `shouldContain` "missing option: --baz=string"
 
       it "prints out an error for unparseable options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $

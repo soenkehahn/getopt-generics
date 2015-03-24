@@ -149,7 +149,6 @@ project sums empty =
 class Option a where
   toOption :: ArgDescr (Either String a)
   emptyOption :: String -> Either String a
-  emptyOption flagName = Left ("missing option: --" ++ flagName)
 
 instance Option Bool where
   toOption = NoArg (Right True)
@@ -157,6 +156,7 @@ instance Option Bool where
 
 instance Option String where
   toOption = ReqArg Right "string"
+  emptyOption flagName = Left ("missing option: --" ++ flagName ++ "=string")
 
 instance Option (Maybe String) where
   toOption = ReqArg (Right . Just) "string (optional)"
@@ -167,6 +167,7 @@ parseInt s = maybe (Left ("not an integer: " ++ s)) Right $ readMay s
 
 instance Option Int where
   toOption = ReqArg parseInt "integer"
+  emptyOption flagName = Left ("missing option: --" ++ flagName ++ "=int")
 
 instance Option (Maybe Int) where
   toOption = ReqArg (fmap Just . parseInt) "integer (optional)"
