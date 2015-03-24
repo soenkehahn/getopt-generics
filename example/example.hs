@@ -22,8 +22,7 @@ instance HasDatatypeInfo Foo
 
 main :: IO ()
 main = do
-  args <- getArgs
-  withArgs args $ withArguments $ \ myFoo -> do
+  withArguments $ \ myFoo -> do
     print $ bar myFoo
     print $ baz myFoo
     print $ qux myFoo
