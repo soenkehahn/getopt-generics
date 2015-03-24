@@ -25,6 +25,10 @@ spec = do
       withArgs (words "--baz foo") $ withArguments $ \ options ->
         options `shouldBe` Foo Nothing "foo" False
 
+    it "allows boolean flags" $ do
+      withArgs (words "--bool --baz foo") $ withArguments $ \ options ->
+        options `shouldBe` Foo Nothing "foo" True
+
     context "invalid arguments" $ do
       it "doesn't execute the action" $ do
         let main = withArgs (words "--invalid") $
@@ -36,22 +40,38 @@ spec = do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
           withArgs (words "--no-such-option") $
             withArguments $ \ (_ :: Foo) -> return ()
-        output `shouldContain` "Invalid"
+        output `shouldContain` "unrecognized"
         output `shouldContain` "--no-such-option"
+
+      it "prints errors for missing options" $ do
+        output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
+          withArgs [] $
+            withArguments $ \ (_ :: Foo) -> return ()
+        output `shouldContain` "missing"
+        output `shouldContain` "--baz"
+
+      it "prints out an error for unparseable options" $ do
+        output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
+          withArgs (words "--bar foo --baz huhu") $
+            withArguments $ \ (_ :: Foo) -> return ()
+        output `shouldContain` "not an integer: foo"
 
     it "implements --help" $ do
       output <- capture_ $
         withArgs ["--help"] $ withArguments $ \ (_ :: Foo) ->
           throwIO (ErrorCall "action")
-      output `shouldContain` "Usage"
-      output `shouldContain` "--bar"
+      mapM_ (output `shouldContain`) $
+        "--bar=integer" : "optional" :
+        "--baz=string" :
+        "--bool" :
+        []
 
 
 data Foo
   = Foo {
     bar :: Maybe Int,
     baz :: String,
-    huhu :: Bool
+    bool :: Bool
   }
   deriving (GHC.Generics.Generic, Show, Eq)
 
