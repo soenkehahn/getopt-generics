@@ -12,6 +12,7 @@
 
 module System.Console.Args.Generics (withArguments) where
 
+import           Control.Applicative
 import           Data.List
 import           Data.Monoid (Monoid, mempty)
 import           Generics.SOP
@@ -78,22 +79,21 @@ processFields args fields =
     ignoreRight = either id (const mempty)
 
 mkOptDescrs :: forall xs . All Option xs =>
-  NP FieldInfo xs -> [OptDescr (NS (Either String) xs)]
+  NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
 mkOptDescrs fields =
   map toOptDescr $ sumList $ npMap mkOptDescr fields
 
-newtype OptDescrE a = OptDescrE (OptDescr (Either String a))
-  deriving (Functor)
+newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
 
 mkOptDescr :: forall a . Option a => FieldInfo a -> OptDescrE a
 mkOptDescr (FieldInfo name) = OptDescrE $ Option [] [name] toOption ""
 
-toOptDescr :: NS OptDescrE xs -> OptDescr (NS (Either String) xs)
+toOptDescr :: NS OptDescrE xs -> OptDescr (NS FieldState xs)
 toOptDescr (Z (OptDescrE a)) = fmap Z a
 toOptDescr (S a) = fmap S (toOptDescr a)
 
 mkEmptyArguments :: forall xs . (SingI xs, All Option xs) =>
-  NP FieldInfo xs -> NP (Either String) xs
+  NP FieldInfo xs -> NP FieldState xs
 mkEmptyArguments fields = case (sing :: Sing xs, fields) of
   (SNil, Nil) -> Nil
   (SCons, FieldInfo name :* r) ->
@@ -118,13 +118,14 @@ helpWrapper args fields a =
 
 -- * helper functions for NS and NP
 
-collectErrors :: NP (Either String) xs -> Either [String] (NP I xs)
+collectErrors :: NP FieldState xs -> Either [String] (NP I xs)
 collectErrors np = case np of
   Nil -> Right Nil
   (a :* r) -> case (a, collectErrors r) of
-    (Right a, Right r) -> Right (I a :* r)
-    (Left error, r) -> Left (error : either id (const []) r)
-    (Right _, Left errors) -> Left errors
+    (Success a, Right r) -> Right (I a :* r)
+    (ParseErrors errors, r) -> Left (errors ++ either id (const []) r)
+    (Unset error, r) -> Left (error : either id (const []) r)
+    (Success _, Left errors) -> Left errors
 
 npMap :: (All Option xs) => (forall a . Option a => f a -> g a) -> NP f xs -> NP g xs
 npMap _ Nil = Nil
@@ -134,41 +135,66 @@ sumList :: NP f xs -> [NS f xs]
 sumList Nil = []
 sumList (a :* r) = Z a : map S (sumList r)
 
-project :: SingI xs => [NS f xs] -> NP f xs -> NP f xs
+project :: (SingI xs, All Option xs) =>
+  [NS FieldState xs] -> NP FieldState xs -> NP FieldState xs
 project sums empty =
     foldl' inner empty sums
   where
-    inner :: NP f xs -> NS f xs -> NP f xs
-    inner (_ :* r) (Z a) = a :* r
+    inner :: (All Option xs) =>
+      NP FieldState xs -> NS FieldState xs -> NP FieldState xs
+    inner (a :* r) (Z b) = combine a b :* r
     inner (a :* r) (S rSum) = a :* inner r rSum
     inner Nil _ = error "project: impossible"
 
 
 -- * possible field types
 
+data FieldState a
+  = Unset String
+  | ParseErrors [String]
+  | Success a
+  deriving (Functor)
+
 class Option a where
-  toOption :: ArgDescr (Either String a)
-  emptyOption :: String -> Either String a
+  toOption :: ArgDescr (FieldState a)
+  emptyOption :: String -> FieldState a
+  accumulate :: a -> a -> a
+  accumulate _ x = x
+
+combine :: Option a => FieldState a -> FieldState a -> FieldState a
+combine _ (Unset _) = error "combine: shouldn't happen"
+combine (ParseErrors e) (ParseErrors f) = ParseErrors (e ++ f)
+combine (ParseErrors e) _ = ParseErrors e
+combine (Unset _) x = x
+combine (Success _) (ParseErrors e) = ParseErrors e
+combine (Success a) (Success b) = Success (accumulate a b)
 
 instance Option Bool where
-  toOption = NoArg (Right True)
-  emptyOption _ = Right False
+  toOption = NoArg (Success True)
+  emptyOption _ = Success False
 
 instance Option String where
-  toOption = ReqArg Right "string"
-  emptyOption flagName = Left ("missing option: --" ++ flagName ++ "=string")
+  toOption = ReqArg Success "string"
+  emptyOption flagName = Unset
+    ("missing option: --" ++ flagName ++ "=string")
 
 instance Option (Maybe String) where
-  toOption = ReqArg (Right . Just) "string (optional)"
-  emptyOption _ = Right Nothing
+  toOption = ReqArg (Success . Just) "string (optional)"
+  emptyOption _ = Success Nothing
 
-parseInt :: String -> Either String Int
-parseInt s = maybe (Left ("not an integer: " ++ s)) Right $ readMay s
+instance Option [String] where
+  toOption = ReqArg (Success . pure) "strings (multiple possible)"
+  emptyOption _ = Success []
+  accumulate = (++)
+
+parseInt :: String -> FieldState Int
+parseInt s = maybe (ParseErrors ["not an integer: " ++ s]) Success $ readMay s
 
 instance Option Int where
   toOption = ReqArg parseInt "integer"
-  emptyOption flagName = Left ("missing option: --" ++ flagName ++ "=int")
+  emptyOption flagName = Unset
+    ("missing option: --" ++ flagName ++ "=int")
 
 instance Option (Maybe Int) where
   toOption = ReqArg (fmap Just . parseInt) "integer (optional)"
-  emptyOption _ = Right Nothing
+  emptyOption _ = Success Nothing
