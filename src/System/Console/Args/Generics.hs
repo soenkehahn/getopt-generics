@@ -29,8 +29,8 @@ withArguments action = do
   case parseArgs args of
     Right (Right a) -> action a
     Left noAction -> noAction
-    Right (Left errors) -> do
-      mapM_ (hPutStrLn stderr) errors
+    Right (Left errs) -> do
+      mapM_ (hPutStrLn stderr) errs
       exitWith $ ExitFailure 1
 
 parseArgs :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
@@ -98,7 +98,7 @@ mkEmptyArguments fields = case (sing :: Sing xs, fields) of
   (SNil, Nil) -> Nil
   (SCons, FieldInfo name :* r) ->
     emptyOption name :* mkEmptyArguments r
-  _ -> error "mkEmpty: impossible"
+  _ -> uninhabited "mkEmpty"
 
 
 -- * showing help?
@@ -123,9 +123,9 @@ collectErrors np = case np of
   Nil -> Right Nil
   (a :* r) -> case (a, collectErrors r) of
     (Success a, Right r) -> Right (I a :* r)
-    (ParseErrors errors, r) -> Left (errors ++ either id (const []) r)
-    (Unset error, r) -> Left (error : either id (const []) r)
-    (Success _, Left errors) -> Left errors
+    (ParseErrors errs, r) -> Left (errs ++ either id (const []) r)
+    (Unset err, r) -> Left (err : either id (const []) r)
+    (Success _, Left errs) -> Left errs
 
 npMap :: (All Option xs) => (forall a . Option a => f a -> g a) -> NP f xs -> NP g xs
 npMap _ Nil = Nil
@@ -144,8 +144,13 @@ project sums empty =
       NP FieldState xs -> NS FieldState xs -> NP FieldState xs
     inner (a :* r) (Z b) = combine a b :* r
     inner (a :* r) (S rSum) = a :* inner r rSum
-    inner Nil _ = error "project: impossible"
+    inner Nil _ = uninhabited "project"
 
+impossible :: String -> a
+impossible name = error ("System.Console.Args.Generics." ++ name ++ ": This should never happen!")
+
+uninhabited :: String -> a
+uninhabited = impossible
 
 -- * possible field types
 
@@ -162,7 +167,7 @@ class Option a where
   accumulate _ x = x
 
 combine :: Option a => FieldState a -> FieldState a -> FieldState a
-combine _ (Unset _) = error "combine: shouldn't happen"
+combine _ (Unset _) = impossible "combine"
 combine (ParseErrors e) (ParseErrors f) = ParseErrors (e ++ f)
 combine (ParseErrors e) _ = ParseErrors e
 combine (Unset _) x = x
