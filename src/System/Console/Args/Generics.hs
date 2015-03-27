@@ -1,5 +1,6 @@
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveFunctor         #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -11,80 +12,194 @@
 
 module System.Console.Args.Generics (withArguments) where
 
-import           Control.Exception
+import           Control.Applicative
+import           Data.List
+import           Data.Monoid (Monoid, mempty)
 import           Generics.SOP
-import           Options.Applicative
+import           Safe
+import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
 import           System.IO
 
-withArguments :: (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
+withArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   (a -> IO ()) -> IO ()
 withArguments action = do
-  case parser of
-    Left errorMessage -> do
-      hPutStrLn stderr errorMessage
+  args <- getArgs
+  case parseArgs args of
+    Right (Right a) -> action a
+    Left noAction -> noAction
+    Right (Left errs) -> do
+      mapM_ (hPutStrLn stderr) errs
       exitWith $ ExitFailure 1
-    Right p -> do
-      args <- getArgs
-      let parserResult = execParserPure
-            (prefs idm)
-            (info (helper <*> p) fullDesc)
-            args
-      case parserResult of
-        Success a -> action a
-        Failure failure -> do
-          progName <- getProgName
-          let (message, exitCode) = renderFailure failure progName
-          case exitCode of
-            ExitFailure _ -> do
-              hPutStrLn stderr message
-              exitWith exitCode
-            ExitSuccess -> do
-              -- invocation with --help
-              putStrLn message
-        CompletionInvoked _ ->
-          throwIO $ ErrorCall "completion not reported"
 
-parser :: forall a . (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
-       Either String (Parser a)
-parser = case datatypeInfo (Proxy :: Proxy a) of
-    ADT _ typeName cs -> parseRecord typeName cs
-    Newtype _ typeName c -> parseRecord typeName (c :* Nil)
-
-parseRecord :: (Generic a, HasDatatypeInfo a, All2 HasOptParser (Code a)) =>
-  DatatypeName -> NP ConstructorInfo (Code a) -> Either String (Parser a)
-parseRecord typeName meta = case meta of
-    (Record _ fields :* Nil) ->
-      Right (to <$> SOP <$> Z <$> parseFields fields)
-    (_ :* _ :* _) -> err "sum-types"
-    Nil -> err "empty data types"
-    (Infix{} :* Nil) -> err "infix constructors"
-    (Constructor{} :* Nil) -> err "constructors without field labels"
+parseArgs :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
+  [String] -> Either (IO ()) (Either [String] a)
+parseArgs args = case datatypeInfo (Proxy :: Proxy a) of
+    ADT typeName _ (constructorInfo :* Nil) ->
+      case constructorInfo of
+        (Record _ fields) -> processFields args fields
+        Constructor{} ->
+          err typeName "constructors without field labels"
+        Infix{} ->
+          err typeName "infix constructors"
+    ADT typeName _ Nil ->
+      err typeName "empty data types"
+    ADT typeName _ (_ :* _ :* _) ->
+      err typeName "sum-types"
+    Newtype _ _ (Record _ fields) ->
+      processFields args fields
+    Newtype typeName _ (Constructor _) ->
+      err typeName "constructors without field labels"
   where
-    err :: String -> Either String (Parser a)
-    err message =
-      Left ("args-generics doesn't support " ++ message ++ " (" ++ typeName ++ ").")
+    err typeName message =
+      Right $ Left ["args-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
 
-parseFields :: (All HasOptParser xs) => NP FieldInfo xs -> Parser (NP I xs)
-parseFields Nil = pure Nil
-parseFields (field :* r) =
-  (:*) <$> (I <$> parseField field) <*> (parseFields r)
+processFields :: forall a xs . (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
+  [String] -> NP FieldInfo xs -> Either (IO ()) (Either [String] a)
+processFields args fields =
+  helpWrapper args fields $
+  fmap (to . SOP . Z) $
+  case getOpt Permute (mkOptDescrs fields) args of
+    (options, arguments, parseErrors) ->
+      let result :: Either [String] (NP I xs) =
+            collectErrors $ project options (mkEmptyArguments fields)
+          allErrors =
+            parseErrors ++
+            map mkUnknownArgumentError arguments ++
+            ignoreRight result
+      in case allErrors of
+        [] -> result
+        _ -> Left allErrors
+  where
+    mkUnknownArgumentError :: String -> String
+    mkUnknownArgumentError arg = "unknown argument: " ++ arg
 
-parseField :: (HasOptParser a) => FieldInfo a -> Parser a
-parseField (FieldInfo field) = getOptParser field
+    ignoreRight :: Monoid e => Either e o -> e
+    ignoreRight = either id (const mempty)
 
-class HasOptParser a where
-  getOptParser :: String -> Parser a
+mkOptDescrs :: forall xs . All Option xs =>
+  NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
+mkOptDescrs fields =
+  map toOptDescr $ sumList $ npMap mkOptDescr fields
 
-instance HasOptParser String where
-  getOptParser name = strOption (long name)
+newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
 
-instance HasOptParser Bool where
-  getOptParser name = switch (long name)
+mkOptDescr :: forall a . Option a => FieldInfo a -> OptDescrE a
+mkOptDescr (FieldInfo name) = OptDescrE $ Option [] [name] toOption ""
 
-instance HasOptParser Int where
-  getOptParser name = option auto (long name)
+toOptDescr :: NS OptDescrE xs -> OptDescr (NS FieldState xs)
+toOptDescr (Z (OptDescrE a)) = fmap Z a
+toOptDescr (S a) = fmap S (toOptDescr a)
 
-instance HasOptParser a => HasOptParser (Maybe a) where
-  getOptParser name = optional (getOptParser name)
+mkEmptyArguments :: forall xs . (SingI xs, All Option xs) =>
+  NP FieldInfo xs -> NP FieldState xs
+mkEmptyArguments fields = case (sing :: Sing xs, fields) of
+  (SNil, Nil) -> Nil
+  (SCons, FieldInfo name :* r) ->
+    emptyOption name :* mkEmptyArguments r
+  _ -> uninhabited "mkEmpty"
+
+
+-- * showing help?
+
+helpWrapper :: (All Option xs) =>
+  [String] -> NP FieldInfo xs -> a -> Either (IO ()) a
+helpWrapper args fields a =
+    case getOpt Permute [helpOption] args of
+      ([], _, _) -> Right a
+      (() : _, _, _) -> Left $ do
+        progName <- getProgName
+        let header = progName
+        putStrLn (usageInfo header (mkOptDescrs fields))
+  where
+    helpOption = Option ['h'] ["help"] (NoArg ()) "show help and exit"
+
+
+-- * helper functions for NS and NP
+
+collectErrors :: NP FieldState xs -> Either [String] (NP I xs)
+collectErrors np = case np of
+  Nil -> Right Nil
+  (a :* r) -> case (a, collectErrors r) of
+    (Success a, Right r) -> Right (I a :* r)
+    (ParseErrors errs, r) -> Left (errs ++ either id (const []) r)
+    (Unset err, r) -> Left (err : either id (const []) r)
+    (Success _, Left errs) -> Left errs
+
+npMap :: (All Option xs) => (forall a . Option a => f a -> g a) -> NP f xs -> NP g xs
+npMap _ Nil = Nil
+npMap f (a :* r) = f a :* npMap f r
+
+sumList :: NP f xs -> [NS f xs]
+sumList Nil = []
+sumList (a :* r) = Z a : map S (sumList r)
+
+project :: (SingI xs, All Option xs) =>
+  [NS FieldState xs] -> NP FieldState xs -> NP FieldState xs
+project sums empty =
+    foldl' inner empty sums
+  where
+    inner :: (All Option xs) =>
+      NP FieldState xs -> NS FieldState xs -> NP FieldState xs
+    inner (a :* r) (Z b) = combine a b :* r
+    inner (a :* r) (S rSum) = a :* inner r rSum
+    inner Nil _ = uninhabited "project"
+
+impossible :: String -> a
+impossible name = error ("System.Console.Args.Generics." ++ name ++ ": This should never happen!")
+
+uninhabited :: String -> a
+uninhabited = impossible
+
+-- * possible field types
+
+data FieldState a
+  = Unset String
+  | ParseErrors [String]
+  | Success a
+  deriving (Functor)
+
+class Option a where
+  toOption :: ArgDescr (FieldState a)
+  emptyOption :: String -> FieldState a
+  accumulate :: a -> a -> a
+  accumulate _ x = x
+
+combine :: Option a => FieldState a -> FieldState a -> FieldState a
+combine _ (Unset _) = impossible "combine"
+combine (ParseErrors e) (ParseErrors f) = ParseErrors (e ++ f)
+combine (ParseErrors e) _ = ParseErrors e
+combine (Unset _) x = x
+combine (Success _) (ParseErrors e) = ParseErrors e
+combine (Success a) (Success b) = Success (accumulate a b)
+
+instance Option Bool where
+  toOption = NoArg (Success True)
+  emptyOption _ = Success False
+
+instance Option String where
+  toOption = ReqArg Success "string"
+  emptyOption flagName = Unset
+    ("missing option: --" ++ flagName ++ "=string")
+
+instance Option (Maybe String) where
+  toOption = ReqArg (Success . Just) "string (optional)"
+  emptyOption _ = Success Nothing
+
+instance Option [String] where
+  toOption = ReqArg (Success . pure) "strings (multiple possible)"
+  emptyOption _ = Success []
+  accumulate = (++)
+
+parseInt :: String -> FieldState Int
+parseInt s = maybe (ParseErrors ["not an integer: " ++ s]) Success $ readMay s
+
+instance Option Int where
+  toOption = ReqArg parseInt "integer"
+  emptyOption flagName = Unset
+    ("missing option: --" ++ flagName ++ "=int")
+
+instance Option (Maybe Int) where
+  toOption = ReqArg (fmap Just . parseInt) "integer (optional)"
+  emptyOption _ = Success Nothing

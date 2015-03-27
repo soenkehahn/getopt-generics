@@ -6,7 +6,8 @@ Early draft.
 
 ## todos
 
-- get rid of optparse-applicative
+- get rid of cabal dependency safe
+- implement support for lists
 - implement support for short options
   - We should have a pure core function like this:
     `:: (AllTheConstraints a) => [String] -> SomeConfigurationType -> Either String a`
