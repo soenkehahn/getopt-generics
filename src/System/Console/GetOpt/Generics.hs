@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 
-module System.Console.Args.Generics (withArguments) where
+module System.Console.GetOpt.Generics (withArguments) where
 
 import           Control.Applicative
 import           Data.List
@@ -53,7 +53,7 @@ parseArgs args = case datatypeInfo (Proxy :: Proxy a) of
       err typeName "constructors without field labels"
   where
     err typeName message =
-      Right $ Left ["args-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
+      Right $ Left ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
 
 processFields :: forall a xs . (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
   [String] -> NP FieldInfo xs -> Either (IO ()) (Either [String] a)
@@ -147,7 +147,7 @@ project sums empty =
     inner Nil _ = uninhabited "project"
 
 impossible :: String -> a
-impossible name = error ("System.Console.Args.Generics." ++ name ++ ": This should never happen!")
+impossible name = error ("System.Console.GetOpt.Generics." ++ name ++ ": This should never happen!")
 
 uninhabited :: String -> a
 uninhabited = impossible

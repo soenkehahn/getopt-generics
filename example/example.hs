@@ -2,7 +2,7 @@
 
 import           Generics.SOP
 import qualified GHC.Generics
-import           System.Console.Args.Generics
+import           System.Console.GetOpt.Generics
 import           System.Environment
 
 -- we specify a data type that maps to the commandline arguments

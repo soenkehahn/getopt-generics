@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module System.Console.Args.GenericsSpec where
+module System.Console.GetOpt.GenericsSpec where
 
 import           Control.Exception
 import           Generics.SOP
@@ -12,7 +12,7 @@ import           System.IO
 import           System.IO.Silently
 import           Test.Hspec
 
-import           System.Console.Args.Generics
+import           System.Console.GetOpt.Generics
 
 data Foo
   = Foo {

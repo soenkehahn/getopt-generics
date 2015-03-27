@@ -1,11 +1,11 @@
-name: args-generics
+name: getopt-generics
 version: 0.1
 category: Console, System
 synopsis: Simple command line argument parsing
 description:
-  "args-generics" tries to make it very simple to create command line
+  "getopt-generics" tries to make it very simple to create command line
   interfaces. Users just specify a simple data type (and derive some type
-  classes for that type) and "args-generics" creates a command line argument
+  classes for that type) and "getopt-generics" creates a command line argument
   parser.
 license: BSD3
 license-file: LICENSE
@@ -22,7 +22,7 @@ library
   ghc-options:
     -Wall -fno-warn-name-shadowing
   exposed-modules:
-    System.Console.Args.Generics
+    System.Console.GetOpt.Generics
   build-depends:
       base == 4.*
     , generics-sop
@@ -39,7 +39,7 @@ test-suite spec
     Spec.hs
   build-depends:
       base == 4.*
-    , args-generics
+    , getopt-generics
     , generics-sop
 
     , hspec
@@ -47,4 +47,4 @@ test-suite spec
 
 source-repository head
   type:     git
-  location: git://github.com/zalora/args-generics
+  location: git://github.com/zalora/getopt-generics
