@@ -16,6 +16,8 @@
 
 module System.Console.GetOpt.Generics (
   withArguments,
+  parseArguments,
+  Result(..),
   Option(..),
  ) where
 
@@ -30,23 +32,31 @@ import           System.Environment
 import           System.Exit
 import           System.IO
 
-withArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
+withArguments :: (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   (a -> IO ()) -> IO ()
 withArguments action = do
   args <- getArgs
-  case parseArgs args of
-    Right (Right a) -> action a
-    Left noAction -> noAction
-    Right (Left errs) -> do
+  progName <- getProgName
+  case parseArguments progName args of
+    Success a -> action a
+    OutputAndExit message -> do
+      putStrLn message
+    Errors errs -> do
       mapM_ (hPutStrLn stderr) errs
       exitWith $ ExitFailure 1
 
-parseArgs :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  [String] -> Either (IO ()) (Either [String] a)
-parseArgs args = case datatypeInfo (Proxy :: Proxy a) of
+data Result a
+  = Success a
+  | OutputAndExit String
+  | Errors [String]
+  deriving (Show, Eq, Ord)
+
+parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
+  String -> [String] -> Result a
+parseArguments header args = case datatypeInfo (Proxy :: Proxy a) of
     ADT typeName _ (constructorInfo :* Nil) ->
       case constructorInfo of
-        (Record _ fields) -> processFields args fields
+        (Record _ fields) -> processFields header args fields
         Constructor{} ->
           err typeName "constructors without field labels"
         Infix{} ->
@@ -56,17 +66,17 @@ parseArgs args = case datatypeInfo (Proxy :: Proxy a) of
     ADT typeName _ (_ :* _ :* _) ->
       err typeName "sum-types"
     Newtype _ _ (Record _ fields) ->
-      processFields args fields
+      processFields header args fields
     Newtype typeName _ (Constructor _) ->
       err typeName "constructors without field labels"
   where
     err typeName message =
-      Right $ Left ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
+      Errors ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
 
 processFields :: forall a xs . (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
-  [String] -> NP FieldInfo xs -> Either (IO ()) (Either [String] a)
-processFields args fields =
-  helpWrapper args fields $
+  String -> [String] -> NP FieldInfo xs -> Result a
+processFields header args fields =
+  helpWrapper header args fields $
   fmap (to . SOP . Z) $
   case getOpt Permute (mkOptDescrs fields) args of
     (options, arguments, parseErrors) ->
@@ -118,14 +128,14 @@ mkEmptyArguments fields = case (sing :: Sing xs, fields) of
 -- * showing help?
 
 helpWrapper :: (All Option xs) =>
-  [String] -> NP FieldInfo xs -> a -> Either (IO ()) a
-helpWrapper args fields a =
+  String -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
+helpWrapper header args fields result =
     case getOpt Permute [helpOption] args of
-      ([], _, _) -> Right a
-      (() : _, _, _) -> Left $ do
-        progName <- getProgName
-        let header = progName
-        putStrLn (usageInfo header (mkOptDescrs fields))
+      ([], _, _) -> case result of
+        Left errs -> Errors errs
+        Right a -> Success a
+      (() : _, _, _) -> OutputAndExit $
+        usageInfo header (mkOptDescrs fields)
   where
     helpOption = Option ['h'] ["help"] (NoArg ()) "show help and exit"
 
@@ -136,10 +146,10 @@ collectErrors :: NP FieldState xs -> Either [String] (NP I xs)
 collectErrors np = case np of
   Nil -> Right Nil
   (a :* r) -> case (a, collectErrors r) of
-    (Success a, Right r) -> Right (I a :* r)
+    (FieldSuccess a, Right r) -> Right (I a :* r)
     (ParseErrors errs, r) -> Left (errs ++ either id (const []) r)
     (Unset err, r) -> Left (err : either id (const []) r)
-    (Success _, Left errs) -> Left errs
+    (FieldSuccess _, Left errs) -> Left errs
 
 npMap :: (All Option xs) => (forall a . Option a => f a -> g a) -> NP f xs -> NP g xs
 npMap _ Nil = Nil
@@ -171,7 +181,7 @@ uninhabited = impossible
 data FieldState a
   = Unset String
   | ParseErrors [String]
-  | Success a
+  | FieldSuccess a
   deriving (Functor)
 
 class Option a where
@@ -185,29 +195,29 @@ combine _ (Unset _) = impossible "combine"
 combine (ParseErrors e) (ParseErrors f) = ParseErrors (e ++ f)
 combine (ParseErrors e) _ = ParseErrors e
 combine (Unset _) x = x
-combine (Success _) (ParseErrors e) = ParseErrors e
-combine (Success a) (Success b) = Success (accumulate a b)
+combine (FieldSuccess _) (ParseErrors e) = ParseErrors e
+combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (accumulate a b)
 
 instance Option Bool where
-  toOption = NoArg (Success True)
-  emptyOption _ = Success False
+  toOption = NoArg (FieldSuccess True)
+  emptyOption _ = FieldSuccess False
 
 instance Option String where
-  toOption = ReqArg Success "string"
+  toOption = ReqArg FieldSuccess "string"
   emptyOption flagName = Unset
     ("missing option: --" ++ flagName ++ "=string")
 
 instance Option (Maybe String) where
-  toOption = ReqArg (Success . Just) "string (optional)"
-  emptyOption _ = Success Nothing
+  toOption = ReqArg (FieldSuccess . Just) "string (optional)"
+  emptyOption _ = FieldSuccess Nothing
 
 instance Option [String] where
-  toOption = ReqArg (Success . pure) "strings (multiple possible)"
-  emptyOption _ = Success []
+  toOption = ReqArg (FieldSuccess . pure) "strings (multiple possible)"
+  emptyOption _ = FieldSuccess []
   accumulate = (++)
 
 parseInt :: String -> FieldState Int
-parseInt s = maybe (ParseErrors ["not an integer: " ++ s]) Success $ readMay s
+parseInt s = maybe (ParseErrors ["not an integer: " ++ s]) FieldSuccess $ readMay s
 
 instance Option Int where
   toOption = ReqArg parseInt "integer"
@@ -216,9 +226,9 @@ instance Option Int where
 
 instance Option (Maybe Int) where
   toOption = ReqArg (fmap Just . parseInt) "integer (optional)"
-  emptyOption _ = Success Nothing
+  emptyOption _ = FieldSuccess Nothing
 
 instance Option [Int] where
   toOption = ReqArg (fmap pure . parseInt) "int (multiple possible)"
-  emptyOption _ = Success []
+  emptyOption _ = FieldSuccess []
   accumulate = (++)
