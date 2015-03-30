@@ -117,3 +117,12 @@ next2 = do
     it "turns camelCase selectors to lowercase and seperates with a dash" $ do
         withArgs (words "--camel-case foo") $ withArguments $ \ options ->
           options `shouldBe` CamelCaseOptions "foo"
+
+  describe "parseArguments" $ do
+    it "allows hints for short options" $ do
+      parseArguments "header" [Short "camel-case" 'x'] (words "-x foo")
+        `shouldBe` Success (CamelCaseOptions "foo")
+
+    it "allows hints in camelCase" $ do
+      parseArguments "header" [Short "camelCase" 'x'] (words "-x foo")
+        `shouldBe` Success (CamelCaseOptions "foo")

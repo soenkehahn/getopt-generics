@@ -18,11 +18,11 @@ module System.Console.GetOpt.Generics (
   withArguments,
   parseArguments,
   Result(..),
+  Hint(..),
   Option(..),
  ) where
 
 import           Control.Applicative
-import           Data.Char
 import           Data.List
 import           Data.Monoid (Monoid, mempty)
 import           Generics.SOP
@@ -32,12 +32,14 @@ import           System.Environment
 import           System.Exit
 import           System.IO
 
+import           System.Console.GetOpt.Generics.Hint
+
 withArguments :: (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   (a -> IO ()) -> IO ()
 withArguments action = do
   args <- getArgs
   progName <- getProgName
-  case parseArguments progName args of
+  case parseArguments progName [] args of
     Success a -> action a
     OutputAndExit message -> do
       putStrLn message
@@ -52,11 +54,11 @@ data Result a
   deriving (Show, Eq, Ord)
 
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  String -> [String] -> Result a
-parseArguments header args = case datatypeInfo (Proxy :: Proxy a) of
+  String -> [Hint] -> [String] -> Result a
+parseArguments header hints args = case datatypeInfo (Proxy :: Proxy a) of
     ADT typeName _ (constructorInfo :* Nil) ->
       case constructorInfo of
-        (Record _ fields) -> processFields header args fields
+        (Record _ fields) -> processFields header hints args fields
         Constructor{} ->
           err typeName "constructors without field labels"
         Infix{} ->
@@ -66,7 +68,7 @@ parseArguments header args = case datatypeInfo (Proxy :: Proxy a) of
     ADT typeName _ (_ :* _ :* _) ->
       err typeName "sum-types"
     Newtype _ _ (Record _ fields) ->
-      processFields header args fields
+      processFields header hints args fields
     Newtype typeName _ (Constructor _) ->
       err typeName "constructors without field labels"
   where
@@ -74,11 +76,11 @@ parseArguments header args = case datatypeInfo (Proxy :: Proxy a) of
       Errors ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
 
 processFields :: forall a xs . (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
-  String -> [String] -> NP FieldInfo xs -> Result a
-processFields header args fields =
-  helpWrapper header args fields $
+  String -> [Hint] -> [String] -> NP FieldInfo xs -> Result a
+processFields header hints args fields =
+  helpWrapper header hints args fields $
   fmap (to . SOP . Z) $
-  case getOpt Permute (mkOptDescrs fields) args of
+  case getOpt Permute (mkOptDescrs hints fields) args of
     (options, arguments, parseErrors) ->
       let result :: Either [String] (NP I xs) =
             collectErrors $ project options (mkEmptyArguments fields)
@@ -97,20 +99,15 @@ processFields header args fields =
     ignoreRight = either id (const mempty)
 
 mkOptDescrs :: forall xs . All Option xs =>
-  NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
-mkOptDescrs fields =
-  map toOptDescr $ sumList $ npMap mkOptDescr fields
+  [Hint] -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
+mkOptDescrs hints fields =
+  map toOptDescr $ sumList $ npMap (mkOptDescr hints) fields
 
 newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
 
-mkOptDescr :: forall a . Option a => FieldInfo a -> OptDescrE a
-mkOptDescr (FieldInfo name) = OptDescrE $ Option [] [slugify name] toOption ""
-
-slugify :: String -> String
-slugify [] = []
-slugify (x : xs)
-  | isUpper x = '-' : toLower x : slugify xs
-  | otherwise = x : slugify xs
+mkOptDescr :: forall a . Option a => [Hint] -> FieldInfo a -> OptDescrE a
+mkOptDescr hints (FieldInfo name) = OptDescrE $
+  Option (mkShortOptions hints name) [slugify name] toOption ""
 
 toOptDescr :: NS OptDescrE xs -> OptDescr (NS FieldState xs)
 toOptDescr (Z (OptDescrE a)) = fmap Z a
@@ -128,14 +125,14 @@ mkEmptyArguments fields = case (sing :: Sing xs, fields) of
 -- * showing help?
 
 helpWrapper :: (All Option xs) =>
-  String -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
-helpWrapper header args fields result =
+  String -> [Hint] -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
+helpWrapper header hints args fields result =
     case getOpt Permute [helpOption] args of
       ([], _, _) -> case result of
         Left errs -> Errors errs
         Right a -> Success a
       (() : _, _, _) -> OutputAndExit $
-        usageInfo header (mkOptDescrs fields)
+        usageInfo header (mkOptDescrs hints fields)
   where
     helpOption = Option ['h'] ["help"] (NoArg ()) "show help and exit"
 

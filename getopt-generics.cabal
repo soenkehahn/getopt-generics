@@ -21,7 +21,8 @@ library
   ghc-options:
     -Wall -fno-warn-name-shadowing
   exposed-modules:
-    System.Console.GetOpt.Generics
+    System.Console.GetOpt.Generics,
+    System.Console.GetOpt.Generics.Hint
   build-depends:
       base == 4.*
     , generics-sop
