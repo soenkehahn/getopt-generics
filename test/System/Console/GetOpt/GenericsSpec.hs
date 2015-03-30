@@ -82,7 +82,7 @@ spec = do
         "--bool" :
         []
 
-  next
+  next1
 
 data ListOptions
   = ListOptions {
@@ -93,10 +93,27 @@ data ListOptions
 instance Generic ListOptions
 instance HasDatatypeInfo ListOptions
 
-next :: Spec
-next = do
+next1 :: Spec
+next1 = do
   describe "withArguments" $ do
     it "allows to interpret multiple uses of the same option as lists" $ do
       withArgs (words "--multiple foo --multiple bar") $
         withArguments $ \ options ->
           options `shouldBe` ListOptions ["foo", "bar"]
+  next2
+
+data CamelCaseOptions
+  = CamelCaseOptions {
+    camelCase :: String
+  }
+  deriving (GHC.Generic, Show, Eq)
+
+instance Generic CamelCaseOptions
+instance HasDatatypeInfo CamelCaseOptions
+
+next2 :: Spec
+next2 = do
+  describe "withArguments" $ do
+    it "turns camelCase selectors to lowercase and seperates with a dash" $ do
+        withArgs (words "--camel-case foo") $ withArguments $ \ options ->
+          options `shouldBe` CamelCaseOptions "foo"

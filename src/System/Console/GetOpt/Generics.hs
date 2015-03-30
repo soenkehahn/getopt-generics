@@ -20,6 +20,7 @@ module System.Console.GetOpt.Generics (
  ) where
 
 import           Control.Applicative
+import           Data.Char
 import           Data.List
 import           Data.Monoid (Monoid, mempty)
 import           Generics.SOP
@@ -93,7 +94,13 @@ mkOptDescrs fields =
 newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
 
 mkOptDescr :: forall a . Option a => FieldInfo a -> OptDescrE a
-mkOptDescr (FieldInfo name) = OptDescrE $ Option [] [name] toOption ""
+mkOptDescr (FieldInfo name) = OptDescrE $ Option [] [slugify name] toOption ""
+
+slugify :: String -> String
+slugify [] = []
+slugify (x : xs)
+  | isUpper x = '-' : toLower x : slugify xs
+  | otherwise = x : slugify xs
 
 toOptDescr :: NS OptDescrE xs -> OptDescr (NS FieldState xs)
 toOptDescr (Z (OptDescrE a)) = fmap Z a
