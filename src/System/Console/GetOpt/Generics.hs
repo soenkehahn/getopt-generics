@@ -34,12 +34,12 @@ import           System.IO
 
 import           System.Console.GetOpt.Generics.Hint
 
-withArguments :: (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
+withArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   (a -> IO ()) -> IO ()
 withArguments action = do
   args <- getArgs
   progName <- getProgName
-  case parseArguments progName [] args of
+  case parseArguments progName (defaultHints (Proxy :: Proxy a)) args of
     Success a -> action a
     OutputAndExit message -> do
       putStrLn message
