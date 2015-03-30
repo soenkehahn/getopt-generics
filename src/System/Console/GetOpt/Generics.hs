@@ -10,7 +10,9 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 
-
+-- | "getopt-generics" tries to make it very simple to create command line
+-- argument parsers. Documentation can be found in the
+-- <https://github.com/zalora/getopt-generics#getopt-generics README>.
 
 module System.Console.GetOpt.Generics (
   withArguments,
