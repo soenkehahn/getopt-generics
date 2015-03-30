@@ -217,3 +217,8 @@ instance Option Int where
 instance Option (Maybe Int) where
   toOption = ReqArg (fmap Just . parseInt) "integer (optional)"
   emptyOption _ = Success Nothing
+
+instance Option [Int] where
+  toOption = ReqArg (fmap pure . parseInt) "int (multiple possible)"
+  emptyOption _ = Success []
+  accumulate = (++)
