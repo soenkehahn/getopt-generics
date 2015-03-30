@@ -32,9 +32,9 @@ test-suite spec
   type:
     exitcode-stdio-1.0
   hs-source-dirs:
-    test
+    test, examples
   ghc-options:
-    -Wall -threaded -fno-warn-name-shadowing -O0
+    -Wall -threaded -fno-warn-name-shadowing -O0 -pgmL markdown-unlit
   main-is:
     Spec.hs
   build-depends:

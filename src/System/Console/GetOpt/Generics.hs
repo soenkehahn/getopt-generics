@@ -10,7 +10,12 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 
-module System.Console.GetOpt.Generics (withArguments) where
+
+
+module System.Console.GetOpt.Generics (
+  withArguments,
+  Option(..),
+ ) where
 
 import           Control.Applicative
 import           Data.List
