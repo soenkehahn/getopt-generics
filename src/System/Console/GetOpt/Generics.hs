@@ -15,17 +15,15 @@
 -- <https://github.com/zalora/getopt-generics#getopt-generics README>.
 
 module System.Console.GetOpt.Generics (
-  withArguments,
+  getArguments,
   parseArguments,
   Result(..),
   Hint(..),
   Option(..),
  ) where
 
-import           Control.Applicative
 import           Data.Char
 import           Data.List
-import           Data.Monoid (Monoid, mempty)
 import           Generics.SOP
 import           Safe
 import           System.Console.GetOpt
@@ -36,15 +34,16 @@ import           System.IO
 import           System.Console.GetOpt.Generics.Hint
 import           System.Console.GetOpt.Generics.Internal
 
-withArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  (a -> IO ()) -> IO ()
-withArguments action = do
+getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
+  IO a
+getArguments = do
   args <- getArgs
   progName <- getProgName
   case parseArguments progName (defaultHints (Proxy :: Proxy a)) args of
-    Success a -> action a
+    Success a -> return a
     OutputAndExit message -> do
       putStrLn message
+      exitWith ExitSuccess
     Errors errs -> do
       mapM_ (hPutStrLn stderr) errs
       exitWith $ ExitFailure 1

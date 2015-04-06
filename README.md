@@ -31,11 +31,12 @@ instance Generics.SOP.Generic Options
 instance HasDatatypeInfo Options
 ~~~
 
-Then you can use `withArguments` to create a command-line argument parser:
+Then you can use `getArguments` to create a command-line argument parser:
 
 ~~~ {.haskell}
 main :: IO ()
-main = withArguments $ \ options ->
+main = do
+  options <- getArguments
   print (options :: Options)
 ~~~
 

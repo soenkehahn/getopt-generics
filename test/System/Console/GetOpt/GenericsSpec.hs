@@ -32,64 +32,74 @@ spec :: Spec
 spec = do
   describe "withArguments" $ do
     it "parses command line arguments" $ do
-      withArgs (words "--bar 4 --baz foo") $ withArguments $ \ options ->
-        options `shouldBe` Foo (Just 4) "foo" False
+      withArgs (words "--bar 4 --baz foo") $
+        getArguments `shouldReturn` Foo (Just 4) "foo" False
 
     it "allows optional arguments" $ do
-      withArgs (words "--baz foo") $ withArguments $ \ options ->
-        options `shouldBe` Foo Nothing "foo" False
+      withArgs (words "--baz foo") $
+        getArguments `shouldReturn` Foo Nothing "foo" False
 
     it "allows boolean flags" $ do
-      withArgs (words "--bool --baz foo") $ withArguments $ \ options ->
-        options `shouldBe` Foo Nothing "foo" True
+      withArgs (words "--bool --baz foo") $
+        getArguments `shouldReturn` Foo Nothing "foo" True
 
     context "invalid arguments" $ do
       it "doesn't execute the action" $ do
-        let main = withArgs (words "--invalid") $
-              withArguments $ \ (_ :: Foo) ->
-                throwIO (ErrorCall "action")
+        let main = withArgs (words "--invalid") $ do
+              _ :: Foo <- getArguments
+              throwIO (ErrorCall "action")
         main `shouldThrow` (== ExitFailure 1)
 
       it "prints out an error" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs (words "--no-such-option") $
-            withArguments $ \ (_ :: Foo) -> return ()
+          withArgs (words "--no-such-option") $ do
+            _ :: Foo <- getArguments
+            return ()
         output `shouldContain` "unrecognized"
         output `shouldContain` "--no-such-option"
 
       it "prints errors for missing options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs [] $
-            withArguments $ \ (_ :: Foo) -> return ()
+          withArgs [] $ do
+            _ :: Foo <- getArguments
+            return ()
         output `shouldContain` "missing option: --baz=string"
 
       it "prints out an error for unparseable options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs (words "--bar foo --baz huhu") $
-            withArguments $ \ (_ :: Foo) -> return ()
+          withArgs (words "--bar foo --baz huhu") $ do
+            _ :: Foo <- getArguments
+            return ()
         output `shouldContain` "not an integer: foo"
 
       it "complains about invalid overwritten options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs (words "--bar foo --baz huhu --bar 12") $
-            withArguments $ \ (_ :: Foo) -> return ()
+          withArgs (words "--bar foo --baz huhu --bar 12") $ do
+            _ :: Foo <- getArguments
+            return ()
         output `shouldContain` "not an integer: foo"
 
     context "--help" $ do
       it "implements --help" $ do
-        output <- capture_ $
-          withArgs ["--help"] $ withArguments $ \ (_ :: Foo) ->
-            throwIO (ErrorCall "action")
+        output <- capture_ $ withArgs ["--help"] $
+          handle (\ (_ :: SomeException) -> return ()) $ do
+            _ :: Foo <- getArguments
+            return ()
         mapM_ (output `shouldContain`) $
           "--bar=integer" : "optional" :
           "--baz=string" :
           "--bool" :
           []
 
+      it "throws ExitSuccess" $ do
+        withArgs ["--help"] (getArguments :: IO Foo)
+          `shouldThrow` (== ExitSuccess)
+
       it "does not contain trailing spaces" $ do
-        output <- capture_ $
-          withArgs ["--help"] $ withArguments $ \ (_ :: Foo) ->
-            throwIO (ErrorCall "action")
+        output <- capture_ $ withArgs ["--help"] $
+          handle (\ (_ :: SomeException) -> return ()) $ do
+            _ :: Foo <- getArguments
+            return ()
         forM_ (lines output) $ \ line ->
           line `shouldSatisfy` (\ line ->
             lastMay line /= Just ' ')
@@ -109,9 +119,8 @@ next1 :: Spec
 next1 = do
   describe "withArguments" $ do
     it "allows to interpret multiple uses of the same option as lists" $ do
-      withArgs (words "--multiple foo --multiple bar") $
-        withArguments $ \ options ->
-          options `shouldBe` ListOptions ["foo", "bar"]
+      withArgs (words "--multiple foo --multiple bar") $ do
+        getArguments `shouldReturn` ListOptions ["foo", "bar"]
   next2
 
 data CamelCaseOptions
@@ -127,8 +136,8 @@ next2 :: Spec
 next2 = do
   describe "withArguments" $ do
     it "turns camelCase selectors to lowercase and seperates with a dash" $ do
-        withArgs (words "--camel-case foo") $ withArguments $ \ options ->
-          options `shouldBe` CamelCaseOptions "foo"
+        withArgs (words "--camel-case foo") $ do
+          getArguments `shouldReturn` CamelCaseOptions "foo"
 
     it "help does not contain camelCase flags" $ do
       let OutputAndExit output :: Result CamelCaseOptions
