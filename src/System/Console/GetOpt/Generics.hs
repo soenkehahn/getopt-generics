@@ -23,6 +23,7 @@ module System.Console.GetOpt.Generics (
  ) where
 
 import           Control.Applicative
+import           Data.Char
 import           Data.List
 import           Data.Monoid (Monoid, mempty)
 import           Generics.SOP
@@ -33,6 +34,7 @@ import           System.Exit
 import           System.IO
 
 import           System.Console.GetOpt.Generics.Hint
+import           System.Console.GetOpt.Generics.Internal
 
 withArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   (a -> IO ()) -> IO ()
@@ -55,7 +57,7 @@ data Result a
 
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   String -> [Hint] -> [String] -> Result a
-parseArguments header hints args = case datatypeInfo (Proxy :: Proxy a) of
+parseArguments header hints args = case normalizedDatatypeInfo (Proxy :: Proxy a) of
     ADT typeName _ (constructorInfo :* Nil) ->
       case constructorInfo of
         (Record _ fields) -> processFields header hints args fields
@@ -107,7 +109,11 @@ newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
 
 mkOptDescr :: forall a . Option a => [Hint] -> FieldInfo a -> OptDescrE a
 mkOptDescr hints (FieldInfo name) = OptDescrE $
-  Option (mkShortOptions hints name) [slugify name] toOption ""
+  Option
+    (mkShortOptions hints name)
+    (mkLongOptions hints name)
+    toOption
+    ""
 
 toOptDescr :: NS OptDescrE xs -> OptDescr (NS FieldState xs)
 toOptDescr (Z (OptDescrE a)) = fmap Z a
@@ -132,10 +138,15 @@ helpWrapper header hints args fields result =
         Left errs -> Errors errs
         Right a -> Success a
       (() : _, _, _) -> OutputAndExit $
+        stripTrailingSpaces $
         usageInfo header (mkOptDescrs hints fields)
   where
     helpOption = Option ['h'] ["help"] (NoArg ()) "show help and exit"
 
+stripTrailingSpaces :: String -> String
+stripTrailingSpaces = unlines . map stripLines . lines
+  where
+    stripLines = reverse . dropWhile isSpace . reverse
 
 -- * helper functions for NS and NP
 

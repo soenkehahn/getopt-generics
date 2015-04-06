@@ -4,13 +4,16 @@
 module System.Console.GetOpt.GenericsSpec where
 
 import           Control.Exception
+import           Data.Foldable                   (forM_)
 import           Generics.SOP
-import qualified GHC.Generics                 as GHC
+import qualified GHC.Generics                    as GHC
+import           Safe
 import           System.Environment
 import           System.Exit
 import           System.IO
 import           System.IO.Silently
 import           Test.Hspec
+import           Test.Hspec.Expectations.Contrib
 
 import           System.Console.GetOpt.Generics
 
@@ -72,15 +75,24 @@ spec = do
             withArguments $ \ (_ :: Foo) -> return ()
         output `shouldContain` "not an integer: foo"
 
-    it "implements --help" $ do
-      output <- capture_ $
-        withArgs ["--help"] $ withArguments $ \ (_ :: Foo) ->
-          throwIO (ErrorCall "action")
-      mapM_ (output `shouldContain`) $
-        "--bar=integer" : "optional" :
-        "--baz=string" :
-        "--bool" :
-        []
+    context "--help" $ do
+      it "implements --help" $ do
+        output <- capture_ $
+          withArgs ["--help"] $ withArguments $ \ (_ :: Foo) ->
+            throwIO (ErrorCall "action")
+        mapM_ (output `shouldContain`) $
+          "--bar=integer" : "optional" :
+          "--baz=string" :
+          "--bool" :
+          []
+
+      it "does not contain trailing spaces" $ do
+        output <- capture_ $
+          withArgs ["--help"] $ withArguments $ \ (_ :: Foo) ->
+            throwIO (ErrorCall "action")
+        forM_ (lines output) $ \ line ->
+          line `shouldSatisfy` (\ line ->
+            lastMay line /= Just ' ')
 
   next1
 
@@ -118,11 +130,53 @@ next2 = do
         withArgs (words "--camel-case foo") $ withArguments $ \ options ->
           options `shouldBe` CamelCaseOptions "foo"
 
-  describe "parseArguments" $ do
-    it "allows hints for short options" $ do
-      parseArguments "header" [Short "camel-case" 'x'] (words "-x foo")
-        `shouldBe` Success (CamelCaseOptions "foo")
+    it "help does not contain camelCase flags" $ do
+      let OutputAndExit output :: Result CamelCaseOptions
+            = parseArguments "header" [] ["--help"]
+      output `shouldNotContain` "camelCase"
+      output `shouldContain` "camel-case"
 
-    it "allows hints in camelCase" $ do
-      parseArguments "header" [Short "camelCase" 'x'] (words "-x foo")
-        `shouldBe` Success (CamelCaseOptions "foo")
+    it "error messages don't contain camelCase flags" $ do
+      let Errors errs :: Result CamelCaseOptions
+            = parseArguments "header" [] ["--bla"]
+      show errs `shouldNotContain` "camelCase"
+      show errs `shouldContain` "camel-case"
+
+  describe "parseArguments" $ do
+    context "Short" $ do
+      it "allows hints for short options" $ do
+        parseArguments "header" [Short "camel-case" 'x'] (words "-x foo")
+          `shouldBe` Success (CamelCaseOptions "foo")
+
+      it "allows hints in camelCase" $ do
+        parseArguments "header" [Short "camelCase" 'x'] (words "-x foo")
+          `shouldBe` Success (CamelCaseOptions "foo")
+
+      let parse :: [String] -> Result CamelCaseOptions
+          parse = parseArguments "header" [Short "camelCase" 'x']
+      it "includes the short option in the help" $ do
+        let OutputAndExit output = parse ["--help"]
+        output `shouldContain` "-x string"
+
+    context "Rename" $ do
+      it "allows to rename options" $ do
+        parseArguments "header" [RenameOption "camelCase" "bla"] (words "--bla foo")
+          `shouldBe` Success (CamelCaseOptions "foo")
+
+      let parse = parseArguments "header"
+            [RenameOption "camelCase" "foo", RenameOption "camelCase" "bar"]
+      it "allows to shadow earlier hints with later hints" $ do
+        parse (words "--bar foo")
+          `shouldBe` Success (CamelCaseOptions "foo")
+        let Errors errs = parse (words "--foo foo")
+        show errs `shouldContain` "unknown argument: foo"
+
+      it "contains renamed options in error messages" $ do
+        let Errors errs = parse []
+        show errs `shouldNotContain` "camelCase"
+        show errs `shouldContain` "camel-case"
+
+      it "allows to address fields slugified" $ do
+        parseArguments "header" [RenameOption "camel-case" "foo"] (words "--foo bar")
+          `shouldBe` Success (CamelCaseOptions "bar")
+

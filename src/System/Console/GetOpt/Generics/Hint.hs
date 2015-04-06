@@ -1,29 +1,32 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs            #-}
 
 module System.Console.GetOpt.Generics.Hint (
   Hint(..),
   defaultHints,
-  slugify,
   mkShortOptions,
+  mkLongOptions,
  ) where
 
-import           Data.Char
 import           Data.List
 import           Data.Maybe
 import           Generics.SOP
 
+import           System.Console.GetOpt.Generics.Internal
+
 data Hint
   = Short String Char
+  | RenameOption String String
   deriving (Show, Eq, Ord)
 
-defaultHints :: HasDatatypeInfo a =>
+defaultHints :: (HasDatatypeInfo a, SingI (Code a)) =>
   Proxy a -> [Hint]
 defaultHints proxy =
   mkShortHints (flags proxy)
 
-flags :: HasDatatypeInfo a =>
+flags :: (SingI (Code a), HasDatatypeInfo a) =>
   Proxy a -> [String]
-flags proxy = case datatypeInfo proxy of
+flags proxy = case normalizedDatatypeInfo proxy of
     ADT _ _ ci -> fromNPConstructorInfo ci
     Newtype _ _ ci -> fromConstructorInfo ci
   where
@@ -53,19 +56,27 @@ mkShortHints fields =
         _ -> Nothing
     inner [] = Nothing
 
-slugify :: String -> String
-slugify [] = []
-slugify (x : xs)
-  | isUpper x = '-' : toLower x : slugify xs
-  | otherwise = x : slugify xs
-
 mkShortOptions :: [Hint] -> String -> [Char]
 mkShortOptions hints option =
     catMaybes $ map inner hints
   where
     inner :: Hint -> Maybe Char
     inner (Short hintOption short)
-      | hintOption == option || hintOption == slugify option
+      | matchesField hintOption option
         = Just short
       | otherwise
         = Nothing
+    inner _ = Nothing
+
+mkLongOptions :: [Hint] -> String -> [String]
+mkLongOptions hints option =
+    inner (reverse hints)
+  where
+    inner (RenameOption renameOption newName : _)
+      | renameOption `matchesField` option = [newName]
+    inner [] = [option]
+    inner (_ : r) = inner r
+
+matchesField :: String -> String -> Bool
+matchesField hintOption option =
+  hintOption == option || slugify hintOption == option
