@@ -26,8 +26,8 @@ library
     System.Console.GetOpt.Generics.Internal
   build-depends:
       base == 4.*
+    , base-compat >= 0.6
     , generics-sop
-    , safe
 
 test-suite spec
   type:
@@ -40,9 +40,9 @@ test-suite spec
     Spec.hs
   build-depends:
       base == 4.*
+    , base-compat
     , getopt-generics
     , generics-sop
-    , safe
 
     , hspec
     , hspec-expectations

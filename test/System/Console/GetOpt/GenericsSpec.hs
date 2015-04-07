@@ -5,9 +5,9 @@ module System.Console.GetOpt.GenericsSpec where
 
 import           Control.Exception
 import           Data.Foldable                   (forM_)
+import           Data.List
 import           Generics.SOP
 import qualified GHC.Generics                    as GHC
-import           Safe
 import           System.Environment
 import           System.Exit
 import           System.IO
@@ -101,8 +101,7 @@ spec = do
             _ :: Foo <- getArguments
             return ()
         forM_ (lines output) $ \ line ->
-          line `shouldSatisfy` (\ line ->
-            lastMay line /= Just ' ')
+          line `shouldSatisfy` (not . (" " `isSuffixOf`))
 
   next1
 

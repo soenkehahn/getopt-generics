@@ -22,14 +22,17 @@ module System.Console.GetOpt.Generics (
   Option(..),
  ) where
 
+import           Prelude ()
+import           Prelude.Compat
+
 import           Data.Char
 import           Data.List
 import           Generics.SOP
-import           Safe
 import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
 import           System.IO
+import           Text.Read.Compat
 
 import           System.Console.GetOpt.Generics.Hint
 import           System.Console.GetOpt.Generics.Internal
@@ -224,7 +227,7 @@ instance Option [String] where
   accumulate = (++)
 
 parseInt :: String -> FieldState Int
-parseInt s = maybe (ParseErrors ["not an integer: " ++ s]) FieldSuccess $ readMay s
+parseInt s = maybe (ParseErrors ["not an integer: " ++ s]) FieldSuccess $ readMaybe s
 
 instance Option Int where
   toOption = ReqArg parseInt "integer"
