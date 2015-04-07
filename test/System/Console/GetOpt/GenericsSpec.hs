@@ -95,6 +95,13 @@ spec = do
         withArgs ["--help"] (getArguments :: IO Foo)
           `shouldThrow` (== ExitSuccess)
 
+      it "contains help message about --help" $ do
+        output <- capture_ $ withArgs ["--help"] $
+          handle (\ (_ :: SomeException) -> return ()) $ do
+            _ :: Foo <- getArguments
+            return ()
+        output `shouldContain` "show help and exit"
+
       it "does not contain trailing spaces" $ do
         output <- capture_ $ withArgs ["--help"] $
           handle (\ (_ :: SomeException) -> return ()) $ do

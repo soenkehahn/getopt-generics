@@ -134,18 +134,25 @@ mkEmptyArguments fields = case (sing :: Sing xs, fields) of
 
 -- * showing help?
 
+data HelpFlag = HelpFlag
+
 helpWrapper :: (All Option xs) =>
   String -> [Hint] -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
 helpWrapper header hints args fields result =
     case getOpt Permute [helpOption] args of
       ([], _, _) -> case result of
+        -- no help flag given
         Left errs -> Errors errs
         Right a -> Success a
-      (() : _, _, _) -> OutputAndExit $
+      (HelpFlag : _, _, _) -> OutputAndExit $
         stripTrailingSpaces $
-        usageInfo header (mkOptDescrs hints fields)
+        usageInfo header (toOptDescrUnit (mkOptDescrs hints fields) ++ toOptDescrUnit [helpOption])
   where
-    helpOption = Option ['h'] ["help"] (NoArg ()) "show help and exit"
+    helpOption :: OptDescr HelpFlag
+    helpOption = Option ['h'] ["help"] (NoArg HelpFlag) "show help and exit"
+
+    toOptDescrUnit :: [OptDescr a] -> [OptDescr ()]
+    toOptDescrUnit = map (fmap (const ()))
 
 stripTrailingSpaces :: String -> String
 stripTrailingSpaces = unlines . map stripLines . lines
