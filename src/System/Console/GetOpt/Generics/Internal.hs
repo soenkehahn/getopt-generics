@@ -1,7 +1,6 @@
 {-# LANGUAGE ConstraintKinds     #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
 
 module System.Console.GetOpt.Generics.Internal where
@@ -9,7 +8,7 @@ module System.Console.GetOpt.Generics.Internal where
 import           Data.Char
 import           Generics.SOP
 
-normalizedDatatypeInfo :: forall a xss . (HasDatatypeInfo a, Code a ~ xss, SingI xss) =>
+normalizedDatatypeInfo :: (HasDatatypeInfo a, Code a ~ xss, SingI xss) =>
   Proxy a -> DatatypeInfo xss
 normalizedDatatypeInfo p = mapFieldInfo (\ (FieldInfo s) -> FieldInfo (slugify s)) (datatypeInfo p)
 

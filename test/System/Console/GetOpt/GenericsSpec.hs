@@ -184,7 +184,6 @@ next2 = do
         show errs `shouldNotContain` "camelCase"
         show errs `shouldContain` "camel-case"
 
-      it "allows to address fields slugified" $ do
+      it "allows to address fields in Modifiers in slugified form" $ do
         parseArguments "header" [RenameOption "camel-case" "foo"] (words "--foo bar")
           `shouldBe` Success (CamelCaseOptions "bar")
-

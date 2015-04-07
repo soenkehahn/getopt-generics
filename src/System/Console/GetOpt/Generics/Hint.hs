@@ -47,7 +47,7 @@ flags proxy = case normalizedDatatypeInfo proxy of
 
 mkShortHints :: [String] -> [Hint]
 mkShortHints fields =
-    catMaybes $ map inner fields
+    mapMaybe inner fields
   where
     inner :: String -> Maybe Hint
     inner field@(short : _) =
@@ -58,7 +58,7 @@ mkShortHints fields =
 
 mkShortOptions :: [Hint] -> String -> [Char]
 mkShortOptions hints option =
-    catMaybes $ map inner hints
+    mapMaybe inner hints
   where
     inner :: Hint -> Maybe Char
     inner (Short hintOption short)
