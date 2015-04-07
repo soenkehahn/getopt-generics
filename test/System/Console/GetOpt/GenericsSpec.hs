@@ -159,16 +159,16 @@ next2 = do
 
   describe "parseArguments" $ do
     context "Short" $ do
-      it "allows hints for short options" $ do
-        parseArguments "header" [Short "camel-case" 'x'] (words "-x foo")
+      it "allows modifiers for short options" $ do
+        parseArguments "header" [AddShortOption "camel-case" 'x'] (words "-x foo")
           `shouldBe` Success (CamelCaseOptions "foo")
 
-      it "allows hints in camelCase" $ do
-        parseArguments "header" [Short "camelCase" 'x'] (words "-x foo")
+      it "allows modifiers in camelCase" $ do
+        parseArguments "header" [AddShortOption "camelCase" 'x'] (words "-x foo")
           `shouldBe` Success (CamelCaseOptions "foo")
 
       let parse :: [String] -> Result CamelCaseOptions
-          parse = parseArguments "header" [Short "camelCase" 'x']
+          parse = parseArguments "header" [AddShortOption "camelCase" 'x']
       it "includes the short option in the help" $ do
         let OutputAndExit output = parse ["--help"]
         output `shouldContain` "-x string"
@@ -180,7 +180,7 @@ next2 = do
 
       let parse = parseArguments "header"
             [RenameOption "camelCase" "foo", RenameOption "camelCase" "bar"]
-      it "allows to shadow earlier hints with later hints" $ do
+      it "allows to shadow earlier modifiers with later modifiers" $ do
         parse (words "--bar foo")
           `shouldBe` Success (CamelCaseOptions "foo")
         let Errors errs = parse (words "--foo foo")

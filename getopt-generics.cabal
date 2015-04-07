@@ -22,8 +22,8 @@ library
   exposed-modules:
       System.Console.GetOpt.Generics
   other-modules:
-      System.Console.GetOpt.Generics.Hint
       System.Console.GetOpt.Generics.Internal
+      System.Console.GetOpt.Generics.Modifier
   build-depends:
       base == 4.*
     , base-compat >= 0.7

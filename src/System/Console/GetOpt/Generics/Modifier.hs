@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs            #-}
 
-module System.Console.GetOpt.Generics.Hint (
-  Hint(..),
+module System.Console.GetOpt.Generics.Modifier (
+  Modifier(..),
   deriveShortOptions,
   mkShortOptions,
   mkLongOptions,
@@ -14,15 +14,15 @@ import           Generics.SOP
 
 import           System.Console.GetOpt.Generics.Internal
 
-data Hint
-  = Short String Char
+data Modifier
+  = AddShortOption String Char
   | RenameOption String String
   deriving (Show, Eq, Ord)
 
 deriveShortOptions :: (HasDatatypeInfo a, SingI (Code a)) =>
-  Proxy a -> [Hint]
+  Proxy a -> [Modifier]
 deriveShortOptions proxy =
-  mkShortHints (flags proxy)
+  mkShortModifiers (flags proxy)
 
 flags :: (SingI (Code a), HasDatatypeInfo a) =>
   Proxy a -> [String]
@@ -45,32 +45,32 @@ flags proxy = case normalizedDatatypeInfo proxy of
     fromFields (FieldInfo name :* r) = name : fromFields r
     fromFields Nil = []
 
-mkShortHints :: [String] -> [Hint]
-mkShortHints fields =
+mkShortModifiers :: [String] -> [Modifier]
+mkShortModifiers fields =
     mapMaybe inner fields
   where
-    inner :: String -> Maybe Hint
+    inner :: String -> Maybe Modifier
     inner field@(short : _) =
       case filter ([short] `isPrefixOf`) fields of
-        [_] -> Just $ Short field short
+        [_] -> Just $ AddShortOption field short
         _ -> Nothing
     inner [] = Nothing
 
-mkShortOptions :: [Hint] -> String -> [Char]
-mkShortOptions hints option =
-    mapMaybe inner hints
+mkShortOptions :: [Modifier] -> String -> [Char]
+mkShortOptions modifiers option =
+    mapMaybe inner modifiers
   where
-    inner :: Hint -> Maybe Char
-    inner (Short hintOption short)
-      | matchesField hintOption option
+    inner :: Modifier -> Maybe Char
+    inner (AddShortOption modifierOption short)
+      | matchesField modifierOption option
         = Just short
       | otherwise
         = Nothing
     inner _ = Nothing
 
-mkLongOptions :: [Hint] -> String -> [String]
-mkLongOptions hints option =
-    inner (reverse hints)
+mkLongOptions :: [Modifier] -> String -> [String]
+mkLongOptions modifiers option =
+    inner (reverse modifiers)
   where
     inner (RenameOption renameOption newName : _)
       | renameOption `matchesField` option = [newName]
@@ -78,5 +78,5 @@ mkLongOptions hints option =
     inner (_ : r) = inner r
 
 matchesField :: String -> String -> Bool
-matchesField hintOption option =
-  hintOption == option || slugify hintOption == option
+matchesField modifierOption option =
+  modifierOption == option || slugify modifierOption == option

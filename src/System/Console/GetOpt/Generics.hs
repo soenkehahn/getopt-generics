@@ -19,7 +19,7 @@ module System.Console.GetOpt.Generics (
   getArguments,
   parseArguments,
   Result(..),
-  Hint(..),
+  Modifier(..),
   deriveShortOptions,
   Option(..),
  ) where
@@ -36,7 +36,7 @@ import           System.Exit
 import           System.IO
 import           Text.Read.Compat
 
-import           System.Console.GetOpt.Generics.Hint
+import           System.Console.GetOpt.Generics.Modifier
 import           System.Console.GetOpt.Generics.Internal
 
 getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
@@ -60,11 +60,11 @@ data Result a
   deriving (Show, Eq, Ord)
 
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  String -> [Hint] -> [String] -> Result a
-parseArguments header hints args = case normalizedDatatypeInfo (Proxy :: Proxy a) of
+  String -> [Modifier] -> [String] -> Result a
+parseArguments header modifiers args = case normalizedDatatypeInfo (Proxy :: Proxy a) of
     ADT typeName _ (constructorInfo :* Nil) ->
       case constructorInfo of
-        (Record _ fields) -> processFields header hints args fields
+        (Record _ fields) -> processFields header modifiers args fields
         Constructor{} ->
           err typeName "constructors without field labels"
         Infix{} ->
@@ -74,7 +74,7 @@ parseArguments header hints args = case normalizedDatatypeInfo (Proxy :: Proxy a
     ADT typeName _ (_ :* _ :* _) ->
       err typeName "sum-types"
     Newtype _ _ (Record _ fields) ->
-      processFields header hints args fields
+      processFields header modifiers args fields
     Newtype typeName _ (Constructor _) ->
       err typeName "constructors without field labels"
   where
@@ -82,11 +82,11 @@ parseArguments header hints args = case normalizedDatatypeInfo (Proxy :: Proxy a
       Errors ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
 
 processFields :: forall a xs . (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
-  String -> [Hint] -> [String] -> NP FieldInfo xs -> Result a
-processFields header hints args fields =
-  helpWrapper header hints args fields $
+  String -> [Modifier] -> [String] -> NP FieldInfo xs -> Result a
+processFields header modifiers args fields =
+  helpWrapper header modifiers args fields $
   fmap (to . SOP . Z) $
-  case getOpt Permute (mkOptDescrs hints fields) args of
+  case getOpt Permute (mkOptDescrs modifiers fields) args of
     (options, arguments, parseErrors) ->
       let result :: Either [String] (NP I xs) =
             collectErrors $ project options (mkEmptyArguments fields)
@@ -105,17 +105,17 @@ processFields header hints args fields =
     ignoreRight = either id (const mempty)
 
 mkOptDescrs :: forall xs . All Option xs =>
-  [Hint] -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
-mkOptDescrs hints fields =
-  map toOptDescr $ sumList $ npMap (mkOptDescr hints) fields
+  [Modifier] -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
+mkOptDescrs modifiers fields =
+  map toOptDescr $ sumList $ npMap (mkOptDescr modifiers) fields
 
 newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
 
-mkOptDescr :: forall a . Option a => [Hint] -> FieldInfo a -> OptDescrE a
-mkOptDescr hints (FieldInfo name) = OptDescrE $
+mkOptDescr :: forall a . Option a => [Modifier] -> FieldInfo a -> OptDescrE a
+mkOptDescr modifiers (FieldInfo name) = OptDescrE $
   Option
-    (mkShortOptions hints name)
-    (mkLongOptions hints name)
+    (mkShortOptions modifiers name)
+    (mkLongOptions modifiers name)
     toOption
     ""
 
@@ -137,8 +137,8 @@ mkEmptyArguments fields = case (sing :: Sing xs, fields) of
 data HelpFlag = HelpFlag
 
 helpWrapper :: (All Option xs) =>
-  String -> [Hint] -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
-helpWrapper header hints args fields result =
+  String -> [Modifier] -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
+helpWrapper header modifiers args fields result =
     case getOpt Permute [helpOption] args of
       ([], _, _) -> case result of
         -- no help flag given
@@ -146,7 +146,9 @@ helpWrapper header hints args fields result =
         Right a -> Success a
       (HelpFlag : _, _, _) -> OutputAndExit $
         stripTrailingSpaces $
-        usageInfo header (toOptDescrUnit (mkOptDescrs hints fields) ++ toOptDescrUnit [helpOption])
+        usageInfo header $
+          toOptDescrUnit (mkOptDescrs modifiers fields) ++
+          toOptDescrUnit [helpOption]
   where
     helpOption :: OptDescr HelpFlag
     helpOption = Option ['h'] ["help"] (NoArg HelpFlag) "show help and exit"
