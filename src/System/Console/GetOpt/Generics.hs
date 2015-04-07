@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -28,7 +29,7 @@ import           Prelude.Compat
 import           Data.Char
 import           Data.List
 import           Generics.SOP
-import           System.Console.GetOpt
+import           System.Console.GetOpt.Compat
 import           System.Environment
 import           System.Exit
 import           System.IO

@@ -1,5 +1,5 @@
 {-# LANGUAGE ConstraintKinds     #-}
-{-# LANGUAGE EmptyCase           #-}
+{-# LANGUAGE GADTs               #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
