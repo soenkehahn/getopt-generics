@@ -3,7 +3,7 @@
 
 module System.Console.GetOpt.Generics.Hint (
   Hint(..),
-  defaultHints,
+  deriveShortOptions,
   mkShortOptions,
   mkLongOptions,
  ) where
@@ -19,9 +19,9 @@ data Hint
   | RenameOption String String
   deriving (Show, Eq, Ord)
 
-defaultHints :: (HasDatatypeInfo a, SingI (Code a)) =>
+deriveShortOptions :: (HasDatatypeInfo a, SingI (Code a)) =>
   Proxy a -> [Hint]
-defaultHints proxy =
+deriveShortOptions proxy =
   mkShortHints (flags proxy)
 
 flags :: (SingI (Code a), HasDatatypeInfo a) =>

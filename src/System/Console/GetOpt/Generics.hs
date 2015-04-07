@@ -20,6 +20,7 @@ module System.Console.GetOpt.Generics (
   parseArguments,
   Result(..),
   Hint(..),
+  deriveShortOptions,
   Option(..),
  ) where
 
@@ -43,7 +44,7 @@ getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) 
 getArguments = do
   args <- getArgs
   progName <- getProgName
-  case parseArguments progName (defaultHints (Proxy :: Proxy a)) args of
+  case parseArguments progName [] args of
     Success a -> return a
     OutputAndExit message -> do
       putStrLn message

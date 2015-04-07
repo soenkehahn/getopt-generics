@@ -11,12 +11,12 @@ import           System.Console.GetOpt.Generics.Hint
 
 spec :: Spec
 spec = do
-  describe "defaultHints" $ do
+  describe "deriveShortOptions" $ do
     it "includes hints for short options" $ do
-      defaultHints (Proxy :: Proxy Foo) `shouldBe` [Short "bar" 'b']
+      deriveShortOptions (Proxy :: Proxy Foo) `shouldBe` [Short "bar" 'b']
 
     it "doesn't include hints for short options in case of overlaps" $ do
-      defaultHints (Proxy :: Proxy Overlap) `shouldBe` []
+      deriveShortOptions (Proxy :: Proxy Overlap) `shouldBe` []
 
 data Foo
   = Foo {
