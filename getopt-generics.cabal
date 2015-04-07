@@ -1,55 +1,50 @@
+-- This file has been generated from package.yaml by Cabalize.
 name: getopt-generics
 version: 0.1.1
-category: Console, System
 synopsis: Simple command line argument parsing
 description:
-  "getopt-generics" tries to make it very simple to create command line argument
-  parsers. Documentation can be found in the
-  <https://github.com/zalora/getopt-generics#getopt-generics README>.
+  "getopt-generics" tries to make it very simple to create command line argument parsers. Documentation can be found in the <https://github.com/zalora/getopt-generics#getopt-generics README>.
+category: Console, System
+author: Linh Nguyen, Sönke Hahn
+maintainer: linh.nguyen@zalora.com, soenke.hahn@zalora.com
+copyright: Zalora South East Asia Pte Ltd
 license: BSD3
 license-file: LICENSE
-author: Linh Nguyen, Sönke Hahn
-copyright: Zalora South East Asia Pte Ltd
-maintainer: linh.nguyen@zalora.com, soenke.hahn@zalora.com
-
-cabal-version: >= 1.8
 build-type: Simple
+cabal-version: >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/zalora/getopt-generics
 
 library
-  hs-source-dirs:
-    src
-  ghc-options:
-    -Wall -fno-warn-name-shadowing
+  hs-source-dirs: src
   exposed-modules:
-    System.Console.GetOpt.Generics
-    System.Console.GetOpt.Generics.Hint
-    System.Console.GetOpt.Generics.Internal
+      System.Console.GetOpt.Generics
+      System.Console.GetOpt.Generics.Hint
+      System.Console.GetOpt.Generics.Internal
+  other-modules:
+
   build-depends:
       base == 4.*
     , base-compat >= 0.7
     , generics-sop
     , tagged
+  ghc-options: -Wall -fno-warn-name-shadowing
+  default-language: Haskell2010
 
 test-suite spec
-  type:
-    exitcode-stdio-1.0
-  hs-source-dirs:
-    test, examples
-  ghc-options:
-    -Wall -threaded -fno-warn-name-shadowing -O0 -pgmL markdown-unlit
-  main-is:
-    Spec.hs
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test, examples
+  main-is: Spec.hs
   build-depends:
       base == 4.*
-    , base-compat
-    , getopt-generics
+    , base-compat >= 0.7
     , generics-sop
-    , tagged
-
+    , getopt-generics
     , hspec
     , hspec-expectations
     , silently
-
-source-repository head
-  type:     git
-  location: git://github.com/zalora/getopt-generics
+    , tagged
+  ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0 -pgmL markdown-unlit
+  default-language: Haskell2010

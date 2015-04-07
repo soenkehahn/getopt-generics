@@ -1,0 +1,38 @@
+name: getopt-generics
+version: "0.1.1"
+category: "Console, System"
+synopsis: "Simple command line argument parsing"
+description: >
+  "getopt-generics" tries to make it very simple to create command line argument
+  parsers. Documentation can be found in the
+  <https://github.com/zalora/getopt-generics#getopt-generics README>.
+license: "BSD3"
+author: "Linh Nguyen, Sönke Hahn"
+copyright: "Zalora South East Asia Pte Ltd"
+maintainer: "linh.nguyen@zalora.com, soenke.hahn@zalora.com"
+
+ghc-options: -Wall -fno-warn-name-shadowing
+
+dependencies:
+  - base == 4.*
+  - generics-sop
+  - base-compat >= 0.7
+  - tagged
+
+library: {}
+
+tests:
+  spec:
+    main: "Spec.hs"
+    ghc-options: "-threaded -O0 -pgmL markdown-unlit"
+    source-dirs:
+      - test
+      - examples
+
+    dependencies:
+      - getopt-generics
+      - hspec
+      - hspec-expectations
+      - silently
+
+github: zalora/getopt-generics
