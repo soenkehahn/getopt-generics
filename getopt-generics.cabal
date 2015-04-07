@@ -21,10 +21,9 @@ library
   hs-source-dirs: src
   exposed-modules:
       System.Console.GetOpt.Generics
+  other-modules:
       System.Console.GetOpt.Generics.Hint
       System.Console.GetOpt.Generics.Internal
-  other-modules:
-
   build-depends:
       base == 4.*
     , base-compat >= 0.7
@@ -35,13 +34,12 @@ library
 
 test-suite spec
   type: exitcode-stdio-1.0
-  hs-source-dirs: test, examples
+  hs-source-dirs: src, test, examples
   main-is: Spec.hs
   build-depends:
       base == 4.*
     , base-compat >= 0.7
     , generics-sop
-    , getopt-generics
     , hspec
     , hspec-expectations
     , silently

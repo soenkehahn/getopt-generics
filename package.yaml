@@ -19,18 +19,20 @@ dependencies:
   - base-compat >= 0.7
   - tagged
 
-library: {}
+library:
+  exposed-modules:
+    - System.Console.GetOpt.Generics
 
 tests:
   spec:
     main: "Spec.hs"
     ghc-options: "-threaded -O0 -pgmL markdown-unlit"
     source-dirs:
+      - src
       - test
       - examples
 
     dependencies:
-      - getopt-generics
       - hspec
       - hspec-expectations
       - silently
