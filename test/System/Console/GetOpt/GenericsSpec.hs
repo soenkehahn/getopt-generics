@@ -28,6 +28,12 @@ data Foo
 instance Generic Foo
 instance HasDatatypeInfo Foo
 
+data NotAllowed = NotAllowed
+  deriving (GHC.Generic, Show, Eq)
+
+instance Generic NotAllowed
+instance HasDatatypeInfo NotAllowed
+
 spec :: Spec
 spec = do
   describe "getArguments" $ do
@@ -109,6 +115,14 @@ spec = do
             return ()
         forM_ (lines output) $ \ line ->
           line `shouldSatisfy` (not . (" " `isSuffixOf`))
+
+      it "throws an exception when the options datatype is not allowed" $ do
+        output <- hCapture_ [stderr] $
+          withArgs ["--help"] $
+          handle (\ (_ :: SomeException) -> return ()) $ do
+             _ :: NotAllowed <- getArguments
+             return ()
+        output `shouldContain` "doesn't support constructors without field labels"
 
   next1
 
