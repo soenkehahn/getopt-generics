@@ -11,6 +11,8 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 
+{-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
+
 -- | "getopt-generics" tries to make it very simple to create command line
 -- argument parsers. Documentation can be found in the
 -- <https://github.com/zalora/getopt-generics#getopt-generics README>.
@@ -206,10 +208,26 @@ data FieldState a
   deriving (Functor)
 
 class Option a where
+  {-# MINIMAL argumentType, parseArgument #-}
+  argumentType :: Proxy a -> String
+
+  parseArgument :: String -> Maybe a
+
   toOption :: ArgDescr (FieldState a)
+  toOption = ReqArg parseAsFieldState (argumentType (Proxy :: Proxy a))
+
   emptyOption :: String -> FieldState a
+  emptyOption flagName = Unset
+    ("missing option: --" ++ flagName ++ "=" ++ argumentType (Proxy :: Proxy a))
+
   accumulate :: a -> a -> a
   accumulate _ x = x
+
+parseAsFieldState :: forall a . Option a => String -> FieldState a
+parseAsFieldState s = case parseArgument s of
+  Just a -> FieldSuccess a
+  Nothing -> ParseErrors $ pure $
+    "cannot parse as " ++ argumentType (Proxy :: Proxy a) ++ ": " ++ s
 
 combine :: Option a => FieldState a -> FieldState a -> FieldState a
 combine _ (Unset _) = impossible "combine"
@@ -220,36 +238,42 @@ combine (FieldSuccess _) (ParseErrors e) = ParseErrors e
 combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (accumulate a b)
 
 instance Option Bool where
+  argumentType _ = "bool"
+  parseArgument = impossible "Option.Bool.parseArguments"
+
   toOption = NoArg (FieldSuccess True)
   emptyOption _ = FieldSuccess False
 
 instance Option String where
-  toOption = ReqArg FieldSuccess "string"
-  emptyOption flagName = Unset
-    ("missing option: --" ++ flagName ++ "=string")
+  argumentType _ = "string"
+  parseArgument = Just
 
 instance Option (Maybe String) where
-  toOption = ReqArg (FieldSuccess . Just) "string (optional)"
+  argumentType _ = "string (optional)"
+  parseArgument = Just . Just
   emptyOption _ = FieldSuccess Nothing
 
 instance Option [String] where
-  toOption = ReqArg (FieldSuccess . pure) "strings (multiple possible)"
+  argumentType _ = "string (multiple possible)"
+  parseArgument = Just . pure
   emptyOption _ = FieldSuccess []
   accumulate = (++)
 
-parseInt :: String -> FieldState Int
-parseInt s = maybe (ParseErrors ["not an integer: " ++ s]) FieldSuccess $ readMaybe s
-
 instance Option Int where
-  toOption = ReqArg parseInt "integer"
-  emptyOption flagName = Unset
-    ("missing option: --" ++ flagName ++ "=int")
+  argumentType _ = "integer"
+  parseArgument = readMaybe
 
 instance Option (Maybe Int) where
-  toOption = ReqArg (fmap Just . parseInt) "integer (optional)"
+  argumentType _ = "integer (optional)"
+  parseArgument s = case readMaybe s of
+    Just i -> Just (Just i)
+    Nothing -> Nothing
   emptyOption _ = FieldSuccess Nothing
 
 instance Option [Int] where
-  toOption = ReqArg (fmap pure . parseInt) "int (multiple possible)"
+  argumentType _ = "integer (multiple possible)"
+  parseArgument s = case readMaybe s of
+    Just a -> Just [a]
+    Nothing -> Nothing
   emptyOption _ = FieldSuccess []
   accumulate = (++)

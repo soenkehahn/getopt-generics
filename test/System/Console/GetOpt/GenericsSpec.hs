@@ -70,14 +70,14 @@ spec = do
           withArgs (words "--bar foo --baz huhu") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldContain` "not an integer: foo"
+        output `shouldContain` "cannot parse as integer (optional): foo"
 
       it "complains about invalid overwritten options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
           withArgs (words "--bar foo --baz huhu --bar 12") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldContain` "not an integer: foo"
+        output `shouldContain` "cannot parse as integer (optional): foo"
 
     context "--help" $ do
       it "implements --help" $ do
@@ -114,7 +114,7 @@ spec = do
 
 data ListOptions
   = ListOptions {
-    multiple :: [String]
+    multiple :: [Int]
   }
   deriving (GHC.Generic, Show, Eq)
 
@@ -125,8 +125,17 @@ next1 :: Spec
 next1 = do
   describe "withArguments" $ do
     it "allows to interpret multiple uses of the same option as lists" $ do
-      withArgs (words "--multiple foo --multiple bar") $ do
-        getArguments `shouldReturn` ListOptions ["foo", "bar"]
+      withArgs (words "--multiple 23 --multiple 42") $ do
+        getArguments `shouldReturn` ListOptions [23, 42]
+
+    it "complains about invalid list arguments" $ do
+        output <- hCapture_ [stderr] $
+          withArgs (words "--multiple foo --multiple 13") $
+          handle (\ (_ :: SomeException) -> return ()) $ do
+            _ :: ListOptions <- getArguments
+            return ()
+        output `shouldContain` "cannot parse as integer (multiple possible): foo"
+
   next2
 
 data CamelCaseOptions
