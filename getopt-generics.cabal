@@ -3,7 +3,7 @@ name: getopt-generics
 version: 0.1.1
 synopsis: Simple command line argument parsing
 description:
-  "getopt-generics" tries to make it very simple to create command line argument parsers. Documentation can be found in the <https://github.com/zalora/getopt-generics#getopt-generics README>.
+  "getopt-generics" tries to make it very simple to create command line argument parsers. An introductory example can be found in the <https://github.com/zalora/getopt-generics#getopt-generics README>.
 category: Console, System
 author: Linh Nguyen, Sönke Hahn
 maintainer: linh.nguyen@zalora.com, soenke.hahn@zalora.com

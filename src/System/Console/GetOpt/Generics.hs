@@ -13,16 +13,20 @@
 
 {-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
 
--- | "getopt-generics" tries to make it very simple to create command line
--- argument parsers. Documentation can be found in the
+-- | @getopt-generics@ tries to make it very simple to create command line
+-- argument parsers. An introductory example can be found in the
 -- <https://github.com/zalora/getopt-generics#getopt-generics README>.
 
 module System.Console.GetOpt.Generics (
+  -- * IO API
   getArguments,
+  -- * Pure API
   parseArguments,
   Result(..),
+  -- * Customizing the CLI
   Modifier(..),
   deriveShortOptions,
+  -- * Available Field Types
   Option(..),
  ) where
 
@@ -41,6 +45,16 @@ import           Text.Read.Compat
 import           System.Console.GetOpt.Generics.Modifier
 import           System.Console.GetOpt.Generics.Internal
 
+-- | Parses command line arguments (gotten from 'withArgs') and returns the
+--   parsed value. This function should be enough for simple use-cases.
+--
+--   May throw the following exceptions:
+--
+--   - @'ExitFailure' 1@ in case of invalid options. Error messages are written
+--     to @stderr@.
+--   - @'ExitSuccess'@ in case @--help@ is given. (@'ExitSuccess'@ behaves like
+--     a normal exception, except that -- if uncaught -- the process will exit
+--     with exit-code @0@.) Help output is written to @stdout@.
 getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   IO a
 getArguments = do
@@ -55,12 +69,26 @@ getArguments = do
       mapM_ (hPutStrLn stderr) errs
       exitWith $ ExitFailure 1
 
+-- | Type to wrap results from the pure parsing functions.
 data Result a
   = Success a
-  | OutputAndExit String
+    -- ^ The CLI was used correctly and a value of type @a@ was
+    --   successfully constructed.
   | Errors [String]
+    -- ^ The CLI was used incorrectly. The 'Result' contains a list of error
+    --   messages.
+    --
+    --   It can also happen that the data type you're trying to use isn't
+    --   supported. See the
+    --   <https://github.com/zalora/getopt-generics#getopt-generics README> for
+    --   details.
+  | OutputAndExit String
+    -- ^ The CLI was used with @--help@. The 'Result' contains the help message.
   deriving (Show, Eq, Ord)
 
+-- | Pure variant of 'getArguments'. Also allows to declare 'Modifier's.
+--
+--   Does not throw any exceptions.
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   String -> [Modifier] -> [String] -> Result a
 parseArguments header modifiers args = case normalizedDatatypeInfo (Proxy :: Proxy a) of
@@ -118,7 +146,7 @@ mkOptDescr modifiers (FieldInfo name) = OptDescrE $
   Option
     (mkShortOptions modifiers name)
     (mkLongOptions modifiers name)
-    toOption
+    _toOption
     ""
 
 toOptDescr :: NS OptDescrE xs -> OptDescr (NS FieldState xs)
@@ -130,7 +158,7 @@ mkEmptyArguments :: forall xs . (SingI xs, All Option xs) =>
 mkEmptyArguments fields = case (sing :: Sing xs, fields) of
   (SNil, Nil) -> Nil
   (SCons, FieldInfo name :* r) ->
-    emptyOption name :* mkEmptyArguments r
+    _emptyOption name :* mkEmptyArguments r
   _ -> uninhabited "mkEmpty"
 
 
@@ -207,21 +235,34 @@ data FieldState a
   | FieldSuccess a
   deriving (Functor)
 
+-- | Type class for all allowed field types.
+--
+--   Implementing custom instances to allow different types is possible. In the
+--   easiest case you just implement 'argumentType' and 'parseArgument' (the
+--   minimal complete definition).
+--
+--   (Unfortunately implementing instances for lists or 'Maybe's of custom types
+--   is not very straightforward.)
 class Option a where
   {-# MINIMAL argumentType, parseArgument #-}
+  -- | Name of the argument type, e.g. "bool" or "integer".
   argumentType :: Proxy a -> String
 
+  -- | Parses a 'String' into an argument. Returns 'Nothing' on parse errors.
   parseArgument :: String -> Maybe a
 
-  toOption :: ArgDescr (FieldState a)
-  toOption = ReqArg parseAsFieldState (argumentType (Proxy :: Proxy a))
+  -- | This is meant to be an internal function.
+  _toOption :: ArgDescr (FieldState a)
+  _toOption = ReqArg parseAsFieldState (argumentType (Proxy :: Proxy a))
 
-  emptyOption :: String -> FieldState a
-  emptyOption flagName = Unset
+  -- | This is meant to be an internal function.
+  _emptyOption :: String -> FieldState a
+  _emptyOption flagName = Unset
     ("missing option: --" ++ flagName ++ "=" ++ argumentType (Proxy :: Proxy a))
 
-  accumulate :: a -> a -> a
-  accumulate _ x = x
+  -- | This is meant to be an internal function.
+  _accumulate :: a -> a -> a
+  _accumulate _ x = x
 
 parseAsFieldState :: forall a . Option a => String -> FieldState a
 parseAsFieldState s = case parseArgument s of
@@ -235,14 +276,14 @@ combine (ParseErrors e) (ParseErrors f) = ParseErrors (e ++ f)
 combine (ParseErrors e) _ = ParseErrors e
 combine (Unset _) x = x
 combine (FieldSuccess _) (ParseErrors e) = ParseErrors e
-combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (accumulate a b)
+combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (_accumulate a b)
 
 instance Option Bool where
   argumentType _ = "bool"
   parseArgument = impossible "Option.Bool.parseArguments"
 
-  toOption = NoArg (FieldSuccess True)
-  emptyOption _ = FieldSuccess False
+  _toOption = NoArg (FieldSuccess True)
+  _emptyOption _ = FieldSuccess False
 
 instance Option String where
   argumentType _ = "string"
@@ -251,13 +292,13 @@ instance Option String where
 instance Option (Maybe String) where
   argumentType _ = "string (optional)"
   parseArgument = Just . Just
-  emptyOption _ = FieldSuccess Nothing
+  _emptyOption _ = FieldSuccess Nothing
 
 instance Option [String] where
   argumentType _ = "string (multiple possible)"
   parseArgument = Just . pure
-  emptyOption _ = FieldSuccess []
-  accumulate = (++)
+  _emptyOption _ = FieldSuccess []
+  _accumulate = (++)
 
 instance Option Int where
   argumentType _ = "integer"
@@ -268,12 +309,12 @@ instance Option (Maybe Int) where
   parseArgument s = case readMaybe s of
     Just i -> Just (Just i)
     Nothing -> Nothing
-  emptyOption _ = FieldSuccess Nothing
+  _emptyOption _ = FieldSuccess Nothing
 
 instance Option [Int] where
   argumentType _ = "integer (multiple possible)"
   parseArgument s = case readMaybe s of
     Just a -> Just [a]
     Nothing -> Nothing
-  emptyOption _ = FieldSuccess []
-  accumulate = (++)
+  _emptyOption _ = FieldSuccess []
+  _accumulate = (++)

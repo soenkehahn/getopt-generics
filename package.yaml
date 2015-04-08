@@ -4,7 +4,7 @@ category: "Console, System"
 synopsis: "Simple command line argument parsing"
 description: >
   "getopt-generics" tries to make it very simple to create command line argument
-  parsers. Documentation can be found in the
+  parsers. An introductory example can be found in the
   <https://github.com/zalora/getopt-generics#getopt-generics README>.
 license: "BSD3"
 author: "Linh Nguyen, Sönke Hahn"

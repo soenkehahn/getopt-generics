@@ -14,11 +14,18 @@ import           Generics.SOP
 
 import           System.Console.GetOpt.Generics.Internal
 
+-- | 'Modifier's can be used to customize the command line parser.
 data Modifier
   = AddShortOption String Char
+    -- ^ @AddShortOption fieldName c@ adds the 'Char' @c@ as a short option for
+    --   the field addressed by @fieldName@.
   | RenameOption String String
+    -- ^ @RenameOption fieldName customName@ renames the option generated
+    --   through the @fieldName@ by @customName@.
   deriving (Show, Eq, Ord)
 
+-- | Derives 'AddShortOption's for all fields of the datatype that start with a
+--   unique character.
 deriveShortOptions :: (HasDatatypeInfo a, SingI (Code a)) =>
   Proxy a -> [Modifier]
 deriveShortOptions proxy =
