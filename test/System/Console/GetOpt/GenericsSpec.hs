@@ -30,7 +30,7 @@ instance HasDatatypeInfo Foo
 
 spec :: Spec
 spec = do
-  describe "withArguments" $ do
+  describe "getArguments" $ do
     it "parses command line arguments" $ do
       withArgs (words "--bar 4 --baz foo") $
         getArguments `shouldReturn` Foo (Just 4) "foo" False
@@ -123,7 +123,7 @@ instance HasDatatypeInfo ListOptions
 
 next1 :: Spec
 next1 = do
-  describe "withArguments" $ do
+  describe "getArguments" $ do
     it "allows to interpret multiple uses of the same option as lists" $ do
       withArgs (words "--multiple 23 --multiple 42") $ do
         getArguments `shouldReturn` ListOptions [23, 42]
@@ -149,7 +149,7 @@ instance HasDatatypeInfo CamelCaseOptions
 
 next2 :: Spec
 next2 = do
-  describe "withArguments" $ do
+  describe "getArguments" $ do
     it "turns camelCase selectors to lowercase and seperates with a dash" $ do
         withArgs (words "--camel-case foo") $ do
           getArguments `shouldReturn` CamelCaseOptions "foo"
