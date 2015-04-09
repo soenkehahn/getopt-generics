@@ -27,6 +27,7 @@ library
   build-depends:
       base == 4.*
     , base-compat >= 0.7
+    , containers
     , generics-sop
     , tagged
   ghc-options: -Wall -fno-warn-name-shadowing
@@ -39,6 +40,7 @@ test-suite spec
   build-depends:
       base == 4.*
     , base-compat >= 0.7
+    , containers
     , generics-sop
     , hspec
     , hspec-expectations

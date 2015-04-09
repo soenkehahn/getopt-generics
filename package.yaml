@@ -15,8 +15,9 @@ ghc-options: -Wall -fno-warn-name-shadowing
 
 dependencies:
   - base == 4.*
-  - generics-sop
   - base-compat >= 0.7
+  - containers
+  - generics-sop
   - tagged
 
 library:

@@ -3,12 +3,16 @@
 
 module System.Console.GetOpt.Generics.Modifier (
   Modifier(..),
-  deriveShortOptions,
+  Modifiers,
+  mkModifiers,
   mkShortOptions,
-  mkLongOptions,
+  mkLongOption,
+
+  deriveShortOptions,
  ) where
 
 import           Data.List
+import qualified Data.Map.Strict                                as M
 import           Data.Maybe
 import           Generics.SOP
 
@@ -23,6 +27,32 @@ data Modifier
     -- ^ @RenameOption fieldName customName@ renames the option generated
     --   through the @fieldName@ by @customName@.
   deriving (Show, Eq, Ord)
+
+data Modifiers = Modifiers {
+  _shortOptions :: M.Map String [Char],
+  _renamings :: M.Map String String
+ }
+
+mkModifiers :: [Modifier] -> Modifiers
+mkModifiers = foldl' inner (Modifiers M.empty M.empty)
+  where
+    inner :: Modifiers -> Modifier -> Modifiers
+    inner (Modifiers shorts renamings) (AddShortOption option short) =
+      Modifiers
+        (M.insertWith (++) (slugify option) [short] shorts)
+        renamings
+    inner (Modifiers shorts renamings) (RenameOption from to) =
+      Modifiers shorts (M.insert (slugify from) to renamings)
+
+mkShortOptions :: Modifiers -> String -> [Char]
+mkShortOptions (Modifiers shortMap _) option =
+    fromMaybe [] (M.lookup option shortMap)
+
+mkLongOption :: Modifiers -> String -> String
+mkLongOption (Modifiers _ renamings) option =
+  fromMaybe option (M.lookup option renamings)
+
+-- * deriving Modifiers
 
 -- | Derives 'AddShortOption's for all fields of the datatype that start with a
 --   unique character.
@@ -62,28 +92,3 @@ mkShortModifiers fields =
         [_] -> Just $ AddShortOption field short
         _ -> Nothing
     inner [] = Nothing
-
-mkShortOptions :: [Modifier] -> String -> [Char]
-mkShortOptions modifiers option =
-    mapMaybe inner modifiers
-  where
-    inner :: Modifier -> Maybe Char
-    inner (AddShortOption modifierOption short)
-      | matchesField modifierOption option
-        = Just short
-      | otherwise
-        = Nothing
-    inner _ = Nothing
-
-mkLongOptions :: [Modifier] -> String -> [String]
-mkLongOptions modifiers option =
-    inner (reverse modifiers)
-  where
-    inner (RenameOption renameOption newName : _)
-      | renameOption `matchesField` option = [newName]
-    inner [] = [option]
-    inner (_ : r) = inner r
-
-matchesField :: String -> String -> Bool
-matchesField modifierOption option =
-  modifierOption == option || slugify modifierOption == option

@@ -10,6 +10,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 {-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
 
@@ -97,7 +98,7 @@ data Result a
 --   Does not throw any exceptions.
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   String -> [Modifier] -> [String] -> Result a
-parseArguments header modifiers args = case normalizedDatatypeInfo (Proxy :: Proxy a) of
+parseArguments header (mkModifiers -> modifiers) args = case normalizedDatatypeInfo (Proxy :: Proxy a) of
     ADT typeName _ (constructorInfo :* Nil) ->
       case constructorInfo of
         (Record _ fields) -> processFields header modifiers args fields
@@ -118,7 +119,7 @@ parseArguments header modifiers args = case normalizedDatatypeInfo (Proxy :: Pro
       Errors ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
 
 processFields :: forall a xs . (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
-  String -> [Modifier] -> [String] -> NP FieldInfo xs -> Result a
+  String -> Modifiers -> [String] -> NP FieldInfo xs -> Result a
 processFields header modifiers args fields =
   helpWrapper header modifiers args fields $
   fmap (to . SOP . Z) $
@@ -141,17 +142,17 @@ processFields header modifiers args fields =
     ignoreRight = either id (const mempty)
 
 mkOptDescrs :: forall xs . All Option xs =>
-  [Modifier] -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
+  Modifiers -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
 mkOptDescrs modifiers fields =
   map toOptDescr $ sumList $ npMap (mkOptDescr modifiers) fields
 
 newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
 
-mkOptDescr :: forall a . Option a => [Modifier] -> FieldInfo a -> OptDescrE a
+mkOptDescr :: forall a . Option a => Modifiers -> FieldInfo a -> OptDescrE a
 mkOptDescr modifiers (FieldInfo name) = OptDescrE $
   Option
     (mkShortOptions modifiers name)
-    (mkLongOptions modifiers name)
+    [mkLongOption modifiers name]
     _toOption
     ""
 
@@ -173,7 +174,7 @@ mkEmptyArguments fields = case (sing :: Sing xs, fields) of
 data HelpFlag = HelpFlag
 
 helpWrapper :: (All Option xs) =>
-  String -> [Modifier] -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
+  String -> Modifiers -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
 helpWrapper header modifiers args fields result =
     case getOpt Permute [helpOption] args of
       ([], _, _) -> case result of
