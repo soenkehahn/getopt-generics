@@ -20,6 +20,7 @@
 module System.Console.GetOpt.Generics (
   -- * IO API
   getArguments,
+  modifiedGetArguments,
   -- * Pure API
   parseArguments,
   Result(..),
@@ -57,10 +58,15 @@ import           System.Console.GetOpt.Generics.Internal
 --     with exit-code @0@.) Help output is written to @stdout@.
 getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   IO a
-getArguments = do
+getArguments = modifiedGetArguments []
+
+-- | Like 'getArguments` but allows you to pass in 'Modifier's.
+modifiedGetArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
+  [Modifier] -> IO a
+modifiedGetArguments modifiers = do
   args <- getArgs
   progName <- getProgName
-  case parseArguments progName [] args of
+  case parseArguments progName modifiers args of
     Success a -> return a
     OutputAndExit message -> do
       putStrLn message
