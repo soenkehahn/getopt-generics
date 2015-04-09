@@ -181,7 +181,7 @@ next2 = do
       show errs `shouldContain` "camel-case"
 
   describe "parseArguments" $ do
-    context "Short" $ do
+    context "AddShortOption" $ do
       it "allows modifiers for short options" $ do
         parseArguments "header" [AddShortOption "camel-case" 'x'] (words "-x foo")
           `shouldBe` Success (CamelCaseOptions "foo")
@@ -196,7 +196,7 @@ next2 = do
         let OutputAndExit output = parse ["--help"]
         output `shouldContain` "-x string"
 
-    context "Rename" $ do
+    context "RenameOption" $ do
       it "allows to rename options" $ do
         parseArguments "header" [RenameOption "camelCase" "bla"] (words "--bla foo")
           `shouldBe` Success (CamelCaseOptions "foo")
