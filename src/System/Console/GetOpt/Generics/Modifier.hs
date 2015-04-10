@@ -9,10 +9,12 @@ module System.Console.GetOpt.Generics.Modifier (
   mkLongOption,
 
   deriveShortOptions,
+
+  -- exported for testing
+  insertWith,
  ) where
 
-import           Data.List
-import qualified Data.Map.Strict                                as M
+import           Data.List                               (foldl', isPrefixOf)
 import           Data.Maybe
 import           Generics.SOP
 
@@ -29,28 +31,28 @@ data Modifier
   deriving (Show, Eq, Ord)
 
 data Modifiers = Modifiers {
-  _shortOptions :: M.Map String [Char],
-  _renamings :: M.Map String String
+  _shortOptions :: [(String, [Char])],
+  _renamings :: [(String, String)]
  }
 
 mkModifiers :: [Modifier] -> Modifiers
-mkModifiers = foldl' inner (Modifiers M.empty M.empty)
+mkModifiers = foldl' inner (Modifiers [] [])
   where
     inner :: Modifiers -> Modifier -> Modifiers
     inner (Modifiers shorts renamings) (AddShortOption option short) =
       Modifiers
-        (M.insertWith (++) (slugify option) [short] shorts)
+        (insertWith (++) (slugify option) [short] shorts)
         renamings
     inner (Modifiers shorts renamings) (RenameOption from to) =
-      Modifiers shorts (M.insert (slugify from) to renamings)
+      Modifiers shorts (insert (slugify from) to renamings)
 
 mkShortOptions :: Modifiers -> String -> [Char]
 mkShortOptions (Modifiers shortMap _) option =
-    fromMaybe [] (M.lookup option shortMap)
+    fromMaybe [] (lookup option shortMap)
 
 mkLongOption :: Modifiers -> String -> String
 mkLongOption (Modifiers _ renamings) option =
-  fromMaybe option (M.lookup option renamings)
+  fromMaybe option (lookup option renamings)
 
 -- * deriving Modifiers
 
@@ -92,3 +94,19 @@ mkShortModifiers fields =
         [_] -> Just $ AddShortOption field short
         _ -> Nothing
     inner [] = Nothing
+
+-- * list utils to replace Data.Map
+
+insertWith :: Eq a => (b -> b -> b) -> a -> b -> [(a, b)] -> [(a, b)]
+insertWith _ key value [] = [(key, value)]
+insertWith combine key value ((a, b) : r) =
+  if a == key
+    then (key, b `combine` value) : r
+    else (a, b) : insertWith combine key value r
+
+insert :: Eq a => a -> b -> [(a, b)] -> [(a, b)]
+insert key value [] = [(key, value)]
+insert key value ((a, b) : r) =
+  if a == key
+    then (key, value) : r
+    else (a, b) : insert key value r

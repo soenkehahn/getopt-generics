@@ -18,6 +18,11 @@ spec = do
     it "doesn't include modifiers for short options in case of overlaps" $ do
       deriveShortOptions (Proxy :: Proxy Overlap) `shouldBe` []
 
+  describe "insertWith" $ do
+    it "combines existing values with the given function" $ do
+      insertWith (++) (1 :: Integer) "bar" [(1, "foo")]
+        `shouldBe` [(1, "foobar")]
+
 data Foo
   = Foo {
     bar :: String
