@@ -17,6 +17,12 @@ import           Test.Hspec.Expectations.Contrib
 
 import           System.Console.GetOpt.Generics
 
+spec :: Spec
+spec = do
+  part1
+  part2
+  part3
+
 data Foo
   = Foo {
     bar :: Maybe Int,
@@ -34,8 +40,8 @@ data NotAllowed = NotAllowed
 instance Generic NotAllowed
 instance HasDatatypeInfo NotAllowed
 
-spec :: Spec
-spec = do
+part1 :: Spec
+part1 = do
   describe "getArguments" $ do
     it "parses command line arguments" $ do
       withArgs (words "--bar 4 --baz foo") $
@@ -124,8 +130,6 @@ spec = do
              return ()
         output `shouldContain` "doesn't support constructors without field labels"
 
-  next1
-
 data ListOptions
   = ListOptions {
     multiple :: [Int]
@@ -135,8 +139,8 @@ data ListOptions
 instance Generic ListOptions
 instance HasDatatypeInfo ListOptions
 
-next1 :: Spec
-next1 = do
+part2 :: Spec
+part2 = do
   describe "getArguments" $ do
     it "allows to interpret multiple uses of the same option as lists" $ do
       withArgs (words "--multiple 23 --multiple 42") $ do
@@ -150,8 +154,6 @@ next1 = do
             return ()
         output `shouldContain` "cannot parse as integer (multiple possible): foo"
 
-  next2
-
 data CamelCaseOptions
   = CamelCaseOptions {
     camelCase :: String
@@ -161,8 +163,8 @@ data CamelCaseOptions
 instance Generic CamelCaseOptions
 instance HasDatatypeInfo CamelCaseOptions
 
-next2 :: Spec
-next2 = do
+part3 :: Spec
+part3 = do
   describe "getArguments" $ do
     it "turns camelCase selectors to lowercase and seperates with a dash" $ do
         withArgs (words "--camel-case foo") $ do
