@@ -168,6 +168,7 @@ next2 = do
         withArgs (words "--camel-case foo") $ do
           getArguments `shouldReturn` CamelCaseOptions "foo"
 
+  describe "parseArguments" $ do
     it "help does not contain camelCase flags" $ do
       let OutputAndExit output :: Result CamelCaseOptions
             = parseArguments "header" [] ["--help"]
@@ -180,7 +181,6 @@ next2 = do
       show errs `shouldNotContain` "camelCase"
       show errs `shouldContain` "camel-case"
 
-  describe "parseArguments" $ do
     context "AddShortOption" $ do
       it "allows modifiers for short options" $ do
         parseArguments "header" [AddShortOption "camel-case" 'x'] (words "-x foo")
