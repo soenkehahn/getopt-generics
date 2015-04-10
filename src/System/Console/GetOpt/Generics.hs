@@ -91,7 +91,7 @@ data Result a
     --   details.
   | OutputAndExit String
     -- ^ The CLI was used with @--help@. The 'Result' contains the help message.
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Functor)
 
 -- | Pure variant of 'getArguments'. Also allows to declare 'Modifier's.
 --
