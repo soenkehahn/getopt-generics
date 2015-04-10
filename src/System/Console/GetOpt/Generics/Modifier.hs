@@ -41,10 +41,10 @@ mkModifiers = foldl' inner (Modifiers [] [])
     inner :: Modifiers -> Modifier -> Modifiers
     inner (Modifiers shorts renamings) (AddShortOption option short) =
       Modifiers
-        (insertWith (++) (slugify option) [short] shorts)
+        (insertWith (++) (normalizeFieldName option) [short] shorts)
         renamings
     inner (Modifiers shorts renamings) (RenameOption from to) =
-      Modifiers shorts (insert (slugify from) to renamings)
+      Modifiers shorts (insert (normalizeFieldName from) to renamings)
 
 mkShortOptions :: Modifiers -> String -> [Char]
 mkShortOptions (Modifiers shortMap _) option =

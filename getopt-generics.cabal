@@ -37,7 +37,8 @@ test-suite spec
   hs-source-dirs: src, test, examples
   main-is: Spec.hs
   build-depends:
-      base == 4.*
+      QuickCheck
+    , base == 4.*
     , base-compat >= 0.7
     , generics-sop
     , hspec

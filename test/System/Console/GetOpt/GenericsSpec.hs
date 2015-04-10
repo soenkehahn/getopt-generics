@@ -22,6 +22,7 @@ spec = do
   part1
   part2
   part3
+  part4
 
 data Foo
   = Foo {
@@ -219,3 +220,19 @@ part3 = do
       it "allows to address fields in Modifiers in slugified form" $ do
         parseArguments "header" [RenameOption "camel-case" "foo"] (words "--foo bar")
           `shouldBe` Success (CamelCaseOptions "bar")
+
+data WithUnderscore
+  = WithUnderscore {
+    _withUnderscore :: String
+  }
+  deriving (GHC.Generic, Show, Eq)
+
+instance Generic WithUnderscore
+instance HasDatatypeInfo WithUnderscore
+
+part4 :: Spec
+part4 = do
+  describe "parseArguments" $ do
+    it "ignores leading underscores in field names" $ do
+      parseArguments "header" [] (words "--with-underscore foo")
+        `shouldBe` Success (WithUnderscore "foo")

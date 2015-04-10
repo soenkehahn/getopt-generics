@@ -35,6 +35,7 @@ tests:
     dependencies:
       - hspec
       - hspec-expectations
+      - QuickCheck
       - silently
 
 github: zalora/getopt-generics
