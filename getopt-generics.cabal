@@ -24,6 +24,7 @@ library
   other-modules:
       System.Console.GetOpt.Generics.Internal
       System.Console.GetOpt.Generics.Modifier
+      System.Console.GetOpt.Generics.Result
   build-depends:
       base == 4.*
     , base-compat >= 0.7

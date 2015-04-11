@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs            #-}
+{-# LANGUAGE TupleSections    #-}
 
 module System.Console.GetOpt.Generics.Modifier (
   Modifier(..),
@@ -11,14 +12,18 @@ module System.Console.GetOpt.Generics.Modifier (
   deriveShortOptions,
 
   -- exported for testing
+  mkShortModifiers,
   insertWith,
  ) where
 
-import           Data.List                               (foldl', isPrefixOf)
+import           Control.Applicative
+import           Control.Monad
+import           Data.Char
 import           Data.Maybe
 import           Generics.SOP
 
 import           System.Console.GetOpt.Generics.Internal
+import           System.Console.GetOpt.Generics.Result
 
 -- | 'Modifier's can be used to customize the command line parser.
 data Modifier
@@ -35,16 +40,18 @@ data Modifiers = Modifiers {
   _renamings :: [(String, String)]
  }
 
-mkModifiers :: [Modifier] -> Modifiers
-mkModifiers = foldl' inner (Modifiers [] [])
+mkModifiers :: [Modifier] -> Result Modifiers
+mkModifiers = foldM inner (Modifiers [] [])
   where
-    inner :: Modifiers -> Modifier -> Modifiers
-    inner (Modifiers shorts renamings) (AddShortOption option short) =
-      Modifiers
-        (insertWith (++) (normalizeFieldName option) [short] shorts)
+    inner :: Modifiers -> Modifier -> Result Modifiers
+    inner (Modifiers shorts renamings) (AddShortOption option short) = do
+      normalized <- normalizeFieldName option
+      return $ Modifiers
+        (insertWith (++) normalized [short] shorts)
         renamings
-    inner (Modifiers shorts renamings) (RenameOption from to) =
-      Modifiers shorts (insert (normalizeFieldName from) to renamings)
+    inner (Modifiers shorts renamings) (RenameOption from to) = do
+      fromNormalized <- normalizeFieldName from
+      return $ Modifiers shorts (insert fromNormalized to renamings)
 
 mkShortOptions :: Modifiers -> String -> [Char]
 mkShortOptions (Modifiers shortMap _) option =
@@ -65,7 +72,7 @@ deriveShortOptions proxy =
 
 flags :: (SingI (Code a), HasDatatypeInfo a) =>
   Proxy a -> [String]
-flags proxy = case normalizedDatatypeInfo proxy of
+flags proxy = case datatypeInfo proxy of
     ADT _ _ ci -> fromNPConstructorInfo ci
     Newtype _ _ ci -> fromConstructorInfo ci
   where
@@ -86,14 +93,20 @@ flags proxy = case normalizedDatatypeInfo proxy of
 
 mkShortModifiers :: [String] -> [Modifier]
 mkShortModifiers fields =
-    mapMaybe inner fields
+    let withShorts = mapMaybe (\ field -> (field, ) <$> toShort field) fields
+        allShorts = map snd withShorts
+        isUnique c = case filter (== c) allShorts of
+          [_] -> True
+          _ -> False
+    in (flip mapMaybe) withShorts $ \ (field, short) ->
+          if isUnique short
+            then Just (AddShortOption field short)
+            else Nothing
   where
-    inner :: String -> Maybe Modifier
-    inner field@(short : _) =
-      case filter ([short] `isPrefixOf`) fields of
-        [_] -> Just $ AddShortOption field short
-        _ -> Nothing
-    inner [] = Nothing
+    toShort :: String -> Maybe Char
+    toShort s = case dropWhile (\ c -> not (isAscii c && isAlpha c)) s of
+      [] -> Nothing
+      (a : _) -> Just (toLower a)
 
 -- * list utils to replace Data.Map
 

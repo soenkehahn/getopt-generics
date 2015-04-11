@@ -2,10 +2,12 @@
 
 module System.Console.GetOpt.Generics.ModifierSpec where
 
+import           Data.Char
 import           Data.Proxy
 import           Generics.SOP
 import qualified GHC.Generics
 import           Test.Hspec
+import           Test.QuickCheck
 
 import           System.Console.GetOpt.Generics.Modifier
 
@@ -17,6 +19,12 @@ spec = do
 
     it "doesn't include modifiers for short options in case of overlaps" $ do
       deriveShortOptions (Proxy :: Proxy Overlap) `shouldBe` []
+
+  describe "mkShortModifiers" $ do
+    it "returns only lower-case ascii alpha characters as short options" $ do
+      property $ \ strings ->
+        mkShortModifiers strings `shouldSatisfy` all (\ (AddShortOption _ c) ->
+          isLower c && isAscii c && isAlpha c)
 
   describe "insertWith" $ do
     it "combines existing values with the given function" $ do

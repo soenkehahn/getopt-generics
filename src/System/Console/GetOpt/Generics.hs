@@ -46,6 +46,7 @@ import           Text.Read.Compat
 
 import           System.Console.GetOpt.Generics.Modifier
 import           System.Console.GetOpt.Generics.Internal
+import           System.Console.GetOpt.Generics.Result
 
 -- | Parses command line arguments (gotten from 'withArgs') and returns the
 --   parsed value. This function should be enough for simple use-cases.
@@ -76,44 +77,31 @@ modifiedGetArguments modifiers = do
       mapM_ (hPutStrLn stderr) errs
       exitWith $ ExitFailure 1
 
--- | Type to wrap results from the pure parsing functions.
-data Result a
-  = Success a
-    -- ^ The CLI was used correctly and a value of type @a@ was
-    --   successfully constructed.
-  | Errors [String]
-    -- ^ The CLI was used incorrectly. The 'Result' contains a list of error
-    --   messages.
-    --
-    --   It can also happen that the data type you're trying to use isn't
-    --   supported. See the
-    --   <https://github.com/zalora/getopt-generics#getopt-generics README> for
-    --   details.
-  | OutputAndExit String
-    -- ^ The CLI was used with @--help@. The 'Result' contains the help message.
-  deriving (Show, Eq, Ord, Functor)
-
 -- | Pure variant of 'getArguments'. Also allows to declare 'Modifier's.
 --
 --   Does not throw any exceptions.
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   String -> [Modifier] -> [String] -> Result a
-parseArguments header (mkModifiers -> modifiers) args = case normalizedDatatypeInfo (Proxy :: Proxy a) of
-    ADT typeName _ (constructorInfo :* Nil) ->
-      case constructorInfo of
-        (Record _ fields) -> processFields header modifiers args fields
-        Constructor{} ->
-          err typeName "constructors without field labels"
-        Infix{} ->
-          err typeName "infix constructors"
-    ADT typeName _ Nil ->
-      err typeName "empty data types"
-    ADT typeName _ (_ :* _ :* _) ->
-      err typeName "sum-types"
-    Newtype _ _ (Record _ fields) ->
-      processFields header modifiers args fields
-    Newtype typeName _ (Constructor _) ->
-      err typeName "constructors without field labels"
+parseArguments header modifiersList args = do
+    (modifiers, datatypeInfo) <- (,) <$>
+      mkModifiers modifiersList <*>
+      normalizedDatatypeInfo (Proxy :: Proxy a)
+    case datatypeInfo of
+      ADT typeName _ (constructorInfo :* Nil) ->
+        case constructorInfo of
+          (Record _ fields) -> processFields header modifiers args fields
+          Constructor{} ->
+            err typeName "constructors without field labels"
+          Infix{} ->
+            err typeName "infix constructors"
+      ADT typeName _ Nil ->
+        err typeName "empty data types"
+      ADT typeName _ (_ :* _ :* _) ->
+        err typeName "sum-types"
+      Newtype _ _ (Record _ fields) ->
+        processFields header modifiers args fields
+      Newtype typeName _ (Constructor _) ->
+        err typeName "constructors without field labels"
   where
     err typeName message =
       Errors ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
