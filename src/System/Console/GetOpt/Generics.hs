@@ -104,30 +104,30 @@ parseArguments header modifiersList args = do
         err typeName "constructors without field labels"
   where
     err typeName message =
-      Errors ["getopt-generics doesn't support " ++ message ++ " (" ++ typeName ++ ")."]
+      Errors ["getopt-generics doesn't support " ++ message ++
+              " (" ++ typeName ++ ")."]
 
-processFields :: forall a xs . (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
+processFields :: forall a xs .
+  (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
   String -> Modifiers -> [String] -> NP FieldInfo xs -> Result a
 processFields header modifiers args fields =
-  helpWrapper header modifiers args fields $
-  fmap (to . SOP . Z) $
-  case getOpt Permute (mkOptDescrs modifiers fields) args of
-    (options, arguments, parseErrors) ->
-      let result :: Either [String] (NP I xs) =
-            collectErrors $ project options (mkEmptyArguments fields)
-          allErrors =
-            parseErrors ++
-            map mkUnknownArgumentError arguments ++
-            ignoreRight result
-      in case allErrors of
-        [] -> result
-        _ -> Left allErrors
-  where
-    mkUnknownArgumentError :: String -> String
-    mkUnknownArgumentError arg = "unknown argument: " ++ arg
+    helpWrapper header modifiers args fields *>
+    let (options, arguments, parseErrors) =
+          getOpt Permute (mkOptDescrs modifiers fields) args
+    in
 
-    ignoreRight :: Monoid e => Either e o -> e
-    ignoreRight = either id (const mempty)
+    -- report parse errors
+    (case parseErrors of
+      [] -> pure ()
+      errs -> Errors errs) *>
+
+    -- report unknown arguments
+    (case arguments of
+      [] -> pure ()
+      _ -> Errors (map ("unknown argument: " ++) arguments)) *>
+
+    ((to . SOP . Z) <$>
+      collectErrors (project options (mkEmptyArguments fields)))
 
 mkOptDescrs :: forall xs . All Option xs =>
   Modifiers -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
@@ -162,13 +162,11 @@ mkEmptyArguments fields = case (sing :: Sing xs, fields) of
 data HelpFlag = HelpFlag
 
 helpWrapper :: (All Option xs) =>
-  String -> Modifiers -> [String] -> NP FieldInfo xs -> Either [String] a -> Result a
-helpWrapper header modifiers args fields result =
+  String -> Modifiers -> [String] -> NP FieldInfo xs -> Result ()
+helpWrapper header modifiers args fields =
     case getOpt Permute [helpOption] args of
-      ([], _, _) -> case result of
+      ([], _, _) -> return ()
         -- no help flag given
-        Left errs -> Errors errs
-        Right a -> Success a
       (HelpFlag : _, _, _) -> OutputAndExit $
         stripTrailingSpaces $
         usageInfo header $
@@ -188,14 +186,14 @@ stripTrailingSpaces = unlines . map stripLines . lines
 
 -- * helper functions for NS and NP
 
-collectErrors :: NP FieldState xs -> Either [String] (NP I xs)
+collectErrors :: NP FieldState xs -> Result (NP I xs)
 collectErrors np = case np of
-  Nil -> Right Nil
-  (a :* r) -> case (a, collectErrors r) of
-    (FieldSuccess a, Right r) -> Right (I a :* r)
-    (ParseErrors errs, r) -> Left (errs ++ either id (const []) r)
-    (Unset err, r) -> Left (err : either id (const []) r)
-    (FieldSuccess _, Left errs) -> Left errs
+  Nil -> Success Nil
+  (a :* r) -> (:*) <$> inner a <*> collectErrors r
+  where
+    inner (FieldSuccess v) = Success (I v)
+    inner (ParseErrors errs) = Errors errs
+    inner (Unset err) = Errors [err]
 
 npMap :: (All Option xs) => (forall a . Option a => f a -> g a) -> NP f xs -> NP g xs
 npMap _ Nil = Nil
