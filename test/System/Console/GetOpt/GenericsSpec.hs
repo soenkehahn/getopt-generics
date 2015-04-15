@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -6,6 +7,7 @@ module System.Console.GetOpt.GenericsSpec where
 import           Control.Exception
 import           Data.Foldable                   (forM_)
 import           Data.List
+import           Data.Typeable
 import           Generics.SOP
 import qualified GHC.Generics                    as GHC
 import           System.Environment
@@ -24,6 +26,7 @@ spec = do
   part3
   part4
   part5
+  part6
 
 data Foo
   = Foo {
@@ -131,6 +134,11 @@ part1 = do
              _ :: NotAllowed <- getArguments
              return ()
         output `shouldContain` "doesn't support constructors without field labels"
+
+  describe "parseArguments" $ do
+    it "allows to overwrite String options" $ do
+      parseArguments "header" [] (words "--baz one --baz two")
+        `shouldBe` Success (Foo Nothing "two" False)
 
 data ListOptions
   = ListOptions {
@@ -273,3 +281,38 @@ part5 = do
             `shouldBe`
           (Errors ["UseForPositionalArguments can only be used for fields of type [String] not Bool"]
             :: Result WithPositionalArguments)
+
+data CustomFields
+  = CustomFields {
+    custom :: Custom,
+    customList :: [Custom],
+    customMaybe :: Maybe Custom
+  }
+  deriving (GHC.Generic, Show, Eq)
+
+instance Generic CustomFields
+instance HasDatatypeInfo CustomFields
+
+data Custom
+  = CFoo
+  | CBar
+  | CBaz
+  deriving (Show, Eq, Typeable)
+
+instance Option Custom where
+  argumentType Proxy = "custom"
+  parseArgument x = case x of
+    "foo" -> Just CFoo
+    "bar" -> Just CBar
+    "baz" -> Just CBaz
+    _ -> Nothing
+
+part6 :: Spec
+part6 = do
+  describe "parseArguments" $ do
+    context "CustomFields" $ do
+      it "allows easy implementation of custom field types" $ do
+        parseArguments "header" []
+            (words "--custom foo --custom-list bar --custom-maybe baz")
+          `shouldBe`
+            Success (CustomFields CFoo [CBar] (Just CBaz))

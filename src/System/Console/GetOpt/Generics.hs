@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverlappingInstances  #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -320,36 +321,25 @@ instance Option Bool where
   _toOption = NoArg (FieldSuccess True)
   _emptyOption _ = FieldSuccess False
 
-instance Option String where
-  argumentType _ = "string"
-  parseArgument = Just
-
-instance Option (Maybe String) where
-  argumentType _ = "string (optional)"
-  parseArgument = Just . Just
-  _emptyOption _ = FieldSuccess Nothing
-
-instance Option [String] where
-  argumentType _ = "string (multiple possible)"
-  parseArgument = Just . pure
+instance Option a => Option [a] where
+  argumentType Proxy = argumentType (Proxy :: Proxy a) ++ " (multiple possible)"
+  parseArgument x = case parseArgument x of
+    Just (x :: a) -> Just [x]
+    Nothing -> Nothing
   _emptyOption _ = FieldSuccess []
   _accumulate = (++)
+
+instance Option a => Option (Maybe a) where
+  argumentType Proxy = argumentType (Proxy :: Proxy a) ++ " (optional)"
+  parseArgument x = case parseArgument x of
+    Just (x :: a) -> Just (Just x)
+    Nothing -> Nothing
+  _emptyOption _ = FieldSuccess Nothing
+
+instance Option String where
+  argumentType Proxy = "string"
+  parseArgument = Just
 
 instance Option Int where
   argumentType _ = "integer"
   parseArgument = readMaybe
-
-instance Option (Maybe Int) where
-  argumentType _ = "integer (optional)"
-  parseArgument s = case readMaybe s of
-    Just i -> Just (Just i)
-    Nothing -> Nothing
-  _emptyOption _ = FieldSuccess Nothing
-
-instance Option [Int] where
-  argumentType _ = "integer (multiple possible)"
-  parseArgument s = case readMaybe s of
-    Just a -> Just [a]
-    Nothing -> Nothing
-  _emptyOption _ = FieldSuccess []
-  _accumulate = (++)
