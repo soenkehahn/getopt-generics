@@ -1,5 +1,6 @@
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveFunctor         #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -183,11 +184,13 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
  where
   inner :: forall x . Option x => String -> Result (FieldState x)
   inner name = if isPositionalArgumentsField modifiers name
-    then case (eqT :: Maybe (x :~: [String])) of
-      (Just Refl) -> return PositionalArguments
+    then case cast (id :: FieldState x -> FieldState x) of
+      (Just id' :: Maybe (FieldState [String] -> FieldState x)) ->
+        return $ id' PositionalArguments
       Nothing -> Errors
         ["UseForPositionalArguments can only be used " ++
-         "for fields of type [String] not " ++ show (typeRep (Proxy :: Proxy x))]
+         "for fields of type [String] not " ++
+         show (typeOf (impossible "mkInitialFieldStates" :: x))]
     else return $ _emptyOption name
 
 
@@ -263,6 +266,7 @@ data FieldState a where
   ParseErrors :: [String] -> FieldState a
   FieldSuccess :: a -> FieldState a
   PositionalArguments :: FieldState [String]
+  deriving (Typeable)
 
 -- | Type class for all allowed field types.
 --
