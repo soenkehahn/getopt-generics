@@ -8,6 +8,8 @@ module System.Console.GetOpt.Generics.Modifier (
   mkModifiers,
   mkShortOptions,
   mkLongOption,
+  hasPositionalArgumentsField,
+  isPositionalArgumentsField,
 
   deriveShortOptions,
 
@@ -33,33 +35,46 @@ data Modifier
   | RenameOption String String
     -- ^ @RenameOption fieldName customName@ renames the option generated
     --   through the @fieldName@ by @customName@.
+  | UseForPositionalArguments String
   deriving (Show, Eq, Ord)
 
 data Modifiers = Modifiers {
   _shortOptions :: [(String, [Char])],
-  _renamings :: [(String, String)]
+  _renamings :: [(String, String)],
+  positionalArgumentsField :: Maybe String
  }
+ deriving (Show, Eq, Ord)
 
 mkModifiers :: [Modifier] -> Result Modifiers
-mkModifiers = foldM inner (Modifiers [] [])
+mkModifiers = foldM inner (Modifiers [] [] Nothing)
   where
     inner :: Modifiers -> Modifier -> Result Modifiers
-    inner (Modifiers shorts renamings) (AddShortOption option short) = do
+    inner (Modifiers shorts renamings args) (AddShortOption option short) = do
       normalized <- normalizeFieldName option
       return $ Modifiers
         (insertWith (++) normalized [short] shorts)
-        renamings
-    inner (Modifiers shorts renamings) (RenameOption from to) = do
+        renamings args
+    inner (Modifiers shorts renamings args) (RenameOption from to) = do
       fromNormalized <- normalizeFieldName from
-      return $ Modifiers shorts (insert fromNormalized to renamings)
+      return $ Modifiers shorts (insert fromNormalized to renamings) args
+    inner (Modifiers shorts renamings _) (UseForPositionalArguments option) = do
+      normalized <- normalizeFieldName option
+      return $ Modifiers shorts renamings (Just normalized)
 
 mkShortOptions :: Modifiers -> String -> [Char]
-mkShortOptions (Modifiers shortMap _) option =
+mkShortOptions (Modifiers shortMap _ _) option =
     fromMaybe [] (lookup option shortMap)
 
 mkLongOption :: Modifiers -> String -> String
-mkLongOption (Modifiers _ renamings) option =
+mkLongOption (Modifiers _ renamings _) option =
   fromMaybe option (lookup option renamings)
+
+hasPositionalArgumentsField :: Modifiers -> Bool
+hasPositionalArgumentsField = isJust . positionalArgumentsField
+
+isPositionalArgumentsField :: Modifiers -> String -> Bool
+isPositionalArgumentsField modifiers field =
+  Just field == positionalArgumentsField modifiers
 
 -- * deriving Modifiers
 

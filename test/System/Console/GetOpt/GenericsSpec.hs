@@ -23,6 +23,7 @@ spec = do
   part2
   part3
   part4
+  part5
 
 data Foo
   = Foo {
@@ -236,3 +237,39 @@ part4 = do
     it "ignores leading underscores in field names" $ do
       parseArguments "header" [] (words "--with-underscore foo")
         `shouldBe` Success (WithUnderscore "foo")
+
+data WithPositionalArguments
+  = WithPositionalArguments {
+    positionalArguments :: [String],
+    someFlag :: Bool
+  }
+  deriving (GHC.Generic, Show, Eq)
+
+instance Generic WithPositionalArguments
+instance HasDatatypeInfo WithPositionalArguments
+
+part5 :: Spec
+part5 = do
+  describe "parseArguments" $ do
+    context "UseForPositionalArguments" $ do
+      it "allows positionalArguments" $ do
+        parseArguments "header"
+          [UseForPositionalArguments "positionalArguments"]
+          (words "foo bar --some-flag")
+            `shouldBe` Success (WithPositionalArguments ["foo", "bar"] True)
+
+      it "disallows to specify the option used for positional arguments" $ do
+        parseArguments "header"
+          [UseForPositionalArguments "positionalArguments"]
+          (words "--positional-arguments foo")
+            `shouldBe`
+          (Errors ["unrecognized option `--positional-arguments'\n"]
+            :: Result WithPositionalArguments)
+
+      it "complains about fields that don't have type [String]" $ do
+        parseArguments "header"
+          [UseForPositionalArguments "someFlag"]
+          (words "doesn't matter")
+            `shouldBe`
+          (Errors ["UseForPositionalArguments can only be used for fields of type [String] not Bool"]
+            :: Result WithPositionalArguments)

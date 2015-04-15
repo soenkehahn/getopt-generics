@@ -9,6 +9,7 @@
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE ViewPatterns          #-}
 
@@ -35,8 +36,11 @@ module System.Console.GetOpt.Generics (
 import           Prelude ()
 import           Prelude.Compat
 
+import           Control.Monad (when)
 import           Data.Char
 import           Data.List
+import           Data.Maybe
+import           Data.Typeable
 import           Generics.SOP
 import           System.Console.GetOpt.Compat
 import           System.Environment
@@ -111,7 +115,11 @@ processFields :: forall a xs .
   (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
   String -> Modifiers -> [String] -> NP FieldInfo xs -> Result a
 processFields header modifiers args fields =
+    mkInitialFieldStates modifiers fields >>= \ initialFieldStates ->
+
+    -- shortcut with help message on --help
     helpWrapper header modifiers args fields *>
+
     let (options, arguments, parseErrors) =
           getOpt Permute (mkOptDescrs modifiers fields) args
     in
@@ -122,39 +130,53 @@ processFields header modifiers args fields =
       errs -> Errors errs) *>
 
     -- report unknown arguments
-    (case arguments of
-      [] -> pure ()
-      _ -> Errors (map ("unknown argument: " ++) arguments)) *>
+    (when (not $ hasPositionalArgumentsField modifiers) $
+      case arguments of
+        [] -> pure ()
+        _ -> Errors (map ("unknown argument: " ++) arguments)) *>
 
     ((to . SOP . Z) <$>
-      collectErrors (project options (mkEmptyArguments fields)))
+      collectResult arguments (project options initialFieldStates))
 
 mkOptDescrs :: forall xs . All Option xs =>
   Modifiers -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
 mkOptDescrs modifiers fields =
-  map toOptDescr $ sumList $ npMap (mkOptDescr modifiers) fields
+  mapMaybe toOptDescr $ sumList $ npMap (mkOptDescr modifiers) fields
 
-newtype OptDescrE a = OptDescrE (OptDescr (FieldState a))
+newtype OptDescrE a = OptDescrE (Maybe (OptDescr (FieldState a)))
 
 mkOptDescr :: forall a . Option a => Modifiers -> FieldInfo a -> OptDescrE a
 mkOptDescr modifiers (FieldInfo name) = OptDescrE $
-  Option
-    (mkShortOptions modifiers name)
-    [mkLongOption modifiers name]
-    _toOption
-    ""
+  if isPositionalArgumentsField modifiers name
+    then Nothing
+    else Just $ Option
+      (mkShortOptions modifiers name)
+      [mkLongOption modifiers name]
+      _toOption
+      ""
 
-toOptDescr :: NS OptDescrE xs -> OptDescr (NS FieldState xs)
-toOptDescr (Z (OptDescrE a)) = fmap Z a
-toOptDescr (S a) = fmap S (toOptDescr a)
+toOptDescr :: NS OptDescrE xs -> Maybe (OptDescr (NS FieldState xs))
+toOptDescr (Z (OptDescrE (Just a))) = Just $ fmap Z a
+toOptDescr (Z (OptDescrE Nothing)) = Nothing
+toOptDescr (S a) = fmap (fmap S) (toOptDescr a)
 
-mkEmptyArguments :: forall xs . (SingI xs, All Option xs) =>
-  NP FieldInfo xs -> NP FieldState xs
-mkEmptyArguments fields = case (sing :: Sing xs, fields) of
-  (SNil, Nil) -> Nil
+mkInitialFieldStates :: forall xs . (SingI xs, All Option xs) =>
+  Modifiers -> NP FieldInfo xs -> Result (NP FieldState xs)
+mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
+  (SNil, Nil) -> return Nil
   (SCons, FieldInfo name :* r) ->
-    _emptyOption name :* mkEmptyArguments r
+    (:*) <$> inner name <*> mkInitialFieldStates modifiers r
   _ -> uninhabited "mkEmpty"
+
+ where
+  inner :: forall x . Option x => String -> Result (FieldState x)
+  inner name = if isPositionalArgumentsField modifiers name
+    then case (eqT :: Maybe (x :~: [String])) of
+      (Just Refl) -> return PositionalArguments
+      Nothing -> Errors
+        ["UseForPositionalArguments can only be used " ++
+         "for fields of type [String] not " ++ show (typeRep (Proxy :: Proxy x))]
+    else return $ _emptyOption name
 
 
 -- * showing help?
@@ -186,14 +208,16 @@ stripTrailingSpaces = unlines . map stripLines . lines
 
 -- * helper functions for NS and NP
 
-collectErrors :: NP FieldState xs -> Result (NP I xs)
-collectErrors np = case np of
+collectResult :: [String] -> NP FieldState xs -> Result (NP I xs)
+collectResult positionalArguments np = case np of
   Nil -> Success Nil
-  (a :* r) -> (:*) <$> inner a <*> collectErrors r
+  (a :* r) -> (:*) <$> inner a <*> collectResult positionalArguments r
   where
+    inner :: FieldState a -> Result (I a)
     inner (FieldSuccess v) = Success (I v)
     inner (ParseErrors errs) = Errors errs
     inner (Unset err) = Errors [err]
+    inner PositionalArguments = Success (I positionalArguments)
 
 npMap :: (All Option xs) => (forall a . Option a => f a -> g a) -> NP f xs -> NP g xs
 npMap _ Nil = Nil
@@ -222,11 +246,11 @@ uninhabited = impossible
 
 -- * possible field types
 
-data FieldState a
-  = Unset String
-  | ParseErrors [String]
-  | FieldSuccess a
-  deriving (Functor)
+data FieldState a where
+  Unset :: String -> FieldState a
+  ParseErrors :: [String] -> FieldState a
+  FieldSuccess :: a -> FieldState a
+  PositionalArguments :: FieldState [String]
 
 -- | Type class for all allowed field types.
 --
@@ -236,7 +260,7 @@ data FieldState a
 --
 --   (Unfortunately implementing instances for lists or 'Maybe's of custom types
 --   is not very straightforward.)
-class Option a where
+class Typeable a => Option a where
   {-# MINIMAL argumentType, parseArgument #-}
   -- | Name of the argument type, e.g. "bool" or "integer".
   argumentType :: Proxy a -> String
@@ -270,6 +294,8 @@ combine (ParseErrors e) _ = ParseErrors e
 combine (Unset _) x = x
 combine (FieldSuccess _) (ParseErrors e) = ParseErrors e
 combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (_accumulate a b)
+combine PositionalArguments _ = PositionalArguments
+combine _ PositionalArguments = PositionalArguments
 
 instance Option Bool where
   argumentType _ = "bool"

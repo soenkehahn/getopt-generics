@@ -1,1 +1,1 @@
-:set -isrc -itest -iexamples -pgmL markdown-unlit
+:set -isrc -itest -iexamples -pgmL markdown-unlit -Wall -fno-warn-name-shadowing
