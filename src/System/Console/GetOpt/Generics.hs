@@ -305,13 +305,13 @@ parseAsFieldState s = case parseArgument s of
 
 combine :: Option a => FieldState a -> FieldState a -> FieldState a
 combine _ (Unset _) = impossible "combine"
+combine _ PositionalArguments = impossible "combine"
 combine (ParseErrors e) (ParseErrors f) = ParseErrors (e ++ f)
 combine (ParseErrors e) _ = ParseErrors e
 combine (Unset _) x = x
 combine (FieldSuccess _) (ParseErrors e) = ParseErrors e
 combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (_accumulate a b)
 combine PositionalArguments _ = PositionalArguments
-combine _ PositionalArguments = PositionalArguments
 
 instance Option Bool where
   argumentType _ = "bool"
