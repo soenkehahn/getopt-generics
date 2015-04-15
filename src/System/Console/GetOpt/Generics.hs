@@ -117,26 +117,38 @@ processFields :: forall a xs .
 processFields header modifiers args fields =
     mkInitialFieldStates modifiers fields >>= \ initialFieldStates ->
 
-    -- shortcut with help message on --help
-    helpWrapper header modifiers args fields *>
+    showHelp *>
 
     let (options, arguments, parseErrors) =
           getOpt Permute (mkOptDescrs modifiers fields) args
     in
 
-    -- report parse errors
-    (case parseErrors of
+    reportParseErrors parseErrors *>
+
+    reportInvalidPositionalArguments arguments *>
+
+    produceResult initialFieldStates options arguments
+  where
+    showHelp :: Result ()
+    showHelp = helpWrapper header modifiers args fields
+
+    reportParseErrors :: [String] -> Result ()
+    reportParseErrors parseErrors = case parseErrors of
       [] -> pure ()
-      errs -> Errors errs) *>
+      errs -> Errors errs
 
-    -- report unknown arguments
-    (when (not $ hasPositionalArgumentsField modifiers) $
-      case arguments of
-        [] -> pure ()
-        _ -> Errors (map ("unknown argument: " ++) arguments)) *>
+    reportInvalidPositionalArguments :: [String] -> Result ()
+    reportInvalidPositionalArguments arguments =
+      when (not $ hasPositionalArgumentsField modifiers) $
+        case arguments of
+          [] -> pure ()
+          _ -> Errors (map ("unknown argument: " ++) arguments)
 
-    ((to . SOP . Z) <$>
-      collectResult arguments (project options initialFieldStates))
+    produceResult :: NP FieldState xs -> [NS FieldState xs] -> [String] -> Result a
+    produceResult initialFieldStates options arguments =
+      (to . SOP . Z) <$>
+        collectResult arguments (project options initialFieldStates)
+
 
 mkOptDescrs :: forall xs . All Option xs =>
   Modifiers -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
