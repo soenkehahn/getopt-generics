@@ -20,6 +20,8 @@ dependencies:
   - tagged
 
 library:
+  source-dirs:
+    - src
   exposed-modules:
     - System.Console.GetOpt.Generics
 
