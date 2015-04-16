@@ -60,7 +60,7 @@ part1 = do
       withArgs (words "--bool --baz foo") $
         getArguments `shouldReturn` Foo Nothing "foo" True
 
-    context "invalid arguments" $ do
+    context "with invalid arguments" $ do
       it "doesn't execute the action" $ do
         let main = withArgs (words "--invalid") $ do
               _ :: Foo <- getArguments
