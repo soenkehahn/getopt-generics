@@ -33,6 +33,10 @@ module System.Console.GetOpt.Generics (
   deriveShortOptions,
   -- * Available Field Types
   Option(..),
+  -- * Re-exports from "Generics.SOP"
+  Generic,
+  HasDatatypeInfo,
+  Proxy(..)
  ) where
 
 import           Prelude ()

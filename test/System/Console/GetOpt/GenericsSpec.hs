@@ -8,7 +8,6 @@ import           Control.Exception
 import           Data.Foldable                   (forM_)
 import           Data.List
 import           Data.Typeable
-import           Generics.SOP
 import qualified GHC.Generics                    as GHC
 import           System.Environment
 import           System.Exit

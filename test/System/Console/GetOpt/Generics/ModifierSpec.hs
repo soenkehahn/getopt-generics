@@ -4,11 +4,11 @@ module System.Console.GetOpt.Generics.ModifierSpec where
 
 import           Data.Char
 import           Data.Proxy
-import           Generics.SOP
 import qualified GHC.Generics
 import           Test.Hspec
 import           Test.QuickCheck
 
+import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
 
 spec :: Spec

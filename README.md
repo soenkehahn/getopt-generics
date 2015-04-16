@@ -17,7 +17,6 @@ instances:
 module Readme where
 
 import Data.Typeable
-import Generics.SOP
 import GHC.Generics
 import System.Console.GetOpt.Generics
 import System.Environment
@@ -30,7 +29,7 @@ data Options
   }
   deriving (Show, GHC.Generics.Generic)
 
-instance Generics.SOP.Generic Options
+instance System.Console.GetOpt.Generics.Generic Options
 instance HasDatatypeInfo Options
 ~~~
 
@@ -96,7 +95,7 @@ data FileOptions
   }
   deriving (Show, GHC.Generics.Generic)
 
-instance Generics.SOP.Generic FileOptions
+instance System.Console.GetOpt.Generics.Generic FileOptions
 instance HasDatatypeInfo FileOptions
 
 -- Returns: FileOptions {file = File "some/file"}

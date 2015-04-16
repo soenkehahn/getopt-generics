@@ -2,7 +2,6 @@
 
 module Example where
 
-import           Generics.SOP
 import qualified GHC.Generics
 import           System.Console.GetOpt.Generics
 
