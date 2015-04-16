@@ -36,6 +36,9 @@ data Modifier
     -- ^ @RenameOption fieldName customName@ renames the option generated
     --   through the @fieldName@ by @customName@.
   | UseForPositionalArguments String
+    -- ^ @UseForPositionalArguments fieldName@ fills the field addressed by
+    --   @fieldName@ with the positional arguments (i.e. arguments that don't
+    --   correspond to a flag). The field has to have type @['String']@.
   deriving (Show, Eq, Ord)
 
 data Modifiers = Modifiers {
