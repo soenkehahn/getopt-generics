@@ -271,12 +271,11 @@ data FieldState a where
 
 -- | Type class for all allowed field types.
 --
---   Implementing custom instances to allow different types is possible. In the
---   easiest case you just implement 'argumentType' and 'parseArgument' (the
---   minimal complete definition).
---
---   (Unfortunately implementing instances for lists or 'Maybe's of custom types
---   is not very straightforward.)
+--   If you want to use custom field types you should implement an
+--   @instance Option YourCustomType@ containing implementations of
+--   'argumentType' and 'parseArgument' (the minimal complete definition). For
+--   an example see the
+--   <https://github.com/zalora/getopt-generics#getopt-generics README>.
 class Typeable a => Option a where
   {-# MINIMAL argumentType, parseArgument #-}
   -- | Name of the argument type, e.g. "bool" or "integer".

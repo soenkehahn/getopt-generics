@@ -11,13 +11,16 @@ command line options. All you have to do is to define a type and derive some
 instances:
 
 ~~~ {.haskell}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module Readme where
 
+import Data.Typeable
 import Generics.SOP
 import GHC.Generics
 import System.Console.GetOpt.Generics
+import System.Environment
 
 data Options
   = Options {
@@ -74,10 +77,29 @@ There are some constraints that the defined datatype has to fulfill:
 
 (Types declared with `newtype` are allowed with the same constraints.)
 
-## Supported Option Types
+## Using Custom Field Types
 
-- `Int`,
-- `String`,
-- `Maybe Int`, `Maybe String` for optional options,
-- `Bool` for flags (options without arguments) and
-- `[Int]`, `[String]` for options that can be given multiple times.
+It is possible to use custom field types by providing an instance for `Option`.
+Here's an example:
+
+~~~ {.haskell}
+data File = File FilePath
+  deriving (Show, Typeable)
+
+instance Option File where
+  argumentType Proxy = "file"
+  parseArgument f = Just (File f)
+
+data FileOptions
+  = FileOptions {
+    file :: File
+  }
+  deriving (Show, GHC.Generics.Generic)
+
+instance Generics.SOP.Generic FileOptions
+instance HasDatatypeInfo FileOptions
+
+-- Returns: FileOptions {file = File "some/file"}
+getFileOptions :: IO FileOptions
+getFileOptions = withArgs (words "--file some/file") getArguments
+~~~
