@@ -6,7 +6,7 @@ import           Data.Char
 import           Data.Proxy
 import qualified GHC.Generics
 import           Test.Hspec
-import           Test.QuickCheck
+import           Test.QuickCheck                         hiding (Result)
 
 import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
@@ -30,6 +30,14 @@ spec = do
     it "combines existing values with the given function" $ do
       insertWith (++) (1 :: Integer) "bar" [(1, "foo")]
         `shouldBe` [(1, "foobar")]
+
+  context "when used with Modifiers" $ do
+    describe "parseArguments" $ do
+      it "allows to specify a flag specific help" $ do
+        let OutputAndExit output =
+              parseArguments "header" [AddOptionHelp "bar" "bar help text"]
+                (words "--help") :: Result Foo
+        output `shouldContain` "--bar=string  bar help text"
 
 data Foo
   = Foo {

@@ -171,7 +171,7 @@ mkOptDescr modifiers (FieldInfo name) = OptDescrE $
       (mkShortOptions modifiers name)
       [mkLongOption modifiers name]
       _toOption
-      ""
+      (getHelpText modifiers name)
 
 toOptDescr :: NS OptDescrE xs -> Maybe (OptDescr (NS FieldState xs))
 toOptDescr (Z (OptDescrE (Just a))) = Just $ fmap Z a
