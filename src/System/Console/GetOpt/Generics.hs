@@ -41,6 +41,7 @@ module System.Console.GetOpt.Generics (
 
 import           Prelude ()
 import           Prelude.Compat
+import           Data.Orphans ()
 
 import           Control.Monad (when)
 import           Data.Char
@@ -48,7 +49,7 @@ import           Data.List
 import           Data.Maybe
 import           Data.Typeable
 import           Generics.SOP
-import           System.Console.GetOpt.Compat
+import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
 import           System.IO
