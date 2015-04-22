@@ -57,20 +57,21 @@ mkModifiers :: [Modifier] -> Result Modifiers
 mkModifiers = foldM inner (Modifiers [] [] Nothing [])
   where
     inner :: Modifiers -> Modifier -> Result Modifiers
-    inner (Modifiers shorts renamings args help) (AddShortOption option short) = do
-      normalized <- normalizeFieldName option
-      return $ Modifiers
-        (insertWith (++) normalized [short] shorts)
-        renamings args help
-    inner (Modifiers shorts renamings args help) (RenameOption from to) = do
-      fromNormalized <- normalizeFieldName from
-      return $ Modifiers shorts (insert fromNormalized to renamings) args help
-    inner (Modifiers shorts renamings _ help) (UseForPositionalArguments option) = do
-      normalized <- normalizeFieldName option
-      return $ Modifiers shorts renamings (Just normalized) help
-    inner (Modifiers shorts renamings args help) (AddOptionHelp option helpText) = do
-      normalized <- normalizeFieldName option
-      return $ Modifiers shorts renamings args (insert normalized helpText help)
+    inner (Modifiers shorts renamings args help) modifier = case modifier of
+      (AddShortOption option short) ->  do
+        normalized <- normalizeFieldName option
+        return $ Modifiers
+          (insertWith (++) normalized [short] shorts)
+          renamings args help
+      (RenameOption from to) -> do
+        fromNormalized <- normalizeFieldName from
+        return $ Modifiers shorts (insert fromNormalized to renamings) args help
+      (UseForPositionalArguments option) -> do
+        normalized <- normalizeFieldName option
+        return $ Modifiers shorts renamings (Just normalized) help
+      (AddOptionHelp option helpText) -> do
+        normalized <- normalizeFieldName option
+        return $ Modifiers shorts renamings args (insert normalized helpText help)
 
 mkShortOptions :: Modifiers -> String -> [Char]
 mkShortOptions (Modifiers shortMap _ _ _) option =
