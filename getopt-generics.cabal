@@ -52,6 +52,7 @@ test-suite spec
       System.Console.GetOpt.Generics.ResultSpec
       System.Console.GetOpt.GenericsSpec
       Example
+      Readme
   build-depends:
       base == 4.*
     , base-compat >= 0.8
