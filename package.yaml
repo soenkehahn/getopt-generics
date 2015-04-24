@@ -38,6 +38,7 @@ tests:
     dependencies:
       - hspec
       - hspec-expectations
+      - markdown-unlit
       - QuickCheck
       - silently
 

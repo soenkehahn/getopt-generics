@@ -62,6 +62,7 @@ test-suite spec
 
     , hspec
     , hspec-expectations
+    , markdown-unlit
     , QuickCheck
     , silently
   ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0 -pgmL markdown-unlit
