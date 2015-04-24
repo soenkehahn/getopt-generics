@@ -1,3 +1,9 @@
 #!/usr/bin/env runhaskell
+
 import Distribution.Simple
-main = defaultMain
+import Distribution.Simple.Program
+
+main :: IO ()
+main = defaultMainWithHooks simpleUserHooks
+       { hookedPrograms = [ simpleProgram "markdown-unlit" ]
+       }
