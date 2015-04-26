@@ -4,6 +4,9 @@
 
 module System.Console.GetOpt.GenericsSpec where
 
+import           Prelude                         ()
+import           Prelude.Compat
+
 import           Control.Exception
 import           Data.Foldable                   (forM_)
 import           Data.List

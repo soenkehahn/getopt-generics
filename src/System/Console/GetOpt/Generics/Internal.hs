@@ -5,7 +5,9 @@
 
 module System.Console.GetOpt.Generics.Internal where
 
-import           Control.Applicative
+import           Prelude                               ()
+import           Prelude.Compat
+
 import           Data.Char
 import           Generics.SOP
 

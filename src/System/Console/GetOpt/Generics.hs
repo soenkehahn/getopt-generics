@@ -16,6 +16,7 @@
 {-# LANGUAGE ViewPatterns          #-}
 
 {-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
+{-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 
 -- | @getopt-generics@ tries to make it very simple to create command line
 -- argument parsers. An introductory example can be found in the

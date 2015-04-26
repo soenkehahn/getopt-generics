@@ -19,7 +19,9 @@ module System.Console.GetOpt.Generics.Modifier (
   insertWith,
  ) where
 
-import           Control.Applicative
+import           Prelude                                 ()
+import           Prelude.Compat
+
 import           Control.Monad
 import           Data.Char
 import           Data.Maybe

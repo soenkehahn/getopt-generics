@@ -2,7 +2,8 @@
 
 module System.Console.GetOpt.Generics.Result where
 
-import           Control.Applicative
+import           Prelude             ()
+import           Prelude.Compat
 
 -- | Type to wrap results from the pure parsing functions.
 data Result a
