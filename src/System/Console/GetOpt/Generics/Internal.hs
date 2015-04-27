@@ -25,7 +25,7 @@ mapFieldInfoM :: (SingI xss, Applicative m) =>
   -> DatatypeInfo xss -> m (DatatypeInfo xss)
 mapFieldInfoM f info = case info of
     (ADT mod name constructors) ->
-      ADT mod name <$> (mapConsInfo (mapSingleCons f) constructors)
+      ADT mod name <$> hsequence' (hliftA (Comp . mapSingleCons f) constructors)
     (Newtype mod name constructor) ->
       Newtype mod name <$> (mapSingleCons f constructor)
   where
@@ -33,21 +33,9 @@ mapFieldInfoM f info = case info of
          (forall a . FieldInfo a -> m (FieldInfo a))
       -> ConstructorInfo xs -> m (ConstructorInfo xs)
     mapSingleCons f c = case c of
-      (Record name fields) -> Record name <$> (mapFieldInfo f fields)
+      (Record name fields) -> Record name <$> hsequence' (hliftA (Comp . f) fields)
       cons@Infix{} -> pure cons
       cons@Constructor{} -> pure cons
-
-    mapConsInfo :: forall m xs . Applicative m =>
-         (forall a . ConstructorInfo a -> m (ConstructorInfo a))
-      -> NP ConstructorInfo xs -> m (NP ConstructorInfo xs)
-    mapConsInfo _ Nil = pure Nil
-    mapConsInfo f (a :* r) = (:*) <$> f a <*> mapConsInfo f r
-
-    mapFieldInfo :: forall m xs . Applicative m =>
-         (forall a . FieldInfo a -> m (FieldInfo a))
-      -> NP FieldInfo xs -> m (NP FieldInfo xs)
-    mapFieldInfo _ Nil = pure Nil
-    mapFieldInfo f (a :* r) = (:*) <$> f a <*> mapFieldInfo f r
 
 normalizeFieldName :: String -> Result String
 normalizeFieldName s =
