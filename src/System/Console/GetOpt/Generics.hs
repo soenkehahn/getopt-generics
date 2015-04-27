@@ -158,10 +158,10 @@ processFields header modifiers args fields =
         collectResult arguments (project options initialFieldStates)
 
 
-mkOptDescrs :: forall xs . All Option xs =>
+mkOptDescrs :: forall xs . (SingI xs, All Option xs) =>
   Modifiers -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
-mkOptDescrs modifiers fields =
-  mapMaybe toOptDescr $ sumList $ npMap (mkOptDescr modifiers) fields
+mkOptDescrs modifiers =
+  mapMaybe toOptDescr . apInjs_NP . hcliftA (Proxy :: Proxy Option) (mkOptDescr modifiers)
 
 newtype OptDescrE a = OptDescrE (Maybe (OptDescr (FieldState a)))
 
@@ -205,7 +205,7 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
 
 data HelpFlag = HelpFlag
 
-helpWrapper :: (All Option xs) =>
+helpWrapper :: (SingI xs, All Option xs) =>
   String -> Modifiers -> [String] -> NP FieldInfo xs -> Result ()
 helpWrapper header modifiers args fields =
     case getOpt Permute [helpOption] args of
@@ -230,24 +230,14 @@ stripTrailingSpaces = unlines . map stripLines . lines
 
 -- * helper functions for NS and NP
 
-collectResult :: [String] -> NP FieldState xs -> Result (NP I xs)
-collectResult positionalArguments np = case np of
-  Nil -> Success Nil
-  (a :* r) -> (:*) <$> inner a <*> collectResult positionalArguments r
+collectResult :: SingI xs => [String] -> NP FieldState xs -> Result (NP I xs)
+collectResult positionalArguments = hsequence . hliftA inner
   where
-    inner :: FieldState a -> Result (I a)
-    inner (FieldSuccess v) = Success (I v)
+    inner :: FieldState a -> Result a
+    inner (FieldSuccess v) = Success v
     inner (ParseErrors errs) = Errors errs
     inner (Unset err) = Errors [err]
-    inner PositionalArguments = Success (I positionalArguments)
-
-npMap :: (All Option xs) => (forall a . Option a => f a -> g a) -> NP f xs -> NP g xs
-npMap _ Nil = Nil
-npMap f (a :* r) = f a :* npMap f r
-
-sumList :: NP f xs -> [NS f xs]
-sumList Nil = []
-sumList (a :* r) = Z a : map S (sumList r)
+    inner PositionalArguments = Success positionalArguments
 
 project :: (SingI xs, All Option xs) =>
   [NS FieldState xs] -> NP FieldState xs -> NP FieldState xs
