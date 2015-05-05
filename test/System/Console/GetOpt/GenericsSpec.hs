@@ -9,7 +9,7 @@ import           Prelude.Compat
 
 import           Control.Exception
 import           Data.Foldable                   (forM_)
-import           Data.List
+import           Data.List                       (isSuffixOf)
 import           Data.Typeable
 import qualified GHC.Generics                    as GHC
 import           System.Environment
@@ -74,8 +74,7 @@ part1 = do
           withArgs (words "--no-such-option") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldContain` "unrecognized"
-        output `shouldContain` "--no-such-option"
+        output `shouldBe` "unrecognized option `--no-such-option'\nmissing option: --baz=string\n"
 
       it "prints errors for missing options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
@@ -83,20 +82,21 @@ part1 = do
             _ :: Foo <- getArguments
             return ()
         output `shouldContain` "missing option: --baz=string"
+        output `shouldSatisfy` ("\n" `isSuffixOf`)
 
       it "prints out an error for unparseable options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
           withArgs (words "--bar foo --baz huhu") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldContain` "cannot parse as integer (optional): foo"
+        output `shouldBe` "cannot parse as integer (optional): foo\n"
 
       it "complains about invalid overwritten options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
           withArgs (words "--bar foo --baz huhu --bar 12") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldContain` "cannot parse as integer (optional): foo"
+        output `shouldBe` "cannot parse as integer (optional): foo\n"
 
     context "--help" $ do
       it "implements --help" $ do
@@ -109,6 +109,7 @@ part1 = do
           "--baz=string" :
           "--bool" :
           []
+        lines output `shouldSatisfy` (not . ("" `elem`))
 
       it "throws ExitSuccess" $ do
         withArgs ["--help"] (getArguments :: IO Foo)
@@ -136,6 +137,7 @@ part1 = do
              _ :: NotAllowed <- getArguments
              return ()
         output `shouldContain` "doesn't support constructors without field labels"
+        lines output `shouldSatisfy` (not . ("" `elem`))
 
   describe "parseArguments" $ do
     it "allows to overwrite String options" $ do
@@ -164,7 +166,7 @@ part2 = do
           handle (\ (_ :: SomeException) -> return ()) $ do
             _ :: ListOptions <- getArguments
             return ()
-        output `shouldContain` "cannot parse as integer (multiple possible): foo"
+        output `shouldBe` "cannot parse as integer (multiple possible): foo\n"
 
 data CamelCaseOptions
   = CamelCaseOptions {

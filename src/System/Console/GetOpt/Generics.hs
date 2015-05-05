@@ -83,10 +83,10 @@ modifiedGetArguments modifiers = do
   case parseArguments progName modifiers args of
     Success a -> return a
     OutputAndExit message -> do
-      putStrLn message
+      putStr message
       exitWith ExitSuccess
     Errors errs -> do
-      mapM_ (hPutStrLn stderr) errs
+      mapM_ (hPutStr stderr) errs
       exitWith $ ExitFailure 1
 
 -- | Pure variant of 'getArguments'. Also allows to declare 'Modifier's.
@@ -287,7 +287,7 @@ class Typeable a => Option a where
   -- | This is meant to be an internal function.
   _emptyOption :: String -> FieldState a
   _emptyOption flagName = Unset
-    ("missing option: --" ++ flagName ++ "=" ++ argumentType (Proxy :: Proxy a))
+    ("missing option: --" ++ flagName ++ "=" ++ argumentType (Proxy :: Proxy a) ++ "\n")
 
   -- | This is meant to be an internal function.
   _accumulate :: a -> a -> a
@@ -297,7 +297,7 @@ parseAsFieldState :: forall a . Option a => String -> FieldState a
 parseAsFieldState s = case parseArgument s of
   Just a -> FieldSuccess a
   Nothing -> ParseErrors $ pure $
-    "cannot parse as " ++ argumentType (Proxy :: Proxy a) ++ ": " ++ s
+    "cannot parse as " ++ argumentType (Proxy :: Proxy a) ++ ": " ++ s ++ "\n"
 
 combine :: Option a => FieldState a -> FieldState a -> FieldState a
 combine _ (Unset _) = impossible "combine"
