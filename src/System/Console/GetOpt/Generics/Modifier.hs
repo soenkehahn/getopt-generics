@@ -19,7 +19,7 @@ module System.Console.GetOpt.Generics.Modifier (
   insertWith,
  ) where
 
-import           Prelude                                 ()
+import           Prelude ()
 import           Prelude.Compat
 
 import           Control.Monad

@@ -15,8 +15,8 @@
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE ViewPatterns          #-}
 
-{-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
+{-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
 
 -- | @getopt-generics@ tries to make it very simple to create command line
 -- argument parsers. An introductory example can be found in the
@@ -40,9 +40,9 @@ module System.Console.GetOpt.Generics (
   Proxy(..)
  ) where
 
+import           Data.Orphans ()
 import           Prelude ()
 import           Prelude.Compat
-import           Data.Orphans ()
 
 import           Control.Monad (when)
 import           Data.Char
@@ -56,8 +56,8 @@ import           System.Exit
 import           System.IO
 import           Text.Read.Compat
 
-import           System.Console.GetOpt.Generics.Modifier
 import           System.Console.GetOpt.Generics.Internal
+import           System.Console.GetOpt.Generics.Modifier
 import           System.Console.GetOpt.Generics.Result
 
 -- | Parses command line arguments (gotten from 'withArgs') and returns the

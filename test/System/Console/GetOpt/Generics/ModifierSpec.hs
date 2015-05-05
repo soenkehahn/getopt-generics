@@ -6,7 +6,7 @@ import           Data.Char
 import           Data.Proxy
 import qualified GHC.Generics
 import           Test.Hspec
-import           Test.QuickCheck                         hiding (Result)
+import           Test.QuickCheck hiding (Result)
 
 import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier

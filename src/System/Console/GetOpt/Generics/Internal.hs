@@ -5,7 +5,7 @@
 
 module System.Console.GetOpt.Generics.Internal where
 
-import           Prelude                               ()
+import           Prelude ()
 import           Prelude.Compat
 
 import           Data.Char

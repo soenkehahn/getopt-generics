@@ -4,14 +4,14 @@
 
 module System.Console.GetOpt.GenericsSpec where
 
-import           Prelude                         ()
+import           Prelude ()
 import           Prelude.Compat
 
 import           Control.Exception
-import           Data.Foldable                   (forM_)
-import           Data.List                       (isSuffixOf)
+import           Data.Foldable (forM_)
+import           Data.List (isSuffixOf)
 import           Data.Typeable
-import qualified GHC.Generics                    as GHC
+import qualified GHC.Generics as GHC
 import           System.Environment
 import           System.Exit
 import           System.IO
