@@ -35,7 +35,7 @@ spec = do
     describe "parseArguments" $ do
       it "allows to specify a flag specific help" $ do
         let OutputAndExit output =
-              parseArguments "header" [AddOptionHelp "bar" "bar help text"]
+              parseArguments "prog-name" [AddOptionHelp "bar" "bar help text"]
                 (words "--help") :: Result Foo
         output `shouldContain` "--bar=string  bar help text"
 

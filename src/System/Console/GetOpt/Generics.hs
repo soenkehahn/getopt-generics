@@ -89,19 +89,22 @@ modifiedGetArguments modifiers = do
       mapM_ (hPutStr stderr) errs
       exitWith $ ExitFailure 1
 
--- | Pure variant of 'getArguments'. Also allows to declare 'Modifier's.
+-- | Pure variant of 'getArguments'.
 --
 --   Does not throw any exceptions.
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  String -> [Modifier] -> [String] -> Result a
-parseArguments header modifiersList args = do
+     String -- ^ Name of the program (e.g. from 'getProgName').
+  -> [Modifier] -- ^ List of 'Modifier's to manually tweak the command line interface.
+  -> [String] -- ^ List of command line arguments to parse (e.g. from 'getArgs').
+  -> Result a
+parseArguments progName modifiersList args = do
     (modifiers, datatypeInfo) <- (,) <$>
       mkModifiers modifiersList <*>
       normalizedDatatypeInfo (Proxy :: Proxy a)
     case datatypeInfo of
       ADT typeName _ (constructorInfo :* Nil) ->
         case constructorInfo of
-          (Record _ fields) -> processFields header modifiers args fields
+          (Record _ fields) -> processFields progName modifiers args fields
           Constructor{} ->
             err typeName "constructors without field labels"
           Infix{} ->
@@ -111,7 +114,7 @@ parseArguments header modifiersList args = do
       ADT typeName _ (_ :* _ :* _) ->
         err typeName "sum-types"
       Newtype _ _ (Record _ fields) ->
-        processFields header modifiers args fields
+        processFields progName modifiers args fields
       Newtype typeName _ (Constructor _) ->
         err typeName "constructors without field labels"
   where
@@ -122,7 +125,7 @@ parseArguments header modifiersList args = do
 processFields :: forall a xs .
   (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
   String -> Modifiers -> [String] -> NP FieldInfo xs -> Result a
-processFields header modifiers args fields =
+processFields progName modifiers args fields =
     mkInitialFieldStates modifiers fields >>= \ initialFieldStates ->
 
     showHelp *>
@@ -138,7 +141,7 @@ processFields header modifiers args fields =
     produceResult initialFieldStates options arguments
   where
     showHelp :: Result ()
-    showHelp = helpWrapper header modifiers args fields
+    showHelp = helpWrapper progName modifiers args fields
 
     reportParseErrors :: [String] -> Result ()
     reportParseErrors parseErrors = case parseErrors of
@@ -207,7 +210,7 @@ data HelpFlag = HelpFlag
 
 helpWrapper :: (SingI xs, All Option xs) =>
   String -> Modifiers -> [String] -> NP FieldInfo xs -> Result ()
-helpWrapper header modifiers args fields =
+helpWrapper progName modifiers args fields =
     case getOpt Permute [helpOption] args of
       ([], _, _) -> return ()
         -- no help flag given
@@ -222,6 +225,11 @@ helpWrapper header modifiers args fields =
 
     toOptDescrUnit :: [OptDescr a] -> [OptDescr ()]
     toOptDescrUnit = map (fmap (const ()))
+
+    header :: String
+    header = progName ++ " " ++ "[OPTIONS]" ++
+      maybe "" (\ t -> " [" ++ map toUpper t ++ "]")
+        (getPositionalArgumentType modifiers)
 
 stripTrailingSpaces :: String -> String
 stripTrailingSpaces = unlines . map stripLines . lines

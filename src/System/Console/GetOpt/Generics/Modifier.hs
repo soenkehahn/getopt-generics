@@ -10,6 +10,7 @@ module System.Console.GetOpt.Generics.Modifier (
   mkLongOption,
   hasPositionalArgumentsField,
   isPositionalArgumentsField,
+  getPositionalArgumentType,
   getHelpText,
 
   deriveShortOptions,
@@ -38,10 +39,14 @@ data Modifier
   | RenameOption String String
     -- ^ @RenameOption fieldName customName@ renames the option generated
     --   through the @fieldName@ by @customName@.
-  | UseForPositionalArguments String
-    -- ^ @UseForPositionalArguments fieldName@ fills the field addressed by
-    --   @fieldName@ with the positional arguments (i.e. arguments that don't
-    --   correspond to a flag). The field has to have type @['String']@.
+  | UseForPositionalArguments String String
+    -- ^ @UseForPositionalArguments fieldName argumentType@ fills the field
+    --   addressed by @fieldName@ with the positional arguments (i.e. arguments
+    --   that don't correspond to a flag). The field has to have type
+    --   @['String']@.
+    --
+    --   @argumentType@ is used as the type of the positional arguments in the
+    --   help output.
   | AddOptionHelp String String
     -- ^ @AddOptionHelp fieldName helpText@ adds a help text for the option
     --   @fieldName@.
@@ -50,7 +55,7 @@ data Modifier
 data Modifiers = Modifiers {
   _shortOptions :: [(String, [Char])],
   _renamings :: [(String, String)],
-  positionalArgumentsField :: Maybe String,
+  positionalArgumentsField :: Maybe (String, String),
   helpTexts :: [(String, String)]
  }
  deriving (Show, Eq, Ord)
@@ -68,9 +73,9 @@ mkModifiers = foldM inner (Modifiers [] [] Nothing [])
       (RenameOption from to) -> do
         fromNormalized <- normalizeFieldName from
         return $ Modifiers shorts (insert fromNormalized to renamings) args help
-      (UseForPositionalArguments option) -> do
+      (UseForPositionalArguments option typ) -> do
         normalized <- normalizeFieldName option
-        return $ Modifiers shorts renamings (Just normalized) help
+        return $ Modifiers shorts renamings (Just (normalized, typ)) help
       (AddOptionHelp option helpText) -> do
         normalized <- normalizeFieldName option
         return $ Modifiers shorts renamings args (insert normalized helpText help)
@@ -88,7 +93,10 @@ hasPositionalArgumentsField = isJust . positionalArgumentsField
 
 isPositionalArgumentsField :: Modifiers -> String -> Bool
 isPositionalArgumentsField modifiers field =
-  Just field == positionalArgumentsField modifiers
+  Just field == fmap fst (positionalArgumentsField modifiers)
+
+getPositionalArgumentType :: Modifiers -> Maybe String
+getPositionalArgumentType = fmap snd . positionalArgumentsField
 
 getHelpText :: Modifiers -> String -> String
 getHelpText modifiers field = fromMaybe "" (lookup field (helpTexts modifiers))

@@ -9,7 +9,7 @@ import           Prelude.Compat
 
 import           Control.Exception
 import           Data.Foldable (forM_)
-import           Data.List (isSuffixOf)
+import           Data.List (isPrefixOf, isSuffixOf)
 import           Data.Typeable
 import qualified GHC.Generics as GHC
 import           System.Environment
@@ -139,6 +139,11 @@ part1 = do
         output `shouldContain` "doesn't support constructors without field labels"
         lines output `shouldSatisfy` (not . ("" `elem`))
 
+      it "outputs a header including \"[OPTIONS]\"" $ do
+        let OutputAndExit output =
+              parseArguments "prog-name" [] ["--help"] :: Result Foo
+        output `shouldSatisfy` ("prog-name [OPTIONS]\n" `isPrefixOf`)
+
   describe "parseArguments" $ do
     it "allows to overwrite String options" $ do
       parseArguments "header" [] (words "--baz one --baz two")
@@ -187,37 +192,37 @@ part3 = do
   describe "parseArguments" $ do
     it "help does not contain camelCase flags" $ do
       let OutputAndExit output :: Result CamelCaseOptions
-            = parseArguments "header" [] ["--help"]
+            = parseArguments "prog-name" [] ["--help"]
       output `shouldNotContain` "camelCase"
       output `shouldContain` "camel-case"
 
     it "error messages don't contain camelCase flags" $ do
       let Errors errs :: Result CamelCaseOptions
-            = parseArguments "header" [] ["--bla"]
+            = parseArguments "prog-name" [] ["--bla"]
       show errs `shouldNotContain` "camelCase"
       show errs `shouldContain` "camel-case"
 
     context "AddShortOption" $ do
       it "allows modifiers for short options" $ do
-        parseArguments "header" [AddShortOption "camel-case" 'x'] (words "-x foo")
+        parseArguments "prog-name" [AddShortOption "camel-case" 'x'] (words "-x foo")
           `shouldBe` Success (CamelCaseOptions "foo")
 
       it "allows modifiers in camelCase" $ do
-        parseArguments "header" [AddShortOption "camelCase" 'x'] (words "-x foo")
+        parseArguments "prog-name" [AddShortOption "camelCase" 'x'] (words "-x foo")
           `shouldBe` Success (CamelCaseOptions "foo")
 
       let parse :: [String] -> Result CamelCaseOptions
-          parse = parseArguments "header" [AddShortOption "camelCase" 'x']
+          parse = parseArguments "prog-name" [AddShortOption "camelCase" 'x']
       it "includes the short option in the help" $ do
         let OutputAndExit output = parse ["--help"]
         output `shouldContain` "-x string"
 
     context "RenameOption" $ do
       it "allows to rename options" $ do
-        parseArguments "header" [RenameOption "camelCase" "bla"] (words "--bla foo")
+        parseArguments "prog-name" [RenameOption "camelCase" "bla"] (words "--bla foo")
           `shouldBe` Success (CamelCaseOptions "foo")
 
-      let parse = parseArguments "header"
+      let parse = parseArguments "prog-name"
             [RenameOption "camelCase" "foo", RenameOption "camelCase" "bar"]
       it "allows to shadow earlier modifiers with later modifiers" $ do
         parse (words "--bar foo")
@@ -231,7 +236,7 @@ part3 = do
         show errs `shouldContain` "camel-case"
 
       it "allows to address fields in Modifiers in slugified form" $ do
-        parseArguments "header" [RenameOption "camel-case" "foo"] (words "--foo bar")
+        parseArguments "prog-name" [RenameOption "camel-case" "foo"] (words "--foo bar")
           `shouldBe` Success (CamelCaseOptions "bar")
 
 data WithUnderscore
@@ -247,7 +252,7 @@ part4 :: Spec
 part4 = do
   describe "parseArguments" $ do
     it "ignores leading underscores in field names" $ do
-      parseArguments "header" [] (words "--with-underscore foo")
+      parseArguments "prog-name" [] (words "--with-underscore foo")
         `shouldBe` Success (WithUnderscore "foo")
 
 data WithPositionalArguments
@@ -265,26 +270,32 @@ part5 = do
   describe "parseArguments" $ do
     context "UseForPositionalArguments" $ do
       it "allows positionalArguments" $ do
-        parseArguments "header"
-          [UseForPositionalArguments "positionalArguments"]
+        parseArguments "prog-name"
+          [UseForPositionalArguments "positionalArguments" "type"]
           (words "foo bar --some-flag")
             `shouldBe` Success (WithPositionalArguments ["foo", "bar"] True)
 
       it "disallows to specify the option used for positional arguments" $ do
-        parseArguments "header"
-          [UseForPositionalArguments "positionalArguments"]
+        parseArguments "prog-name"
+          [UseForPositionalArguments "positionalArguments" "type"]
           (words "--positional-arguments foo")
             `shouldBe`
           (Errors ["unrecognized option `--positional-arguments'\n"]
             :: Result WithPositionalArguments)
 
       it "complains about fields that don't have type [String]" $ do
-        parseArguments "header"
-          [UseForPositionalArguments "someFlag"]
+        parseArguments "prog-name"
+          [UseForPositionalArguments "someFlag" "type"]
           (words "doesn't matter")
             `shouldBe`
           (Errors ["UseForPositionalArguments can only be used for fields of type [String] not Bool"]
             :: Result WithPositionalArguments)
+
+      it "includes the type of positional arguments in the help output in upper-case" $ do
+        let OutputAndExit output = parseArguments "prog-name"
+              [UseForPositionalArguments "positionalArguments" "foo"]
+              (words "--help") :: Result WithPositionalArguments
+        output `shouldSatisfy` ("prog-name [OPTIONS] [FOO]\n" `isPrefixOf`)
 
 data CustomFields
   = CustomFields {
@@ -316,7 +327,7 @@ part6 = do
   describe "parseArguments" $ do
     context "CustomFields" $ do
       it "allows easy implementation of custom field types" $ do
-        parseArguments "header" []
+        parseArguments "prog-name" []
             (words "--custom foo --custom-list bar --custom-maybe baz")
           `shouldBe`
             Success (CustomFields CFoo [CBar] (Just CBaz))
