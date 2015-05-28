@@ -6,6 +6,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverlappingInstances  #-}
 {-# LANGUAGE RankNTypes            #-}
@@ -44,10 +45,10 @@ import           Data.Orphans ()
 import           Prelude ()
 import           Prelude.Compat
 
-import           Control.Monad (when)
 import           Data.Char
 import           Data.List
 import           Data.Maybe
+import           Data.Proxy
 import           Data.Typeable
 import           Generics.SOP
 import           System.Console.GetOpt
@@ -104,9 +105,10 @@ parseArguments progName modifiersList args = do
     case datatypeInfo of
       ADT typeName _ (constructorInfo :* Nil) ->
         case constructorInfo of
-          (Record _ fields) -> processFields progName modifiers args fields
+          (Record _ fields) -> processFields progName modifiers args
+            (hliftA (Comp . Selector) fields)
           Constructor{} ->
-            err typeName "constructors without field labels"
+            processFields progName modifiers args (hpure (Comp NoSelector))
           Infix{} ->
             err typeName "infix constructors"
       ADT typeName _ Nil ->
@@ -114,7 +116,8 @@ parseArguments progName modifiersList args = do
       ADT typeName _ (_ :* _ :* _) ->
         err typeName "sum-types"
       Newtype _ _ (Record _ fields) ->
-        processFields progName modifiers args fields
+        processFields progName modifiers args
+          (hliftA (Comp . Selector) fields)
       Newtype typeName _ (Constructor _) ->
         err typeName "constructors without field labels"
   where
@@ -122,54 +125,48 @@ parseArguments progName modifiersList args = do
       Errors ["getopt-generics doesn't support " ++ message ++
               " (" ++ typeName ++ ")."]
 
+data Field a
+  = NoSelector
+  | Selector a
+
 processFields :: forall a xs .
   (Generic a, Code a ~ '[xs], SingI xs, All Option xs) =>
-  String -> Modifiers -> [String] -> NP FieldInfo xs -> Result a
-processFields progName modifiers args fields =
-    mkInitialFieldStates modifiers fields >>= \ initialFieldStates ->
+  String -> Modifiers -> [String] -> NP (Field :.: FieldInfo) xs -> Result a
+processFields progName modifiers args fields = do
+    initialFieldStates <- mkInitialFieldStates modifiers fields
 
-    showHelp *>
+    showHelp
 
     let (options, arguments, parseErrors) =
           getOpt Permute (mkOptDescrs modifiers fields) args
-    in
 
-    reportParseErrors parseErrors *>
+    reportGetOptErrors parseErrors
 
-    reportInvalidPositionalArguments arguments *>
+    let (withPositionalArguments, additionalArgumentsErrors) =
+          fillInPositionalArguments arguments $
+            project options initialFieldStates
+    either Errors return additionalArgumentsErrors
 
-    produceResult initialFieldStates options arguments
+    to . SOP . Z <$> collectResult withPositionalArguments
   where
     showHelp :: Result ()
     showHelp = helpWrapper progName modifiers args fields
 
-    reportParseErrors :: [String] -> Result ()
-    reportParseErrors parseErrors = case parseErrors of
+    reportGetOptErrors :: [String] -> Result ()
+    reportGetOptErrors parseErrors = case parseErrors of
       [] -> pure ()
       errs -> Errors errs
 
-    reportInvalidPositionalArguments :: [String] -> Result ()
-    reportInvalidPositionalArguments arguments =
-      when (not $ hasPositionalArgumentsField modifiers) $
-        case arguments of
-          [] -> pure ()
-          _ -> Errors (map ("unknown argument: " ++) arguments)
-
-    produceResult :: NP FieldState xs -> [NS FieldState xs] -> [String] -> Result a
-    produceResult initialFieldStates options arguments =
-      (to . SOP . Z) <$>
-        collectResult arguments (project options initialFieldStates)
-
-
 mkOptDescrs :: forall xs . (SingI xs, All Option xs) =>
-  Modifiers -> NP FieldInfo xs -> [OptDescr (NS FieldState xs)]
+  Modifiers -> NP (Field :.: FieldInfo) xs -> [OptDescr (NS FieldState xs)]
 mkOptDescrs modifiers =
   mapMaybe toOptDescr . apInjs_NP . hcliftA (Proxy :: Proxy Option) (mkOptDescr modifiers)
 
 newtype OptDescrE a = OptDescrE (Maybe (OptDescr (FieldState a)))
 
-mkOptDescr :: forall a . Option a => Modifiers -> FieldInfo a -> OptDescrE a
-mkOptDescr modifiers (FieldInfo name) = OptDescrE $
+mkOptDescr :: forall a . Option a => Modifiers -> (Field :.: FieldInfo) a -> OptDescrE a
+mkOptDescr _modifiers (Comp NoSelector) = OptDescrE Nothing
+mkOptDescr modifiers (Comp (Selector (FieldInfo name))) = OptDescrE $
   if isPositionalArgumentsField modifiers name
     then Nothing
     else Just $ Option
@@ -184,19 +181,21 @@ toOptDescr (Z (OptDescrE Nothing)) = Nothing
 toOptDescr (S a) = fmap (fmap S) (toOptDescr a)
 
 mkInitialFieldStates :: forall xs . (SingI xs, All Option xs) =>
-  Modifiers -> NP FieldInfo xs -> Result (NP FieldState xs)
+  Modifiers -> NP (Field :.: FieldInfo) xs -> Result (NP FieldState xs)
 mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
   (SNil, Nil) -> return Nil
-  (SCons, FieldInfo name :* r) ->
+  (SCons, Comp (Selector (FieldInfo name)) :* r) ->
     (:*) <$> inner name <*> mkInitialFieldStates modifiers r
-  _ -> uninhabited "mkEmpty"
+  (SCons, Comp NoSelector :* r) ->
+    (:*) <$> Success PositionalArgument <*> mkInitialFieldStates modifiers r
+  _ -> uninhabited "mkInitialFieldStates"
 
  where
   inner :: forall x . Option x => String -> Result (FieldState x)
   inner name = if isPositionalArgumentsField modifiers name
     then case cast (id :: FieldState x -> FieldState x) of
       (Just id' :: Maybe (FieldState [String] -> FieldState x)) ->
-        return $ id' PositionalArguments
+        Success $ id' PositionalArguments
       Nothing -> Errors
         ["UseForPositionalArguments can only be used " ++
          "for fields of type [String] not " ++
@@ -209,7 +208,7 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
 data HelpFlag = HelpFlag
 
 helpWrapper :: (SingI xs, All Option xs) =>
-  String -> Modifiers -> [String] -> NP FieldInfo xs -> Result ()
+  String -> Modifiers -> [String] -> NP (Field :.: FieldInfo) xs -> Result ()
 helpWrapper progName modifiers args fields =
     case getOpt Permute [helpOption] args of
       ([], _, _) -> return ()
@@ -227,30 +226,74 @@ helpWrapper progName modifiers args fields =
     toOptDescrUnit = map (fmap (const ()))
 
     header :: String
-    header = progName ++ " " ++ "[OPTIONS]" ++
-      maybe "" (\ t -> " [" ++ map toUpper t ++ "]")
-        (getPositionalArgumentType modifiers)
+    header = unwords $
+      progName :
+      "[OPTIONS]" :
+      positionalArgumentHelp fields ++
+      maybe [] (\ t -> ["[" ++ map toUpper t ++ "]"])
+        (getPositionalArgumentType modifiers) ++
+      []
+
+positionalArgumentHelp :: (All Option xs) => NP (Field :.: FieldInfo) xs -> [String]
+positionalArgumentHelp (p@(Comp NoSelector) :* r) =
+  map toUpper (argumentType (toProxy p)) : positionalArgumentHelp r
+positionalArgumentHelp (_ :* r) = positionalArgumentHelp r
+positionalArgumentHelp Nil = []
 
 stripTrailingSpaces :: String -> String
 stripTrailingSpaces = unlines . map stripLines . lines
   where
     stripLines = reverse . dropWhile isSpace . reverse
 
--- * helper functions for NS and NP
-
-collectResult :: SingI xs => [String] -> NP FieldState xs -> Result (NP I xs)
-collectResult positionalArguments = hsequence . hliftA inner
+fillInPositionalArguments :: (All Option xs) =>
+  [String] -> NP FieldState xs -> (NP FieldState xs, Either [String] ())
+fillInPositionalArguments = inner . Just
   where
-    inner :: FieldState a -> Result a
-    inner (FieldSuccess v) = Success v
-    inner (ParseErrors errs) = Errors errs
-    inner (Unset err) = Errors [err]
-    inner PositionalArguments = Success positionalArguments
+    inner :: All Option xs =>
+      Maybe [String] -> NP FieldState xs -> (NP FieldState xs, Either [String] ())
+    inner arguments fields = case (arguments, fields) of
+
+      (Just arguments, PositionalArguments :* r) -> FieldSuccess arguments `cons` inner Nothing r
+      (Nothing, PositionalArguments :* r) ->
+        FieldErrors ["UseForPositionalArguments can only be used once"] `cons` inner Nothing r
+
+      (Just (argument : arguments), PositionalArgument :* r) ->
+        case parseArgumentEither argument of
+          Right a -> FieldSuccess a `cons` inner (Just arguments) r
+          Left err -> FieldErrors [err] `cons` inner (Just arguments) r
+      (Just [], p@PositionalArgument :* r) ->
+        FieldErrors ["missing argument of type " ++ map toUpper (argumentType (toProxy p))]
+          `cons` inner (Just []) r
+      (Nothing, PositionalArgument :* _) ->
+        impossible "fillInPositionalArguments"
+
+      (arguments, a :* r) -> a `cons` inner arguments r
+      (Just [], Nil) -> (Nil, Right ())
+      (Nothing, Nil) -> (Nil, Right ())
+      (Just arguments@(_ : _), Nil) ->
+        (Nil, Left (map (\ arg -> "unknown argument: " ++ arg) arguments))
+
+    cons :: FieldState x -> (NP FieldState xs, r) -> (NP FieldState (x ': xs), r)
+    cons fieldState (arguments, r) = (fieldState :* arguments, r)
+
+collectResult :: (SingI xs) => NP FieldState xs -> Result (NP I xs)
+collectResult input =
+    hsequence $ hliftA inner input
+  where
+    inner :: FieldState x -> Result x
+    inner s = case s of
+      FieldSuccess v -> Success v
+      FieldErrors errs -> Errors errs
+      Unset err -> Errors [err]
+      PositionalArguments -> impossible "collectResult"
+      PositionalArgument -> impossible "collectResult"
+
+-- * helper functions for NS and NP
 
 project :: (SingI xs, All Option xs) =>
   [NS FieldState xs] -> NP FieldState xs -> NP FieldState xs
-project sums empty =
-    foldl' inner empty sums
+project sums start =
+    foldl' inner start sums
   where
     inner :: (All Option xs) =>
       NP FieldState xs -> NS FieldState xs -> NP FieldState xs
@@ -264,13 +307,17 @@ impossible name = error ("System.Console.GetOpt.Generics." ++ name ++ ": This sh
 uninhabited :: String -> a
 uninhabited = impossible
 
+toProxy :: f a -> Proxy a
+toProxy = const Proxy
+
 -- * possible field types
 
 data FieldState a where
   Unset :: String -> FieldState a
-  ParseErrors :: [String] -> FieldState a
+  FieldErrors :: [String] -> FieldState a
   FieldSuccess :: a -> FieldState a
   PositionalArguments :: FieldState [String]
+  PositionalArgument :: FieldState a
   deriving (Typeable)
 
 -- | Type class for all allowed field types.
@@ -301,25 +348,41 @@ class Typeable a => Option a where
   _accumulate :: a -> a -> a
   _accumulate _ x = x
 
+parseArgumentEither :: forall a . Option a => String -> Either String a
+parseArgumentEither s =
+  maybe
+    (Left ("cannot parse as " ++ argumentType (Proxy :: Proxy a) ++ ": " ++ s ++ "\n"))
+    Right
+    (parseArgument s)
+
 parseAsFieldState :: forall a . Option a => String -> FieldState a
-parseAsFieldState s = case parseArgument s of
-  Just a -> FieldSuccess a
-  Nothing -> ParseErrors $ pure $
-    "cannot parse as " ++ argumentType (Proxy :: Proxy a) ++ ": " ++ s ++ "\n"
+parseAsFieldState s = either
+  (\ err -> FieldErrors [err])
+  FieldSuccess
+  (parseArgumentEither s)
 
 combine :: Option a => FieldState a -> FieldState a -> FieldState a
 combine _ (Unset _) = impossible "combine"
 combine _ PositionalArguments = impossible "combine"
-combine (ParseErrors e) (ParseErrors f) = ParseErrors (e ++ f)
-combine (ParseErrors e) _ = ParseErrors e
+combine _ PositionalArgument = impossible "combine"
+combine (FieldErrors e) (FieldErrors f) = FieldErrors (e ++ f)
+combine (FieldErrors e) _ = FieldErrors e
 combine (Unset _) x = x
-combine (FieldSuccess _) (ParseErrors e) = ParseErrors e
+combine (FieldSuccess _) (FieldErrors e) = FieldErrors e
 combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (_accumulate a b)
 combine PositionalArguments _ = PositionalArguments
+combine PositionalArgument _ = PositionalArgument
 
 instance Option Bool where
   argumentType _ = "bool"
-  parseArgument = impossible "Option.Bool.parseArguments"
+
+  parseArgument :: String -> Maybe Bool
+  parseArgument s
+    | map toLower s == "true" = Just True
+    | map toLower s == "false" = Just False
+    | otherwise = case readMaybe s of
+      Just (n :: Integer) -> Just (n > 0)
+      Nothing -> Nothing
 
   _toOption = NoArg (FieldSuccess True)
   _emptyOption _ = FieldSuccess False

@@ -18,6 +18,7 @@ import           System.IO
 import           System.IO.Silently
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib
+import           Test.QuickCheck hiding (Result(..))
 
 import           System.Console.GetOpt.Generics
 
@@ -29,6 +30,7 @@ spec = do
   part4
   part5
   part6
+  part7
 
 data Foo
   = Foo {
@@ -41,7 +43,9 @@ data Foo
 instance Generic Foo
 instance HasDatatypeInfo Foo
 
-data NotAllowed = NotAllowed
+data NotAllowed
+  = NotAllowed1
+  | NotAllowed2
   deriving (GHC.Generic, Show, Eq)
 
 instance Generic NotAllowed
@@ -91,6 +95,10 @@ part1 = do
             return ()
         output `shouldBe` "cannot parse as integer (optional): foo\n"
 
+      it "complains about unused positional arguments" $ do
+        (parseArguments "prog-name" [] (words "--baz foo unused") :: Result Foo)
+          `shouldBe` Errors ["unknown argument: unused"]
+
       it "complains about invalid overwritten options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
           withArgs (words "--bar foo --baz huhu --bar 12") $ do
@@ -136,7 +144,7 @@ part1 = do
           handle (\ (_ :: SomeException) -> return ()) $ do
              _ :: NotAllowed <- getArguments
              return ()
-        output `shouldContain` "doesn't support constructors without field labels"
+        output `shouldContain` "getopt-generics doesn't support sum-types"
         lines output `shouldSatisfy` (not . ("" `elem`))
 
       it "outputs a header including \"[OPTIONS]\"" $ do
@@ -265,6 +273,17 @@ data WithPositionalArguments
 instance Generic WithPositionalArguments
 instance HasDatatypeInfo WithPositionalArguments
 
+data WithMultiplePositionalArguments
+  = WithMultiplePositionalArguments {
+    positionalArguments1 :: [String],
+    positionalArguments2 :: [String],
+    someOtherFlag :: Bool
+  }
+  deriving (GHC.Generic, Show, Eq)
+
+instance Generic WithMultiplePositionalArguments
+instance HasDatatypeInfo WithMultiplePositionalArguments
+
 part5 :: Spec
 part5 = do
   describe "parseArguments" $ do
@@ -296,6 +315,14 @@ part5 = do
               [UseForPositionalArguments "positionalArguments" "foo"]
               (words "--help") :: Result WithPositionalArguments
         output `shouldSatisfy` ("prog-name [OPTIONS] [FOO]\n" `isPrefixOf`)
+
+      it "complains about multiple PositionalArguments fields" $ do
+        let modifiers =
+              UseForPositionalArguments "positionalArguments1" "foo" :
+              UseForPositionalArguments "positionalArguments2" "bar" :
+              []
+        (parseArguments "prog-name" modifiers [] :: Result WithMultiplePositionalArguments)
+          `shouldBe` Errors ["UseForPositionalArguments can only be used once"]
 
 data CustomFields
   = CustomFields {
@@ -331,3 +358,60 @@ part6 = do
             (words "--custom foo --custom-list bar --custom-maybe baz")
           `shouldBe`
             Success (CustomFields CFoo [CBar] (Just CBaz))
+
+data WithoutSelectors
+  = WithoutSelectors String Bool Int
+  deriving (Eq, Show, GHC.Generic)
+
+instance Generic WithoutSelectors
+instance HasDatatypeInfo WithoutSelectors
+
+part7 :: Spec
+part7 = do
+  describe "parseArguments" $ do
+    context "WithoutSelectors" $ do
+      it "populates fields without selectors from positional arguments" $ do
+        parseArguments "prog-name" [] (words "foo true 23")
+          `shouldBe` Success (WithoutSelectors "foo" True 23)
+
+      it "has good help output for positional arguments" $ do
+        let OutputAndExit output = parseArguments "prog-name" [] ["--help"] :: Result WithoutSelectors
+        output `shouldSatisfy` ("prog-name [OPTIONS] STRING BOOL INTEGER" `isPrefixOf`)
+
+      it "has good error messages for missing positional arguments" $ do
+        (parseArguments "prog-name" [] (words "foo") :: Result WithoutSelectors)
+          `shouldBe` Errors (
+            "missing argument of type BOOL" :
+            "missing argument of type INTEGER" :
+            [])
+
+      it "complains about additional positional arguments" $ do
+        (parseArguments "prog-name" [] (words "foo true 5 bar") :: Result WithoutSelectors)
+          `shouldBe` Errors ["unknown argument: bar"]
+
+      it "allows to use tuples" $ do
+        (parseArguments "prog-name" [] (words "42 bar") :: Result (Int, String))
+          `shouldBe` Success (42, "bar")
+
+  describe "Option.Bool" $ do
+    describe "parseArgument" $ do
+      it "parses 'true' case-insensitively" $ do
+        forM_ ["true", "True", "tRue", "TRUE"] $ \ true ->
+          parseArgument true `shouldBe` Just True
+
+      it "parses 'false' case-insensitively" $ do
+        forM_ ["false", "False", "falSE", "FALSE"] $ \ true ->
+          parseArgument true `shouldBe` Just False
+
+      it "parses every positive integer as true" $ do
+        property $ \ (n :: Int) ->
+          n > 0 ==>
+          parseArgument (show n) `shouldBe` Just True
+
+      it "parses every non-positive integer as false" $ do
+        property $ \ (n :: Int) ->
+          n <= 0 ==>
+          parseArgument (show n) `shouldBe` Just False
+
+      it "doesn't parse 'foo'" $ do
+        parseArgument "foo" `shouldBe` (Nothing :: Maybe Bool)
