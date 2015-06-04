@@ -5,6 +5,10 @@ module System.Console.GetOpt.Generics.Result where
 import           Prelude ()
 import           Prelude.Compat
 
+import           Data.List
+import           System.Exit
+import           System.IO
+
 -- | Type to wrap results from the pure parsing functions.
 data Result a
   = Success a
@@ -38,3 +42,18 @@ instance Monad Result where
   OutputAndExit message >>= _ = OutputAndExit message
 
   (>>) = (*>)
+
+handleResult :: Result a -> IO a
+handleResult result = case result of
+  Success a -> return a
+  OutputAndExit message -> do
+    putStr message
+    exitWith ExitSuccess
+  Errors errs -> do
+    mapM_ (hPutStr stderr . addNewlineIfMissing) errs
+    exitWith $ ExitFailure 1
+
+addNewlineIfMissing :: String -> String
+addNewlineIfMissing s
+  | "\n" `isSuffixOf` s = s
+  | otherwise = s ++ "\n"

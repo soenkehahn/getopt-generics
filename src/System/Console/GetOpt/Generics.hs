@@ -53,8 +53,6 @@ import           Data.Typeable
 import           Generics.SOP
 import           System.Console.GetOpt
 import           System.Environment
-import           System.Exit
-import           System.IO
 import           Text.Read.Compat
 
 import           System.Console.GetOpt.Generics.Internal
@@ -81,14 +79,7 @@ modifiedGetArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (C
 modifiedGetArguments modifiers = do
   args <- getArgs
   progName <- getProgName
-  case parseArguments progName modifiers args of
-    Success a -> return a
-    OutputAndExit message -> do
-      putStr message
-      exitWith ExitSuccess
-    Errors errs -> do
-      mapM_ (hPutStr stderr) errs
-      exitWith $ ExitFailure 1
+  handleResult $ parseArguments progName modifiers args
 
 -- | Pure variant of 'getArguments'.
 --
@@ -342,7 +333,7 @@ class Typeable a => Option a where
   -- | This is meant to be an internal function.
   _emptyOption :: String -> FieldState a
   _emptyOption flagName = Unset
-    ("missing option: --" ++ flagName ++ "=" ++ argumentType (Proxy :: Proxy a) ++ "\n")
+    ("missing option: --" ++ flagName ++ "=" ++ argumentType (Proxy :: Proxy a))
 
   -- | This is meant to be an internal function.
   _accumulate :: a -> a -> a
@@ -351,7 +342,7 @@ class Typeable a => Option a where
 parseArgumentEither :: forall a . Option a => String -> Either String a
 parseArgumentEither s =
   maybe
-    (Left ("cannot parse as " ++ argumentType (Proxy :: Proxy a) ++ ": " ++ s ++ "\n"))
+    (Left ("cannot parse as " ++ argumentType (Proxy :: Proxy a) ++ ": " ++ s))
     Right
     (parseArgument s)
 
