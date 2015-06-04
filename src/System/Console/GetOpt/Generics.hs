@@ -226,13 +226,13 @@ helpWrapper progName modifiers args fields =
       progName :
       "[OPTIONS]" :
       positionalArgumentHelp fields ++
-      maybe [] (\ t -> ["[" ++ map toUpper t ++ "]"])
+      maybe [] (\ t -> ["[" ++ t ++ "]"])
         (getPositionalArgumentType modifiers) ++
       []
 
 positionalArgumentHelp :: (All Option xs) => NP (Field :.: FieldInfo) xs -> [String]
 positionalArgumentHelp (p@(Comp NoSelector) :* r) =
-  map toUpper (argumentType (toProxy p)) : positionalArgumentHelp r
+  argumentType (toProxy p) : positionalArgumentHelp r
 positionalArgumentHelp (_ :* r) = positionalArgumentHelp r
 positionalArgumentHelp Nil = []
 
@@ -263,7 +263,7 @@ fillInPositionalArguments = inner . Just
           Right a -> FieldSuccess a `cons` inner (Just arguments) r
           Left err -> FieldErrors [err] `cons` inner (Just arguments) r
       (Just [], p@PositionalArgument :* r) ->
-        FieldErrors ["missing argument of type " ++ map toUpper (argumentType (toProxy p))]
+        FieldErrors ["missing argument of type " ++ argumentType (toProxy p)]
           `cons` inner (Just []) r
       (Nothing, PositionalArgument :* _) ->
         impossible "fillInPositionalArguments"
@@ -376,20 +376,6 @@ combine (FieldSuccess a) (FieldSuccess b) = FieldSuccess (_accumulate a b)
 combine PositionalArguments _ = PositionalArguments
 combine PositionalArgument _ = PositionalArgument
 
-instance Option Bool where
-  argumentType _ = "bool"
-
-  parseArgument :: String -> Maybe Bool
-  parseArgument s
-    | map toLower s == "true" = Just True
-    | map toLower s == "false" = Just False
-    | otherwise = case readMaybe s of
-      Just (n :: Integer) -> Just (n > 0)
-      Nothing -> Nothing
-
-  _toOption = NoArg (FieldSuccess True)
-  _emptyOption _ = FieldSuccess False
-
 instance Option a => Option [a] where
   argumentType Proxy = argumentType (Proxy :: Proxy a) ++ " (multiple possible)"
   parseArgument x = case parseArgument x of
@@ -405,14 +391,28 @@ instance Option a => Option (Maybe a) where
     Nothing -> Nothing
   _emptyOption _ = FieldSuccess Nothing
 
+instance Option Bool where
+  argumentType _ = "BOOL"
+
+  parseArgument :: String -> Maybe Bool
+  parseArgument s
+    | map toLower s == "true" = Just True
+    | map toLower s == "false" = Just False
+    | otherwise = case readMaybe s of
+      Just (n :: Integer) -> Just (n > 0)
+      Nothing -> Nothing
+
+  _toOption = NoArg (FieldSuccess True)
+  _emptyOption _ = FieldSuccess False
+
 instance Option String where
-  argumentType Proxy = "string"
+  argumentType Proxy = "STRING"
   parseArgument = Just
 
 instance Option Int where
-  argumentType _ = "integer"
+  argumentType _ = "INTEGER"
   parseArgument = readMaybe
 
 instance Option Integer where
-  argumentType _ = "integer"
+  argumentType _ = "INTEGER"
   parseArgument = readMaybe

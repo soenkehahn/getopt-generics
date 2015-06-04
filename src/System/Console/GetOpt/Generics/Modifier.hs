@@ -75,7 +75,7 @@ mkModifiers = foldM inner (Modifiers [] [] Nothing [])
         return $ Modifiers shorts (insert fromNormalized to renamings) args help
       (UseForPositionalArguments option typ) -> do
         normalized <- normalizeFieldName option
-        return $ Modifiers shorts renamings (Just (normalized, typ)) help
+        return $ Modifiers shorts renamings (Just (normalized, map toUpper typ)) help
       (AddOptionHelp option helpText) -> do
         normalized <- normalizeFieldName option
         return $ Modifiers shorts renamings args (insert normalized helpText help)

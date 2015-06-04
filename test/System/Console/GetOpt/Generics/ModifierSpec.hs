@@ -37,7 +37,7 @@ spec = do
         let OutputAndExit output =
               parseArguments "prog-name" [AddOptionHelp "bar" "bar help text"]
                 (words "--help") :: Result Foo
-        output `shouldContain` "--bar=string  bar help text"
+        output `shouldContain` "--bar=STRING  bar help text"
 
 data Foo
   = Foo {

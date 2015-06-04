@@ -78,14 +78,14 @@ part1 = do
           withArgs (words "--no-such-option") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldBe` "unrecognized option `--no-such-option'\nmissing option: --baz=string\n"
+        output `shouldBe` "unrecognized option `--no-such-option'\nmissing option: --baz=STRING\n"
 
       it "prints errors for missing options" $ do
         output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
           withArgs [] $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldContain` "missing option: --baz=string"
+        output `shouldContain` "missing option: --baz=STRING"
         output `shouldSatisfy` ("\n" `isSuffixOf`)
 
       it "prints out an error for unparseable options" $ do
@@ -93,7 +93,7 @@ part1 = do
           withArgs (words "--bar foo --baz huhu") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldBe` "cannot parse as integer (optional): foo\n"
+        output `shouldBe` "cannot parse as INTEGER (optional): foo\n"
 
       it "complains about unused positional arguments" $ do
         (parseArguments "prog-name" [] (words "--baz foo unused") :: Result Foo)
@@ -104,7 +104,7 @@ part1 = do
           withArgs (words "--bar foo --baz huhu --bar 12") $ do
             _ :: Foo <- getArguments
             return ()
-        output `shouldBe` "cannot parse as integer (optional): foo\n"
+        output `shouldBe` "cannot parse as INTEGER (optional): foo\n"
 
     context "--help" $ do
       it "implements --help" $ do
@@ -113,8 +113,8 @@ part1 = do
             _ :: Foo <- getArguments
             return ()
         mapM_ (output `shouldContain`) $
-          "--bar=integer" : "optional" :
-          "--baz=string" :
+          "--bar=INTEGER" : "optional" :
+          "--baz=STRING" :
           "--bool" :
           []
         lines output `shouldSatisfy` (not . ("" `elem`))
@@ -179,7 +179,7 @@ part2 = do
           handle (\ (_ :: SomeException) -> return ()) $ do
             _ :: ListOptions <- getArguments
             return ()
-        output `shouldBe` "cannot parse as integer (multiple possible): foo\n"
+        output `shouldBe` "cannot parse as INTEGER (multiple possible): foo\n"
 
 data CamelCaseOptions
   = CamelCaseOptions {
@@ -223,7 +223,7 @@ part3 = do
           parse = parseArguments "prog-name" [AddShortOption "camelCase" 'x']
       it "includes the short option in the help" $ do
         let OutputAndExit output = parse ["--help"]
-        output `shouldContain` "-x string"
+        output `shouldContain` "-x STRING"
 
     context "RenameOption" $ do
       it "allows to rename options" $ do
