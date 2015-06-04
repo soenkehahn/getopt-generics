@@ -144,7 +144,7 @@ part1 = do
           handle (\ (_ :: SomeException) -> return ()) $ do
              _ :: NotAllowed <- getArguments
              return ()
-        output `shouldContain` "getopt-generics doesn't support sum-types"
+        output `shouldContain` "getopt-generics doesn't support sum types"
         lines output `shouldSatisfy` (not . ("" `elem`))
 
       it "outputs a header including \"[OPTIONS]\"" $ do

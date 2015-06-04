@@ -105,7 +105,7 @@ parseArguments progName modifiersList args = do
       ADT typeName _ Nil ->
         err typeName "empty data types"
       ADT typeName _ (_ :* _ :* _) ->
-        err typeName "sum-types"
+        err typeName "sum types"
       Newtype _ _ (Record _ fields) ->
         processFields progName modifiers args
           (hliftA (Comp . Selector) fields)
