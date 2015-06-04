@@ -148,6 +148,8 @@ processFields progName modifiers args fields = do
       [] -> pure ()
       errs -> Errors errs
 
+-- Creates a list of NS where every element corresponds to one field. To be
+-- used by 'getOpt'.
 mkOptDescrs :: forall xs . (SingI xs, All Option xs) =>
   Modifiers -> NP (Field :.: FieldInfo) xs -> [OptDescr (NS FieldState xs)]
 mkOptDescrs modifiers =
@@ -171,6 +173,8 @@ toOptDescr (Z (OptDescrE (Just a))) = Just $ fmap Z a
 toOptDescr (Z (OptDescrE Nothing)) = Nothing
 toOptDescr (S a) = fmap (fmap S) (toOptDescr a)
 
+-- Initializes an NP of empty fields to be filled in later.
+-- Contains only default values.
 mkInitialFieldStates :: forall xs . (SingI xs, All Option xs) =>
   Modifiers -> NP (Field :.: FieldInfo) xs -> Result (NP FieldState xs)
 mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
@@ -198,6 +202,7 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
 
 data HelpFlag = HelpFlag
 
+-- Outputs the help if the help flag is given.
 helpWrapper :: (SingI xs, All Option xs) =>
   String -> Modifiers -> [String] -> NP (Field :.: FieldInfo) xs -> Result ()
 helpWrapper progName modifiers args fields =
@@ -236,6 +241,11 @@ stripTrailingSpaces = unlines . map stripLines . lines
   where
     stripLines = reverse . dropWhile isSpace . reverse
 
+-- Fills in the positional arguments in the NP that already contains the flag
+-- values. Fills in FieldErrors in case of
+-- - parse errors and
+-- - missing positional arguments.
+-- The returned Either contains errors in case of too many positional arguments.
 fillInPositionalArguments :: (All Option xs) =>
   [String] -> NP FieldState xs -> (NP FieldState xs, Either [String] ())
 fillInPositionalArguments = inner . Just
@@ -267,6 +277,8 @@ fillInPositionalArguments = inner . Just
     cons :: FieldState x -> (NP FieldState xs, r) -> (NP FieldState (x ': xs), r)
     cons fieldState (arguments, r) = (fieldState :* arguments, r)
 
+-- Collects all FieldStates into a Result NP. If any errors are contained they
+-- will be accumulated.
 collectResult :: (SingI xs) => NP FieldState xs -> Result (NP I xs)
 collectResult input =
     hsequence $ hliftA inner input
