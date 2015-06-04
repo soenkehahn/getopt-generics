@@ -412,3 +412,7 @@ instance Option String where
 instance Option Int where
   argumentType _ = "integer"
   parseArgument = readMaybe
+
+instance Option Integer where
+  argumentType _ = "integer"
+  parseArgument = readMaybe
