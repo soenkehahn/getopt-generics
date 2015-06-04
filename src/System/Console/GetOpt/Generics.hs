@@ -416,3 +416,18 @@ instance Option Int where
 instance Option Integer where
   argumentType _ = "INTEGER"
   parseArgument = readMaybe
+
+readNumber :: (RealFloat n, Read n) => String -> Maybe n
+readNumber s = case readMaybe s of
+  Just n -> Just n
+  Nothing
+    | "." `isPrefixOf` s -> readMaybe ("0" ++ s)
+    | otherwise -> Nothing
+
+instance Option Float where
+  argumentType _ = "NUMBER"
+  parseArgument = readNumber
+
+instance Option Double where
+  argumentType _ = "NUMBER"
+  parseArgument = readNumber
