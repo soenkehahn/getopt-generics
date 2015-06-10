@@ -46,7 +46,7 @@ import           Prelude ()
 import           Prelude.Compat
 
 import           Data.Char
-import           Data.List
+import           Data.List.Compat
 import           Data.Maybe
 import           Data.Proxy
 import           Data.Typeable
@@ -126,7 +126,7 @@ processFields :: forall a xs .
 processFields progName modifiers args fields = do
     initialFieldStates <- mkInitialFieldStates modifiers fields
 
-    showHelp
+    showOutputInfo
 
     let (options, arguments, parseErrors) =
           getOpt Permute (mkOptDescrs modifiers fields) args
@@ -140,8 +140,8 @@ processFields progName modifiers args fields = do
 
     to . SOP . Z <$> collectResult withPositionalArguments
   where
-    showHelp :: Result ()
-    showHelp = helpWrapper progName modifiers args fields
+    showOutputInfo :: Result ()
+    showOutputInfo = outputInfo progName modifiers args fields
 
     reportGetOptErrors :: [String] -> Result ()
     reportGetOptErrors parseErrors = case parseErrors of
@@ -197,26 +197,38 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
          show (typeOf (impossible "mkInitialFieldStates" :: x))]
     else return $ _emptyOption name
 
+-- * showing output information
 
--- * showing help?
+data OutputInfoFlag
+  = HelpFlag
+  | VersionFlag String
+  deriving (Eq, Ord)
 
-data HelpFlag = HelpFlag
-
--- Outputs the help if the help flag is given.
-helpWrapper :: (SingI xs, All Option xs) =>
+-- Outputs the help or version information if the corresponding flags are given.
+outputInfo :: (SingI xs, All Option xs) =>
   String -> Modifiers -> [String] -> NP (Field :.: FieldInfo) xs -> Result ()
-helpWrapper progName modifiers args fields =
-    case getOpt Permute [helpOption] args of
+outputInfo progName modifiers args fields =
+    case (\ (a, b, c) -> (sort a, b, c)) (getOpt Permute options args) of
       ([], _, _) -> return ()
-        -- no help flag given
+        -- no help or version flag given
       (HelpFlag : _, _, _) -> OutputAndExit $
         stripTrailingSpaces $
         usageInfo header $
           toOptDescrUnit (mkOptDescrs modifiers fields) ++
-          toOptDescrUnit [helpOption]
+          toOptDescrUnit options
+      (VersionFlag version : _, _, _) -> OutputAndExit $
+        progName ++ " version " ++ version ++ "\n"
   where
-    helpOption :: OptDescr HelpFlag
+    options :: [OptDescr OutputInfoFlag]
+    options = helpOption : maybeToList versionOption
+
+    helpOption :: OptDescr OutputInfoFlag
     helpOption = Option ['h'] ["help"] (NoArg HelpFlag) "show help and exit"
+
+    versionOption :: Maybe (OptDescr OutputInfoFlag)
+    versionOption = case getVersion modifiers of
+      Just version -> Just $ Option [] ["version"] (NoArg (VersionFlag version)) "show version and exit"
+      Nothing -> Nothing
 
     toOptDescrUnit :: [OptDescr a] -> [OptDescr ()]
     toOptDescrUnit = map (fmap (const ()))

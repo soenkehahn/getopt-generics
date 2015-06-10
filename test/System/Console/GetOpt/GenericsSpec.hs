@@ -9,7 +9,7 @@ import           Prelude.Compat
 
 import           Control.Exception
 import           Data.Foldable (forM_)
-import           Data.List (isPrefixOf, isSuffixOf)
+import           Data.List (isInfixOf, isPrefixOf, isSuffixOf)
 import           Data.Typeable
 import qualified GHC.Generics as GHC
 import           System.Environment
@@ -31,6 +31,7 @@ spec = do
   part5
   part6
   part7
+  part8
 
 data Foo
   = Foo {
@@ -432,3 +433,19 @@ part7 = do
 
     it "renders as NUMBER in help and error output" $ do
       argumentType (Proxy :: Proxy Float) `shouldBe` "NUMBER"
+
+part8 :: Spec
+part8 = do
+  describe "parseArgument" $ do
+    context "--version" $ do
+      it "implements --version" $ do
+        let OutputAndExit output = parseArguments "foo" [AddVersionFlag "1.0.0"] (words "--version") :: Result Foo
+        output `shouldBe` "foo version 1.0.0\n"
+
+      it "--help takes precedence over --version" $ do
+        let OutputAndExit output = parseArguments "foo" [AddVersionFlag "1.0.0"] (words "--version --help") :: Result Foo
+        output `shouldSatisfy` ("show help and exit" `isInfixOf`)
+
+      it "--version shows up in help output" $ do
+        let OutputAndExit output = parseArguments "foo" [AddVersionFlag "1.0.0"] (words "--help") :: Result Foo
+        output `shouldSatisfy` ("show version and exit" `isInfixOf`)

@@ -6,7 +6,7 @@ import           Data.Char
 import           Data.Proxy
 import qualified GHC.Generics
 import           Test.Hspec
-import           Test.QuickCheck hiding (Result)
+import           Test.QuickCheck hiding (Result(..))
 
 import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
@@ -30,6 +30,11 @@ spec = do
     it "combines existing values with the given function" $ do
       insertWith (++) (1 :: Integer) "bar" [(1, "foo")]
         `shouldBe` [(1, "foobar")]
+
+  describe "getVersion" $ do
+    it "returns the version" $ do
+      let Success modifiers = mkModifiers [AddVersionFlag "1.0.0"]
+      getVersion modifiers `shouldBe` Just "1.0.0"
 
   context "when used with Modifiers" $ do
     describe "parseArguments" $ do
