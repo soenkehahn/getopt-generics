@@ -31,12 +31,12 @@ spec = do
   part8
 
 parse :: (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  [String] -> Result a
+  String -> Result a
 parse = modsParse []
 
 modsParse :: (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  [Modifier] -> [String] -> Result a
-modsParse = parseArguments "prog-name"
+  [Modifier] -> String -> Result a
+modsParse modifiers = parseArguments "prog-name" modifiers . words
 
 data Foo
   = Foo {
@@ -66,16 +66,16 @@ part1 = do
 
   describe "parseArguments" $ do
     it "allows optional arguments" $ do
-      parse (words "--baz foo") `shouldBe`
+      parse "--baz foo" `shouldBe`
         Success (Foo Nothing "foo" False)
 
     it "allows boolean flags" $ do
-      parse (words "--bool --baz foo") `shouldBe`
+      parse "--bool --baz foo" `shouldBe`
         Success (Foo Nothing "foo" True)
 
     context "with invalid arguments" $ do
       it "prints out an error" $ do
-        let Errors messages = parse (words "--no-such-option") :: Result Foo
+        let Errors messages = parse "--no-such-option" :: Result Foo
         messages `shouldBe`
           ["unrecognized option `--no-such-option'\n",
            "missing option: --baz=STRING"]
@@ -85,20 +85,20 @@ part1 = do
         message `shouldBe` "missing option: --baz=STRING"
 
       it "prints out an error for unparseable options" $ do
-        let Errors [message] = parse (words "--bar foo --baz huhu") :: Result Foo
+        let Errors [message] = parse "--bar foo --baz huhu" :: Result Foo
         message `shouldBe` "cannot parse as INTEGER (optional): foo"
 
       it "complains about unused positional arguments" $ do
-        (parse (words "--baz foo unused") :: Result Foo)
+        (parse "--baz foo unused" :: Result Foo)
           `shouldBe` Errors ["unknown argument: unused"]
 
       it "complains about invalid overwritten options" $ do
-        let Errors [message] = parse (words "--bar foo --baz huhu --bar 12") :: Result Foo
+        let Errors [message] = parse "--bar foo --baz huhu --bar 12" :: Result Foo
         message `shouldBe` "cannot parse as INTEGER (optional): foo"
 
     context "--help" $ do
       it "implements --help" $ do
-        let OutputAndExit output = parse ["--help"] :: Result Foo
+        let OutputAndExit output = parse "--help" :: Result Foo
         mapM_ (output `shouldContain`) $
           "--bar=INTEGER" : "optional" :
           "--baz=STRING" :
@@ -107,25 +107,25 @@ part1 = do
         lines output `shouldSatisfy` (not . ("" `elem`))
 
       it "contains help message about --help" $ do
-        let OutputAndExit output = parse ["--help"] :: Result Foo
+        let OutputAndExit output = parse "--help" :: Result Foo
         output `shouldContain` "show help and exit"
 
       it "does not contain trailing spaces" $ do
-        let OutputAndExit output = parse ["--help"] :: Result Foo
+        let OutputAndExit output = parse "--help" :: Result Foo
         forM_ (lines output) $ \ line ->
           line `shouldSatisfy` (not . (" " `isSuffixOf`))
 
       it "complains when the options datatype is not allowed" $ do
-        let Errors [message] = parse ["--help"] :: Result NotAllowed
+        let Errors [message] = parse "--help" :: Result NotAllowed
         message `shouldSatisfy` ("getopt-generics doesn't support sum types" `isPrefixOf`)
 
       it "outputs a header including \"[OPTIONS]\"" $ do
-        let OutputAndExit output = parse ["--help"] :: Result Foo
+        let OutputAndExit output = parse "--help" :: Result Foo
         output `shouldSatisfy` ("prog-name [OPTIONS]\n" `isPrefixOf`)
 
   describe "parseArguments" $ do
     it "allows to overwrite String options" $ do
-      parse (words "--baz one --baz two")
+      parse "--baz one --baz two"
         `shouldBe` Success (Foo Nothing "two" False)
 
 data ListOptions
@@ -141,12 +141,12 @@ part2 :: Spec
 part2 = do
   describe "parseArguments" $ do
     it "allows to interpret multiple uses of the same option as lists" $ do
-      parse (words "--multiple 23 --multiple 42")
+      parse "--multiple 23 --multiple 42"
         `shouldBe` Success (ListOptions [23, 42])
 
     it "complains about invalid list arguments" $ do
       let Errors errs =
-            parse (words "--multiple foo --multiple 13") :: Result ListOptions
+            parse "--multiple foo --multiple 13" :: Result ListOptions
       errs `shouldBe` ["cannot parse as INTEGER (multiple possible): foo"]
 
 data CamelCaseOptions
@@ -162,45 +162,44 @@ part3 :: Spec
 part3 = do
   describe "parseArguments" $ do
     it "turns camelCase selectors to lowercase and seperates with a dash" $ do
-      parse (words "--camel-case foo") `shouldBe` Success (CamelCaseOptions "foo")
+      parse "--camel-case foo" `shouldBe` Success (CamelCaseOptions "foo")
 
     it "help does not contain camelCase flags" $ do
       let OutputAndExit output :: Result CamelCaseOptions
-            = parse ["--help"]
+            = parse "--help"
       output `shouldNotContain` "camelCase"
       output `shouldContain` "camel-case"
 
     it "error messages don't contain camelCase flags" $ do
       let Errors errs :: Result CamelCaseOptions
-            = parse ["--bla"]
+            = parse "--bla"
       show errs `shouldNotContain` "camelCase"
       show errs `shouldContain` "camel-case"
 
     context "AddShortOption" $ do
       it "allows modifiers for short options" $ do
-        modsParse [AddShortOption "camel-case" 'x'] (words "-x foo")
+        modsParse [AddShortOption "camel-case" 'x'] "-x foo"
           `shouldBe` Success (CamelCaseOptions "foo")
 
       it "allows modifiers in camelCase" $ do
-        modsParse [AddShortOption "camelCase" 'x'] (words "-x foo")
+        modsParse [AddShortOption "camelCase" 'x'] "-x foo"
           `shouldBe` Success (CamelCaseOptions "foo")
 
-      let parse :: [String] -> Result CamelCaseOptions
-          parse = modsParse [AddShortOption "camelCase" 'x']
+      let parse' :: String -> Result CamelCaseOptions
+          parse' = modsParse [AddShortOption "camelCase" 'x']
       it "includes the short option in the help" $ do
-        let OutputAndExit output = parse ["--help"]
+        let OutputAndExit output = parse' "--help"
         output `shouldContain` "-x STRING"
 
     context "RenameOption" $ do
       it "allows to rename options" $ do
-        modsParse [RenameOption "camelCase" "bla"] (words "--bla foo")
+        modsParse [RenameOption "camelCase" "bla"] "--bla foo"
           `shouldBe` Success (CamelCaseOptions "foo")
 
       let parse' = modsParse [RenameOption "camelCase" "foo", RenameOption "camelCase" "bar"]
       it "allows to shadow earlier modifiers with later modifiers" $ do
-        parse' (words "--bar foo")
-          `shouldBe` Success (CamelCaseOptions "foo")
-        let Errors errs = parse' (words "--foo foo")
+        parse' "--bar foo" `shouldBe` Success (CamelCaseOptions "foo")
+        let Errors errs = parse' "--foo foo"
         show errs `shouldContain` "unknown argument: foo"
 
       it "contains renamed options in error messages" $ do
@@ -209,7 +208,7 @@ part3 = do
         show errs `shouldContain` "camel-case"
 
       it "allows to address fields in Modifiers in slugified form" $ do
-        modsParse [RenameOption "camel-case" "foo"] (words "--foo bar")
+        modsParse [RenameOption "camel-case" "foo"] "--foo bar"
           `shouldBe` Success (CamelCaseOptions "bar")
 
 data WithUnderscore
@@ -225,7 +224,7 @@ part4 :: Spec
 part4 = do
   describe "parseArguments" $ do
     it "ignores leading underscores in field names" $ do
-      parse (words "--with-underscore foo")
+      parse "--with-underscore foo"
         `shouldBe` Success (WithUnderscore "foo")
 
 data WithPositionalArguments
@@ -256,13 +255,13 @@ part5 = do
       it "allows positionalArguments" $ do
         modsParse
           [UseForPositionalArguments "positionalArguments" "type"]
-          (words "foo bar --some-flag")
+          "foo bar --some-flag"
             `shouldBe` Success (WithPositionalArguments ["foo", "bar"] True)
 
       it "disallows to specify the option used for positional arguments" $ do
         modsParse
           [UseForPositionalArguments "positionalArguments" "type"]
-          (words "--positional-arguments foo")
+          "--positional-arguments foo"
             `shouldBe`
           (Errors ["unrecognized option `--positional-arguments'\n"]
             :: Result WithPositionalArguments)
@@ -270,7 +269,7 @@ part5 = do
       it "complains about fields that don't have type [String]" $ do
         modsParse
           [UseForPositionalArguments "someFlag" "type"]
-          (words "doesn't matter")
+          "doesn't matter"
             `shouldBe`
           (Errors ["UseForPositionalArguments can only be used for fields of type [String] not Bool"]
             :: Result WithPositionalArguments)
@@ -278,7 +277,7 @@ part5 = do
       it "includes the type of positional arguments in the help output in upper-case" $ do
         let OutputAndExit output = modsParse
               [UseForPositionalArguments "positionalArguments" "foo"]
-              (words "--help") :: Result WithPositionalArguments
+              "--help" :: Result WithPositionalArguments
         output `shouldSatisfy` ("prog-name [OPTIONS] [FOO]\n" `isPrefixOf`)
 
       it "complains about multiple PositionalArguments fields" $ do
@@ -319,7 +318,7 @@ part6 = do
   describe "parseArguments" $ do
     context "CustomFields" $ do
       it "allows easy implementation of custom field types" $ do
-        parse (words "--custom foo --custom-list bar --custom-maybe baz")
+        parse "--custom foo --custom-list bar --custom-maybe baz"
           `shouldBe` Success (CustomFields CFoo [CBar] (Just CBaz))
 
 data WithoutSelectors
@@ -334,26 +333,26 @@ part7 = do
   describe "parseArguments" $ do
     context "WithoutSelectors" $ do
       it "populates fields without selectors from positional arguments" $ do
-        parse (words "foo true 23")
+        parse "foo true 23"
           `shouldBe` Success (WithoutSelectors "foo" True 23)
 
       it "has good help output for positional arguments" $ do
-        let OutputAndExit output = parse ["--help"] :: Result WithoutSelectors
+        let OutputAndExit output = parse "--help" :: Result WithoutSelectors
         output `shouldSatisfy` ("prog-name [OPTIONS] STRING BOOL INTEGER" `isPrefixOf`)
 
       it "has good error messages for missing positional arguments" $ do
-        (parse (words "foo") :: Result WithoutSelectors)
+        (parse "foo" :: Result WithoutSelectors)
           `shouldBe` Errors (
             "missing argument of type BOOL" :
             "missing argument of type INTEGER" :
             [])
 
       it "complains about additional positional arguments" $ do
-        (parse (words "foo true 5 bar") :: Result WithoutSelectors)
+        (parse "foo true 5 bar" :: Result WithoutSelectors)
           `shouldBe` Errors ["unknown argument: bar"]
 
       it "allows to use tuples" $ do
-        (parse (words "42 bar") :: Result (Int, String))
+        (parse "42 bar" :: Result (Int, String))
           `shouldBe` Success (42, "bar")
 
   describe "Option.Bool" $ do
@@ -401,13 +400,13 @@ part8 = do
   describe "parseArgument" $ do
     context "--version" $ do
       it "implements --version" $ do
-        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] (words "--version") :: Result Foo
+        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version" :: Result Foo
         output `shouldBe` "prog-name version 1.0.0\n"
 
       it "--help takes precedence over --version" $ do
-        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] (words "--version --help") :: Result Foo
+        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version --help" :: Result Foo
         output `shouldSatisfy` ("show help and exit" `isInfixOf`)
 
       it "--version shows up in help output" $ do
-        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] (words "--help") :: Result Foo
+        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--help" :: Result Foo
         output `shouldSatisfy` ("show version and exit" `isInfixOf`)
