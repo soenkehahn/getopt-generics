@@ -38,6 +38,8 @@ module System.Console.GetOpt.Generics (
   -- * Re-exports from "Generics.SOP"
   Generic,
   HasDatatypeInfo,
+  All2,
+  Code,
   Proxy(..)
  ) where
 
