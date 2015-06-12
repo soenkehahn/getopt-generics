@@ -8,15 +8,11 @@ module System.Console.GetOpt.GenericsSpec where
 import           Prelude ()
 import           Prelude.Compat
 
-import           Control.Exception
 import           Data.Foldable (forM_)
 import           Data.List (isInfixOf, isPrefixOf, isSuffixOf)
 import           Data.Typeable
 import qualified GHC.Generics as GHC
 import           System.Environment
-import           System.Exit
-import           System.IO
-import           System.IO.Silently
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib
 import           Test.QuickCheck hiding (Result(..))
@@ -68,60 +64,41 @@ part1 = do
       withArgs (words "--bar 4 --baz foo") $
         getArguments `shouldReturn` Foo (Just 4) "foo" False
 
+  describe "parseArguments" $ do
     it "allows optional arguments" $ do
-      withArgs (words "--baz foo") $
-        getArguments `shouldReturn` Foo Nothing "foo" False
+      parse (words "--baz foo") `shouldBe`
+        Success (Foo Nothing "foo" False)
 
     it "allows boolean flags" $ do
-      withArgs (words "--bool --baz foo") $
-        getArguments `shouldReturn` Foo Nothing "foo" True
+      parse (words "--bool --baz foo") `shouldBe`
+        Success (Foo Nothing "foo" True)
 
     context "with invalid arguments" $ do
-      it "doesn't execute the action" $ do
-        let main = withArgs (words "--invalid") $ do
-              _ :: Foo <- getArguments
-              throwIO (ErrorCall "action")
-        main `shouldThrow` (== ExitFailure 1)
-
       it "prints out an error" $ do
-        output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs (words "--no-such-option") $ do
-            _ :: Foo <- getArguments
-            return ()
-        output `shouldBe` "unrecognized option `--no-such-option'\nmissing option: --baz=STRING\n"
+        let Errors messages = parse (words "--no-such-option") :: Result Foo
+        messages `shouldBe`
+          ["unrecognized option `--no-such-option'\n",
+           "missing option: --baz=STRING"]
 
       it "prints errors for missing options" $ do
-        output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs [] $ do
-            _ :: Foo <- getArguments
-            return ()
-        output `shouldContain` "missing option: --baz=STRING"
-        output `shouldSatisfy` ("\n" `isSuffixOf`)
+        let Errors [message] = parse [] :: Result Foo
+        message `shouldBe` "missing option: --baz=STRING"
 
       it "prints out an error for unparseable options" $ do
-        output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs (words "--bar foo --baz huhu") $ do
-            _ :: Foo <- getArguments
-            return ()
-        output `shouldBe` "cannot parse as INTEGER (optional): foo\n"
+        let Errors [message] = parse (words "--bar foo --baz huhu") :: Result Foo
+        message `shouldBe` "cannot parse as INTEGER (optional): foo"
 
       it "complains about unused positional arguments" $ do
         (parse (words "--baz foo unused") :: Result Foo)
           `shouldBe` Errors ["unknown argument: unused"]
 
       it "complains about invalid overwritten options" $ do
-        output <- hCapture_ [stderr] $ handle (\ (_ :: SomeException) -> return ()) $
-          withArgs (words "--bar foo --baz huhu --bar 12") $ do
-            _ :: Foo <- getArguments
-            return ()
-        output `shouldBe` "cannot parse as INTEGER (optional): foo\n"
+        let Errors [message] = parse (words "--bar foo --baz huhu --bar 12") :: Result Foo
+        message `shouldBe` "cannot parse as INTEGER (optional): foo"
 
     context "--help" $ do
       it "implements --help" $ do
-        output <- capture_ $ withArgs ["--help"] $
-          handle (\ (_ :: SomeException) -> return ()) $ do
-            _ :: Foo <- getArguments
-            return ()
+        let OutputAndExit output = parse ["--help"] :: Result Foo
         mapM_ (output `shouldContain`) $
           "--bar=INTEGER" : "optional" :
           "--baz=STRING" :
@@ -129,37 +106,21 @@ part1 = do
           []
         lines output `shouldSatisfy` (not . ("" `elem`))
 
-      it "throws ExitSuccess" $ do
-        withArgs ["--help"] (getArguments :: IO Foo)
-          `shouldThrow` (== ExitSuccess)
-
       it "contains help message about --help" $ do
-        output <- capture_ $ withArgs ["--help"] $
-          handle (\ (_ :: SomeException) -> return ()) $ do
-            _ :: Foo <- getArguments
-            return ()
+        let OutputAndExit output = parse ["--help"] :: Result Foo
         output `shouldContain` "show help and exit"
 
       it "does not contain trailing spaces" $ do
-        output <- capture_ $ withArgs ["--help"] $
-          handle (\ (_ :: SomeException) -> return ()) $ do
-            _ :: Foo <- getArguments
-            return ()
+        let OutputAndExit output = parse ["--help"] :: Result Foo
         forM_ (lines output) $ \ line ->
           line `shouldSatisfy` (not . (" " `isSuffixOf`))
 
-      it "throws an exception when the options datatype is not allowed" $ do
-        output <- hCapture_ [stderr] $
-          withArgs ["--help"] $
-          handle (\ (_ :: SomeException) -> return ()) $ do
-             _ :: NotAllowed <- getArguments
-             return ()
-        output `shouldContain` "getopt-generics doesn't support sum types"
-        lines output `shouldSatisfy` (not . ("" `elem`))
+      it "complains when the options datatype is not allowed" $ do
+        let Errors [message] = parse ["--help"] :: Result NotAllowed
+        message `shouldSatisfy` ("getopt-generics doesn't support sum types" `isPrefixOf`)
 
       it "outputs a header including \"[OPTIONS]\"" $ do
-        let OutputAndExit output =
-              parse ["--help"] :: Result Foo
+        let OutputAndExit output = parse ["--help"] :: Result Foo
         output `shouldSatisfy` ("prog-name [OPTIONS]\n" `isPrefixOf`)
 
   describe "parseArguments" $ do
@@ -178,18 +139,15 @@ instance HasDatatypeInfo ListOptions
 
 part2 :: Spec
 part2 = do
-  describe "getArguments" $ do
+  describe "parseArguments" $ do
     it "allows to interpret multiple uses of the same option as lists" $ do
-      withArgs (words "--multiple 23 --multiple 42") $ do
-        getArguments `shouldReturn` ListOptions [23, 42]
+      parse (words "--multiple 23 --multiple 42")
+        `shouldBe` Success (ListOptions [23, 42])
 
     it "complains about invalid list arguments" $ do
-        output <- hCapture_ [stderr] $
-          withArgs (words "--multiple foo --multiple 13") $
-          handle (\ (_ :: SomeException) -> return ()) $ do
-            _ :: ListOptions <- getArguments
-            return ()
-        output `shouldBe` "cannot parse as INTEGER (multiple possible): foo\n"
+      let Errors errs =
+            parse (words "--multiple foo --multiple 13") :: Result ListOptions
+      errs `shouldBe` ["cannot parse as INTEGER (multiple possible): foo"]
 
 data CamelCaseOptions
   = CamelCaseOptions {
@@ -202,12 +160,10 @@ instance HasDatatypeInfo CamelCaseOptions
 
 part3 :: Spec
 part3 = do
-  describe "getArguments" $ do
-    it "turns camelCase selectors to lowercase and seperates with a dash" $ do
-        withArgs (words "--camel-case foo") $ do
-          getArguments `shouldReturn` CamelCaseOptions "foo"
-
   describe "parseArguments" $ do
+    it "turns camelCase selectors to lowercase and seperates with a dash" $ do
+      parse (words "--camel-case foo") `shouldBe` Success (CamelCaseOptions "foo")
+
     it "help does not contain camelCase flags" $ do
       let OutputAndExit output :: Result CamelCaseOptions
             = parse ["--help"]
