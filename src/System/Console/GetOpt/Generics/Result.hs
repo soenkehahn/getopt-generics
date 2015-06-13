@@ -1,6 +1,11 @@
 {-# LANGUAGE DeriveFunctor #-}
 
-module System.Console.GetOpt.Generics.Result where
+module System.Console.GetOpt.Generics.Result (
+  Result(..),
+  errors,
+  outputAndExit,
+  handleResult,
+ ) where
 
 import           Prelude ()
 import           Prelude.Compat
@@ -25,6 +30,12 @@ data Result a
   | OutputAndExit String
     -- ^ The CLI was used with @--help@. The 'Result' contains the help message.
   deriving (Show, Eq, Ord, Functor)
+
+errors :: [String] -> Result a
+errors = Errors . map removeTrailingNewline
+
+outputAndExit :: String -> Result a
+outputAndExit = OutputAndExit . stripTrailingSpaces
 
 instance Applicative Result where
   pure = Success
@@ -57,3 +68,16 @@ addNewlineIfMissing :: String -> String
 addNewlineIfMissing s
   | "\n" `isSuffixOf` s = s
   | otherwise = s ++ "\n"
+
+removeTrailingNewline :: String -> String
+removeTrailingNewline s
+  | "\n" `isSuffixOf` s = init s
+  | otherwise = s
+
+stripTrailingSpaces :: String -> String
+stripTrailingSpaces = reverse . inner . dropWhile (== ' ') . reverse
+  where
+    inner s = case s of
+      ('\n' : ' ' : r) -> inner ('\n' : r)
+      (a : r) -> a : inner r
+      [] -> []

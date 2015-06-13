@@ -115,7 +115,7 @@ parseArguments progName modifiersList args = do
         err typeName "constructors without field labels"
   where
     err typeName message =
-      Errors ["getopt-generics doesn't support " ++ message ++
+      errors ["getopt-generics doesn't support " ++ message ++
               " (" ++ typeName ++ ")."]
 
 data Field a
@@ -138,7 +138,7 @@ processFields progName modifiers args fields = do
     let (withPositionalArguments, additionalArgumentsErrors) =
           fillInPositionalArguments arguments $
             project options initialFieldStates
-    either Errors return additionalArgumentsErrors
+    either errors return additionalArgumentsErrors
 
     to . SOP . Z <$> collectResult withPositionalArguments
   where
@@ -148,7 +148,7 @@ processFields progName modifiers args fields = do
     reportGetOptErrors :: [String] -> Result ()
     reportGetOptErrors parseErrors = case parseErrors of
       [] -> pure ()
-      errs -> Errors errs
+      errs -> errors errs
 
 -- Creates a list of NS where every element corresponds to one field. To be
 -- used by 'getOpt'.
@@ -193,7 +193,7 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
     then case cast (id :: FieldState x -> FieldState x) of
       (Just id' :: Maybe (FieldState [String] -> FieldState x)) ->
         Success $ id' PositionalArguments
-      Nothing -> Errors
+      Nothing -> errors
         ["UseForPositionalArguments can only be used " ++
          "for fields of type [String] not " ++
          show (typeOf (impossible "mkInitialFieldStates" :: x))]
@@ -213,12 +213,11 @@ outputInfo progName modifiers args fields =
     case (\ (a, b, c) -> (sort a, b, c)) (getOpt Permute options args) of
       ([], _, _) -> return ()
         -- no help or version flag given
-      (HelpFlag : _, _, _) -> OutputAndExit $
-        stripTrailingSpaces $
+      (HelpFlag : _, _, _) -> outputAndExit $
         usageInfo header $
           toOptDescrUnit (mkOptDescrs modifiers fields) ++
           toOptDescrUnit options
-      (VersionFlag version : _, _, _) -> OutputAndExit $
+      (VersionFlag version : _, _, _) -> outputAndExit $
         progName ++ " version " ++ version ++ "\n"
   where
     options :: [OptDescr OutputInfoFlag]
@@ -249,11 +248,6 @@ positionalArgumentHelp (p@(Comp NoSelector) :* r) =
   argumentType (toProxy p) : positionalArgumentHelp r
 positionalArgumentHelp (_ :* r) = positionalArgumentHelp r
 positionalArgumentHelp Nil = []
-
-stripTrailingSpaces :: String -> String
-stripTrailingSpaces = unlines . map stripLines . lines
-  where
-    stripLines = reverse . dropWhile isSpace . reverse
 
 -- Fills in the positional arguments in the NP that already contains the flag
 -- values. Fills in FieldErrors in case of
@@ -300,8 +294,8 @@ collectResult input =
     inner :: FieldState x -> Result x
     inner s = case s of
       FieldSuccess v -> Success v
-      FieldErrors errs -> Errors errs
-      Unset err -> Errors [err]
+      FieldErrors errs -> errors errs
+      Unset err -> errors [err]
       PositionalArguments -> impossible "collectResult"
       PositionalArgument -> impossible "collectResult"
 

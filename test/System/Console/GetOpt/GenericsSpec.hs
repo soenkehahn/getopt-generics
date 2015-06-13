@@ -77,7 +77,7 @@ part1 = do
       it "prints out an error" $ do
         let Errors messages = parse "--no-such-option" :: Result Foo
         messages `shouldBe`
-          ["unrecognized option `--no-such-option'\n",
+          ["unrecognized option `--no-such-option'",
            "missing option: --baz=STRING"]
 
       it "prints errors for missing options" $ do
@@ -263,7 +263,7 @@ part5 = do
           [UseForPositionalArguments "positionalArguments" "type"]
           "--positional-arguments foo"
             `shouldBe`
-          (Errors ["unrecognized option `--positional-arguments'\n"]
+          (Errors ["unrecognized option `--positional-arguments'"]
             :: Result WithPositionalArguments)
 
       it "complains about fields that don't have type [String]" $ do
