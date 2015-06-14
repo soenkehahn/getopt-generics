@@ -48,10 +48,13 @@ test-suite spec
       System.Console.GetOpt.Generics.Result
       System.Console.GetOpt.Generics
       ExamplesSpec
+      ModifiersSpec.UseForPositionalArgumentsSpec
+      ModifiersSpec
       System.Console.GetOpt.Generics.InternalSpec
       System.Console.GetOpt.Generics.ModifierSpec
       System.Console.GetOpt.Generics.ResultSpec
       System.Console.GetOpt.GenericsSpec
+      Util
       Example
       Readme
   build-depends:

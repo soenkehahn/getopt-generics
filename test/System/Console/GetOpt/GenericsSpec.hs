@@ -9,7 +9,7 @@ import           Prelude ()
 import           Prelude.Compat
 
 import           Data.Foldable (forM_)
-import           Data.List (isInfixOf, isPrefixOf, isSuffixOf)
+import           Data.List (isPrefixOf, isSuffixOf)
 import           Data.Typeable
 import qualified GHC.Generics as GHC
 import           System.Environment
@@ -18,6 +18,7 @@ import           Test.Hspec.Expectations.Contrib
 import           Test.QuickCheck hiding (Result(..))
 
 import           System.Console.GetOpt.Generics
+import           Util
 
 spec :: Spec
 spec = do
@@ -27,16 +28,6 @@ spec = do
   part4
   part5
   part6
-  part7
-  part8
-
-parse :: (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  String -> Result a
-parse = modsParse []
-
-modsParse :: (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  [Modifier] -> String -> Result a
-modsParse modifiers = parseArguments "prog-name" modifiers . words
 
 data Foo
   = Foo {
@@ -176,41 +167,6 @@ part3 = do
       show errs `shouldNotContain` "camelCase"
       show errs `shouldContain` "camel-case"
 
-    context "AddShortOption" $ do
-      it "allows modifiers for short options" $ do
-        modsParse [AddShortOption "camel-case" 'x'] "-x foo"
-          `shouldBe` Success (CamelCaseOptions "foo")
-
-      it "allows modifiers in camelCase" $ do
-        modsParse [AddShortOption "camelCase" 'x'] "-x foo"
-          `shouldBe` Success (CamelCaseOptions "foo")
-
-      let parse' :: String -> Result CamelCaseOptions
-          parse' = modsParse [AddShortOption "camelCase" 'x']
-      it "includes the short option in the help" $ do
-        let OutputAndExit output = parse' "--help"
-        output `shouldContain` "-x STRING"
-
-    context "RenameOption" $ do
-      it "allows to rename options" $ do
-        modsParse [RenameOption "camelCase" "bla"] "--bla foo"
-          `shouldBe` Success (CamelCaseOptions "foo")
-
-      let parse' = modsParse [RenameOption "camelCase" "foo", RenameOption "camelCase" "bar"]
-      it "allows to shadow earlier modifiers with later modifiers" $ do
-        parse' "--bar foo" `shouldBe` Success (CamelCaseOptions "foo")
-        let Errors errs = parse' "--foo foo"
-        show errs `shouldContain` "unknown argument: foo"
-
-      it "contains renamed options in error messages" $ do
-        let Errors errs = parse' []
-        show errs `shouldNotContain` "camelCase"
-        show errs `shouldContain` "camel-case"
-
-      it "allows to address fields in Modifiers in slugified form" $ do
-        modsParse [RenameOption "camel-case" "foo"] "--foo bar"
-          `shouldBe` Success (CamelCaseOptions "bar")
-
 data WithUnderscore
   = WithUnderscore {
     _withUnderscore :: String
@@ -226,67 +182,6 @@ part4 = do
     it "ignores leading underscores in field names" $ do
       parse "--with-underscore foo"
         `shouldBe` Success (WithUnderscore "foo")
-
-data WithPositionalArguments
-  = WithPositionalArguments {
-    positionalArguments :: [String],
-    someFlag :: Bool
-  }
-  deriving (GHC.Generic, Show, Eq)
-
-instance Generic WithPositionalArguments
-instance HasDatatypeInfo WithPositionalArguments
-
-data WithMultiplePositionalArguments
-  = WithMultiplePositionalArguments {
-    positionalArguments1 :: [String],
-    positionalArguments2 :: [String],
-    someOtherFlag :: Bool
-  }
-  deriving (GHC.Generic, Show, Eq)
-
-instance Generic WithMultiplePositionalArguments
-instance HasDatatypeInfo WithMultiplePositionalArguments
-
-part5 :: Spec
-part5 = do
-  describe "parseArguments" $ do
-    context "UseForPositionalArguments" $ do
-      it "allows positionalArguments" $ do
-        modsParse
-          [UseForPositionalArguments "positionalArguments" "type"]
-          "foo bar --some-flag"
-            `shouldBe` Success (WithPositionalArguments ["foo", "bar"] True)
-
-      it "disallows to specify the option used for positional arguments" $ do
-        modsParse
-          [UseForPositionalArguments "positionalArguments" "type"]
-          "--positional-arguments foo"
-            `shouldBe`
-          (Errors ["unrecognized option `--positional-arguments'"]
-            :: Result WithPositionalArguments)
-
-      it "complains about fields that don't have type [String]" $ do
-        modsParse
-          [UseForPositionalArguments "someFlag" "type"]
-          "doesn't matter"
-            `shouldBe`
-          (Errors ["UseForPositionalArguments can only be used for fields of type [String] not Bool"]
-            :: Result WithPositionalArguments)
-
-      it "includes the type of positional arguments in the help output in upper-case" $ do
-        let OutputAndExit output = modsParse
-              [UseForPositionalArguments "positionalArguments" "foo"]
-              "--help" :: Result WithPositionalArguments
-        output `shouldSatisfy` ("prog-name [OPTIONS] [FOO]\n" `isPrefixOf`)
-
-      it "complains about multiple PositionalArguments fields" $ do
-        let modifiers =
-              UseForPositionalArguments "positionalArguments1" "foo" :
-              UseForPositionalArguments "positionalArguments2" "bar" :
-              []
-        (modsParse modifiers [] :: Result WithMultiplePositionalArguments)
-          `shouldBe` Errors ["UseForPositionalArguments can only be used once"]
 
 data CustomFields
   = CustomFields {
@@ -313,8 +208,8 @@ instance Option Custom where
     "baz" -> Just CBaz
     _ -> Nothing
 
-part6 :: Spec
-part6 = do
+part5 :: Spec
+part5 = do
   describe "parseArguments" $ do
     context "CustomFields" $ do
       it "allows easy implementation of custom field types" $ do
@@ -328,8 +223,8 @@ data WithoutSelectors
 instance Generic WithoutSelectors
 instance HasDatatypeInfo WithoutSelectors
 
-part7 :: Spec
-part7 = do
+part6 :: Spec
+part6 = do
   describe "parseArguments" $ do
     context "WithoutSelectors" $ do
       it "populates fields without selectors from positional arguments" $ do
@@ -394,19 +289,3 @@ part7 = do
 
     it "renders as NUMBER in help and error output" $ do
       argumentType (Proxy :: Proxy Float) `shouldBe` "NUMBER"
-
-part8 :: Spec
-part8 = do
-  describe "parseArgument" $ do
-    context "--version" $ do
-      it "implements --version" $ do
-        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version" :: Result Foo
-        output `shouldBe` "prog-name version 1.0.0\n"
-
-      it "--help takes precedence over --version" $ do
-        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version --help" :: Result Foo
-        output `shouldSatisfy` ("show help and exit" `isInfixOf`)
-
-      it "--version shows up in help output" $ do
-        let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--help" :: Result Foo
-        output `shouldSatisfy` ("show version and exit" `isInfixOf`)
