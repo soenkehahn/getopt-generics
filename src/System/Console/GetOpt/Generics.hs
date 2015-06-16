@@ -195,7 +195,7 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
         ["UseForPositionalArguments can only be used " ++
          "for fields of type [String] not " ++
          show (typeOf (impossible "mkInitialFieldStates" :: x))]
-    else return $ _emptyOption name
+    else return $ _emptyOption modifiers name
 
 -- * showing output information
 
@@ -349,9 +349,10 @@ class Typeable a => Option a where
   _toOption = ReqArg parseAsFieldState (argumentType (Proxy :: Proxy a))
 
   -- | This is meant to be an internal function.
-  _emptyOption :: FieldString -> FieldState a
-  _emptyOption flagName = Unset
-    ("missing option: --" ++ normalized flagName ++ "=" ++ argumentType (Proxy :: Proxy a))
+  _emptyOption :: Modifiers -> FieldString -> FieldState a
+  _emptyOption modifiers flagName = Unset
+    ("missing option: --" ++ mkLongOption modifiers flagName ++
+     "=" ++ argumentType (Proxy :: Proxy a))
 
   -- | This is meant to be an internal function.
   _accumulate :: a -> a -> a
@@ -387,7 +388,7 @@ instance Option a => Option [a] where
   parseArgument x = case parseArgument x of
     Just (x :: a) -> Just [x]
     Nothing -> Nothing
-  _emptyOption _ = FieldSuccess []
+  _emptyOption _ _ = FieldSuccess []
   _accumulate = (++)
 
 instance Option a => Option (Maybe a) where
@@ -395,7 +396,7 @@ instance Option a => Option (Maybe a) where
   parseArgument x = case parseArgument x of
     Just (x :: a) -> Just (Just x)
     Nothing -> Nothing
-  _emptyOption _ = FieldSuccess Nothing
+  _emptyOption _ _ = FieldSuccess Nothing
 
 instance Option Bool where
   argumentType _ = "BOOL"
@@ -409,7 +410,7 @@ instance Option Bool where
       Nothing -> Nothing
 
   _toOption = NoArg (FieldSuccess True)
-  _emptyOption _ = FieldSuccess False
+  _emptyOption _ _ = FieldSuccess False
 
 instance Option String where
   argumentType Proxy = "STRING"

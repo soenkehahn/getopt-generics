@@ -31,20 +31,30 @@ spec = do
       modsParse [RenameOption "camelCase" "bla"] "--bla foo"
         `shouldBe` Success (CamelCaseOptions "foo")
 
-    let parse' = modsParse [RenameOption "camelCase" "foo", RenameOption "camelCase" "bar"]
-    it "allows to shadow earlier modifiers with later modifiers" $ do
-      parse' "--bar foo" `shouldBe` Success (CamelCaseOptions "foo")
-      let Errors errs = parse' "--foo foo"
-      show errs `shouldContain` "unknown argument: foo"
+    context "when shadowing earlier modifiers with later modifiers" $ do
+      let parse' = modsParse
+            [RenameOption "camelCase" "foo", RenameOption "camelCase" "bar"]
+      it "uses the later renaming" $ do
+        parse' "--bar foo" `shouldBe` Success (CamelCaseOptions "foo")
+
+      it "disregards the earlier renaming" $ do
+        let Errors errs = parse' "--foo foo"
+        errs `shouldContain` ["unrecognized option `--foo'"]
 
     it "contains renamed options in error messages" $ do
-      let Errors errs = parse' []
+      let Errors errs = modsParse
+            [RenameOption "camelCase" "foo"]
+            "" :: Result CamelCaseOptions
       show errs `shouldNotContain` "camelCase"
-      show errs `shouldContain` "camel-case"
+      show errs `shouldContain` "foo"
 
     it "allows to address fields in Modifiers in slugified form" $ do
       modsParse [RenameOption "camel-case" "foo"] "--foo bar"
         `shouldBe` Success (CamelCaseOptions "bar")
+
+    it "" $ do
+      modsParse [RenameOption "bar" "one", RenameOption "baz" "two"] "--one 1 --two foo"
+        `shouldBe` Success (Foo (Just 1) "foo" False)
 
   describe "AddVersionFlag" $ do
     it "implements --version" $ do

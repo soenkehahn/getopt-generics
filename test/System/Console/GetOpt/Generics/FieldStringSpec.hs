@@ -64,3 +64,16 @@ spec = do
     it "matches unnormalized strings" $ do
       property $ \ s ->
         s `matches` mkFieldString s
+
+  describe "renameUnnormalized" $ do
+    it "allows to rename the unnormalized field names" $ do
+      let f "camelCaseFoo" = Just "caseFoo"
+          f _ = Nothing
+      normalized (renameUnnormalized f (mkFieldString "camelCaseFoo")) `shouldBe`
+        "case-foo"
+
+    it "doesn't allow to rename normalized field names" $ do
+      let f "camel-case-foo" = Just "case-foo"
+          f _ = Nothing
+      normalized (renameUnnormalized f (mkFieldString "camelCaseFoo")) `shouldBe`
+        "camel-case-foo"

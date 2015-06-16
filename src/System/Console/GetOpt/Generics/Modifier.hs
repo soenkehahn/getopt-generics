@@ -40,6 +40,11 @@ data Modifier
   | RenameOption String String
     -- ^ @RenameOption fieldName customName@ renames the option generated
     --   through the @fieldName@ by @customName@.
+  | RenameOptions (String -> Maybe String)
+    -- ^ @RenameOptions f@ renames all options with the given functions. In case
+    --   the function returns @Nothing@ the original field name is used.
+    --
+    --   Can be used together with 'Data.List.stripPrefix'.
   | UseForPositionalArguments String String
     -- ^ @UseForPositionalArguments fieldName argumentType@ fills the field
     --   addressed by @fieldName@ with the positional arguments (i.e. arguments
@@ -53,35 +58,44 @@ data Modifier
     --   @fieldName@.
   | AddVersionFlag String
     -- ^ @AddVersionFlag version@ adds a @--version@ flag.
-  deriving (Show, Eq, Ord)
 
 data Modifiers = Modifiers {
   _shortOptions :: [(String, [Char])],
-  _renamings :: [(String, String)],
+  _renaming :: FieldString -> FieldString,
   positionalArgumentsField :: [(String, String)],
   helpTexts :: [(String, String)],
   version :: Maybe String
  }
- deriving (Show, Eq, Ord)
 
 mkModifiers :: [Modifier] -> Modifiers
 mkModifiers = foldl' inner empty
   where
     empty :: Modifiers
-    empty = Modifiers [] [] [] [] Nothing
+    empty = Modifiers [] id [] [] Nothing
 
     inner :: Modifiers -> Modifier -> Modifiers
-    inner (Modifiers shorts renamings args help version) modifier = case modifier of
+    inner (Modifiers shorts renaming args help version) modifier = case modifier of
       (AddShortOption option short) ->
-        Modifiers (insertWith (++) option [short] shorts) renamings args help version
+        Modifiers (insertWith (++) option [short] shorts) renaming args help version
       (RenameOption from to) ->
-        Modifiers shorts (insert from to renamings) args help version
+        let newRenaming :: FieldString -> FieldString
+            newRenaming option = if from `matches` option
+              then mkFieldString to
+              else option
+        in Modifiers shorts (renaming . newRenaming) args help version
+      (RenameOptions newRenaming) ->
+        Modifiers shorts (renaming `combineRenamings` newRenaming) args help version
       (UseForPositionalArguments option typ) ->
-        Modifiers shorts renamings ((option, map toUpper typ) : args) help version
+        Modifiers shorts renaming ((option, map toUpper typ) : args) help version
       (AddOptionHelp option helpText) ->
-        Modifiers shorts renamings args (insert option helpText help) version
+        Modifiers shorts renaming args (insert option helpText help) version
       (AddVersionFlag v) ->
-        Modifiers shorts renamings args help (Just v)
+        Modifiers shorts renaming args help (Just v)
+
+    combineRenamings :: (FieldString -> FieldString) -> (String -> Maybe String)
+      -> FieldString -> FieldString
+    combineRenamings old new fieldString =
+      (old . renameUnnormalized new) fieldString
 
 lookupMatching :: [(String, a)] -> FieldString -> Maybe a
 lookupMatching list option = fmap snd $ find (\ (from, _) -> from `matches` option) list
@@ -90,8 +104,8 @@ mkShortOptions :: Modifiers -> FieldString -> [Char]
 mkShortOptions (Modifiers shortMap _ _ _ _) option = fromMaybe [] (lookupMatching shortMap option)
 
 mkLongOption :: Modifiers -> FieldString -> String
-mkLongOption (Modifiers _ renamings _ _ _) option =
-  fromMaybe (normalized option) (lookupMatching renamings option)
+mkLongOption (Modifiers _ renaming _ _ _) option =
+  normalized (renaming option)
 
 hasPositionalArgumentsField :: Modifiers -> Bool
 hasPositionalArgumentsField = not . null . positionalArgumentsField

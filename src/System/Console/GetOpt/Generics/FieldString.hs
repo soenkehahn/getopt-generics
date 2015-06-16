@@ -4,6 +4,7 @@ module System.Console.GetOpt.Generics.FieldString (
   mkFieldString,
   normalized,
   matches,
+  renameUnnormalized,
  ) where
 
 import           Data.Char
@@ -20,6 +21,10 @@ mkFieldString = FieldString
 matches :: String -> FieldString -> Bool
 matches s field =
   normalize s == normalized field
+
+renameUnnormalized :: (String -> Maybe String) -> (FieldString -> FieldString)
+renameUnnormalized f input@(FieldString unnormalized) =
+  maybe input FieldString (f unnormalized)
 
 normalize :: String -> String
 normalize s =

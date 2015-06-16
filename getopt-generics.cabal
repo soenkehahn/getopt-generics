@@ -51,6 +51,7 @@ test-suite spec
       System.Console.GetOpt.Generics.Result
       System.Console.GetOpt.Generics
       ExamplesSpec
+      ModifiersSpec.RenameOptionsSpec
       ModifiersSpec.UseForPositionalArgumentsSpec
       ModifiersSpec
       System.Console.GetOpt.Generics.FieldStringSpec
