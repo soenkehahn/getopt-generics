@@ -58,7 +58,7 @@ data Modifier
 data Modifiers = Modifiers {
   _shortOptions :: [(String, [Char])],
   _renamings :: [(String, String)],
-  positionalArgumentsField :: Maybe (String, String),
+  positionalArgumentsField :: [(String, String)],
   helpTexts :: [(String, String)],
   version :: Maybe String
  }
@@ -68,7 +68,7 @@ mkModifiers :: [Modifier] -> Result Modifiers
 mkModifiers = foldM inner empty
   where
     empty :: Modifiers
-    empty = Modifiers [] [] Nothing [] Nothing
+    empty = Modifiers [] [] [] [] Nothing
 
     inner :: Modifiers -> Modifier -> Result Modifiers
     inner (Modifiers shorts renamings args help version) modifier = case modifier of
@@ -82,7 +82,7 @@ mkModifiers = foldM inner empty
         return $ Modifiers shorts (insert fromNormalized to renamings) args help version
       (UseForPositionalArguments option typ) -> do
         normalized <- normalizeFieldName option
-        return $ Modifiers shorts renamings (Just (normalized, map toUpper typ)) help version
+        return $ Modifiers shorts renamings ((normalized, map toUpper typ) : args) help version
       (AddOptionHelp option helpText) -> do
         normalized <- normalizeFieldName option
         return $ Modifiers shorts renamings args (insert normalized helpText help) version
@@ -98,14 +98,14 @@ mkLongOption (Modifiers _ renamings _ _ _) option =
   fromMaybe option (lookup option renamings)
 
 hasPositionalArgumentsField :: Modifiers -> Bool
-hasPositionalArgumentsField = isJust . positionalArgumentsField
+hasPositionalArgumentsField = not . null . positionalArgumentsField
 
 isPositionalArgumentsField :: Modifiers -> String -> Bool
 isPositionalArgumentsField modifiers field =
-  Just field == fmap fst (positionalArgumentsField modifiers)
+  any (field ==) (map fst (positionalArgumentsField modifiers))
 
 getPositionalArgumentType :: Modifiers -> Maybe String
-getPositionalArgumentType = fmap snd . positionalArgumentsField
+getPositionalArgumentType = fmap snd . listToMaybe . positionalArgumentsField
 
 getHelpText :: Modifiers -> String -> String
 getHelpText modifiers field = fromMaybe "" (lookup field (helpTexts modifiers))

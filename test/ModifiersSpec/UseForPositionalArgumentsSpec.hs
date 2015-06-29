@@ -21,8 +21,8 @@ instance HasDatatypeInfo WithPositionalArguments
 
 data WithMultiplePositionalArguments
   = WithMultiplePositionalArguments {
-    positionalArguments1 :: [String],
-    positionalArguments2 :: [String],
+    positionalArgumentsA :: [String],
+    positionalArgumentsB :: [String],
     someOtherFlag :: Bool
   }
   deriving (GHC.Generic, Show, Eq)
@@ -62,8 +62,8 @@ spec = do
 
   it "complains about multiple PositionalArguments fields" $ do
     let modifiers =
-          UseForPositionalArguments "positionalArguments1" "foo" :
-          UseForPositionalArguments "positionalArguments2" "bar" :
+          UseForPositionalArguments "positionalArgumentsA" "foo" :
+          UseForPositionalArguments "positionalArgumentsB" "bar" :
           []
     (modsParse modifiers [] :: Result WithMultiplePositionalArguments)
       `shouldBe` Errors ["UseForPositionalArguments can only be used once"]
