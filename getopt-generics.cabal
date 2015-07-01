@@ -26,7 +26,7 @@ library
   exposed-modules:
       System.Console.GetOpt.Generics
   other-modules:
-      System.Console.GetOpt.Generics.Internal
+      System.Console.GetOpt.Generics.FieldString
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Result
   build-depends:
@@ -43,14 +43,14 @@ test-suite spec
   hs-source-dirs: src, test, examples
   main-is: Spec.hs
   other-modules:
-      System.Console.GetOpt.Generics.Internal
+      System.Console.GetOpt.Generics.FieldString
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Result
       System.Console.GetOpt.Generics
       ExamplesSpec
       ModifiersSpec.UseForPositionalArgumentsSpec
       ModifiersSpec
-      System.Console.GetOpt.Generics.InternalSpec
+      System.Console.GetOpt.Generics.FieldStringSpec
       System.Console.GetOpt.Generics.ModifierSpec
       System.Console.GetOpt.Generics.ResultSpec
       System.Console.GetOpt.GenericsSpec

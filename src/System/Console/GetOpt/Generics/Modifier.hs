@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs            #-}
 {-# LANGUAGE TupleSections    #-}
+{-# LANGUAGE ViewPatterns     #-}
 
 module System.Console.GetOpt.Generics.Modifier (
   Modifier(..),
@@ -24,13 +25,12 @@ module System.Console.GetOpt.Generics.Modifier (
 import           Prelude ()
 import           Prelude.Compat
 
-import           Control.Monad
 import           Data.Char
+import           Data.List (find, foldl')
 import           Data.Maybe
 import           Generics.SOP
 
-import           System.Console.GetOpt.Generics.Internal
-import           System.Console.GetOpt.Generics.Result
+import           System.Console.GetOpt.Generics.FieldString
 
 -- | 'Modifier's can be used to customize the command line parser.
 data Modifier
@@ -64,51 +64,47 @@ data Modifiers = Modifiers {
  }
  deriving (Show, Eq, Ord)
 
-mkModifiers :: [Modifier] -> Result Modifiers
-mkModifiers = foldM inner empty
+mkModifiers :: [Modifier] -> Modifiers
+mkModifiers = foldl' inner empty
   where
     empty :: Modifiers
     empty = Modifiers [] [] [] [] Nothing
 
-    inner :: Modifiers -> Modifier -> Result Modifiers
+    inner :: Modifiers -> Modifier -> Modifiers
     inner (Modifiers shorts renamings args help version) modifier = case modifier of
-      (AddShortOption option short) ->  do
-        normalized <- normalizeFieldName option
-        return $ Modifiers
-          (insertWith (++) normalized [short] shorts)
-          renamings args help version
-      (RenameOption from to) -> do
-        fromNormalized <- normalizeFieldName from
-        return $ Modifiers shorts (insert fromNormalized to renamings) args help version
-      (UseForPositionalArguments option typ) -> do
-        normalized <- normalizeFieldName option
-        return $ Modifiers shorts renamings ((normalized, map toUpper typ) : args) help version
-      (AddOptionHelp option helpText) -> do
-        normalized <- normalizeFieldName option
-        return $ Modifiers shorts renamings args (insert normalized helpText help) version
-      (AddVersionFlag v) -> do
-        return $ Modifiers shorts renamings args help (Just v)
+      (AddShortOption option short) ->
+        Modifiers (insertWith (++) option [short] shorts) renamings args help version
+      (RenameOption from to) ->
+        Modifiers shorts (insert from to renamings) args help version
+      (UseForPositionalArguments option typ) ->
+        Modifiers shorts renamings ((option, map toUpper typ) : args) help version
+      (AddOptionHelp option helpText) ->
+        Modifiers shorts renamings args (insert option helpText help) version
+      (AddVersionFlag v) ->
+        Modifiers shorts renamings args help (Just v)
 
-mkShortOptions :: Modifiers -> String -> [Char]
-mkShortOptions (Modifiers shortMap _ _ _ _) option =
-    fromMaybe [] (lookup option shortMap)
+lookupMatching :: [(String, a)] -> FieldString -> Maybe a
+lookupMatching list option = fmap snd $ find (\ (from, _) -> from `matches` option) list
 
-mkLongOption :: Modifiers -> String -> String
+mkShortOptions :: Modifiers -> FieldString -> [Char]
+mkShortOptions (Modifiers shortMap _ _ _ _) option = fromMaybe [] (lookupMatching shortMap option)
+
+mkLongOption :: Modifiers -> FieldString -> String
 mkLongOption (Modifiers _ renamings _ _ _) option =
-  fromMaybe option (lookup option renamings)
+  fromMaybe (normalized option) (lookupMatching renamings option)
 
 hasPositionalArgumentsField :: Modifiers -> Bool
 hasPositionalArgumentsField = not . null . positionalArgumentsField
 
-isPositionalArgumentsField :: Modifiers -> String -> Bool
+isPositionalArgumentsField :: Modifiers -> FieldString -> Bool
 isPositionalArgumentsField modifiers field =
-  any (field ==) (map fst (positionalArgumentsField modifiers))
+  any (`matches` field) (map fst (positionalArgumentsField modifiers))
 
 getPositionalArgumentType :: Modifiers -> Maybe String
 getPositionalArgumentType = fmap snd . listToMaybe . positionalArgumentsField
 
-getHelpText :: Modifiers -> String -> String
-getHelpText modifiers field = fromMaybe "" (lookup field (helpTexts modifiers))
+getHelpText :: Modifiers -> FieldString -> String
+getHelpText modifiers field = fromMaybe "" $ lookupMatching (helpTexts modifiers) field
 
 getVersion :: Modifiers -> Maybe String
 getVersion modifiers = version modifiers

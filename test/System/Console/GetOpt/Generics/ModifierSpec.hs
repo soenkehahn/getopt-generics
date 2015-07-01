@@ -33,7 +33,7 @@ spec = do
 
   describe "getVersion" $ do
     it "returns the version" $ do
-      let Success modifiers = mkModifiers [AddVersionFlag "1.0.0"]
+      let modifiers = mkModifiers [AddVersionFlag "1.0.0"]
       getVersion modifiers `shouldBe` Just "1.0.0"
 
   context "when used with Modifiers" $ do

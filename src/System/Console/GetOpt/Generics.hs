@@ -57,7 +57,7 @@ import           System.Console.GetOpt
 import           System.Environment
 import           Text.Read.Compat
 
-import           System.Console.GetOpt.Generics.Internal
+import           System.Console.GetOpt.Generics.FieldString
 import           System.Console.GetOpt.Generics.Modifier
 import           System.Console.GetOpt.Generics.Result
 
@@ -92,10 +92,8 @@ parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)
   -> [String] -- ^ List of command line arguments to parse (e.g. from 'getArgs').
   -> Result a
 parseArguments progName modifiersList args = do
-    (modifiers, datatypeInfo) <- (,) <$>
-      mkModifiers modifiersList <*>
-      normalizedDatatypeInfo (Proxy :: Proxy a)
-    case datatypeInfo of
+    let modifiers = mkModifiers modifiersList
+    case datatypeInfo (Proxy :: Proxy a) of
       ADT typeName _ (constructorInfo :* Nil) ->
         case constructorInfo of
           (Record _ fields) -> processFields progName modifiers args
@@ -161,7 +159,7 @@ newtype OptDescrE a = OptDescrE (Maybe (OptDescr (FieldState a)))
 
 mkOptDescr :: forall a . Option a => Modifiers -> (Field :.: FieldInfo) a -> OptDescrE a
 mkOptDescr _modifiers (Comp NoSelector) = OptDescrE Nothing
-mkOptDescr modifiers (Comp (Selector (FieldInfo name))) = OptDescrE $
+mkOptDescr modifiers (Comp (Selector (FieldInfo (mkFieldString -> name)))) = OptDescrE $
   if isPositionalArgumentsField modifiers name
     then Nothing
     else Just $ Option
@@ -181,14 +179,14 @@ mkInitialFieldStates :: forall xs . (SingI xs, All Option xs) =>
   Modifiers -> NP (Field :.: FieldInfo) xs -> Result (NP FieldState xs)
 mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
   (SNil, Nil) -> return Nil
-  (SCons, Comp (Selector (FieldInfo name)) :* r) ->
+  (SCons, Comp (Selector (FieldInfo (mkFieldString -> name))) :* r) ->
     (:*) <$> inner name <*> mkInitialFieldStates modifiers r
   (SCons, Comp NoSelector :* r) ->
     (:*) <$> Success PositionalArgument <*> mkInitialFieldStates modifiers r
   _ -> uninhabited "mkInitialFieldStates"
 
  where
-  inner :: forall x . Option x => String -> Result (FieldState x)
+  inner :: forall x . Option x => FieldString -> Result (FieldState x)
   inner name = if isPositionalArgumentsField modifiers name
     then case cast (id :: FieldState x -> FieldState x) of
       (Just id' :: Maybe (FieldState [String] -> FieldState x)) ->
@@ -261,8 +259,8 @@ fillInPositionalArguments = inner . Just
     inner :: All Option xs =>
       Maybe [String] -> NP FieldState xs -> (NP FieldState xs, Either [String] ())
     inner arguments fields = case (arguments, fields) of
-
-      (Just arguments, PositionalArguments :* r) -> FieldSuccess arguments `cons` inner Nothing r
+      (Just arguments, PositionalArguments :* r) ->
+        FieldSuccess arguments `cons` inner Nothing r
       (Nothing, PositionalArguments :* r) ->
         FieldErrors ["UseForPositionalArguments can only be used once"] `cons` inner Nothing r
 
@@ -351,9 +349,9 @@ class Typeable a => Option a where
   _toOption = ReqArg parseAsFieldState (argumentType (Proxy :: Proxy a))
 
   -- | This is meant to be an internal function.
-  _emptyOption :: String -> FieldState a
+  _emptyOption :: FieldString -> FieldState a
   _emptyOption flagName = Unset
-    ("missing option: --" ++ flagName ++ "=" ++ argumentType (Proxy :: Proxy a))
+    ("missing option: --" ++ normalized flagName ++ "=" ++ argumentType (Proxy :: Proxy a))
 
   -- | This is meant to be an internal function.
   _accumulate :: a -> a -> a
