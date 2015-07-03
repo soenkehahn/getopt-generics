@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.3.2.
+-- This file has been generated from package.yaml by hpack version 0.4.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -16,6 +16,9 @@ license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
+
+extra-source-files:
+  README.md
 
 source-repository head
   type: git

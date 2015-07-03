@@ -11,6 +11,8 @@ author: "Linh Nguyen, Sönke Hahn"
 copyright: "Zalora South East Asia Pte Ltd"
 maintainer: "linh.nguyen@zalora.com, soenke.hahn@zalora.com"
 
+extra-source-files: README.md
+
 ghc-options: -Wall -fno-warn-name-shadowing
 
 dependencies:
