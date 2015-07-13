@@ -4,7 +4,6 @@ module ModifiersSpec where
 
 import           Data.List
 import           Test.Hspec
-import           Test.Hspec.Expectations.Contrib
 
 import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.GenericsSpec

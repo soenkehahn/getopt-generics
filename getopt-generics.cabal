@@ -67,7 +67,7 @@ test-suite spec
     , generics-sop
     , tagged
 
-    , hspec
+    , hspec >= 2.1.8
     , hspec-expectations
     , markdown-unlit
     , QuickCheck

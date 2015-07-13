@@ -14,7 +14,6 @@ import           Data.Typeable
 import qualified GHC.Generics as GHC
 import           System.Environment
 import           Test.Hspec
-import           Test.Hspec.Expectations.Contrib
 import           Test.QuickCheck hiding (Result(..))
 
 import           System.Console.GetOpt.Generics
