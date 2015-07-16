@@ -5,11 +5,13 @@ module System.Console.GetOpt.Generics.ModifierSpec where
 import           Data.Char
 import           Data.Proxy
 import qualified GHC.Generics
+import           Generics.SOP
 import           Test.Hspec
 import           Test.QuickCheck hiding (Result(..))
 
-import           System.Console.GetOpt.Generics
+import           System.Console.GetOpt.Generics.GetArguments
 import           System.Console.GetOpt.Generics.Modifier
+import           System.Console.GetOpt.Generics.Result
 
 spec :: Spec
 spec = do
