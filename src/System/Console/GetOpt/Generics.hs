@@ -133,10 +133,8 @@ processFields progName modifiers args fields = do
 
     reportGetOptErrors parseErrors
 
-    let (withPositionalArguments, additionalArgumentsErrors) =
-          fillInPositionalArguments arguments $
-            project options initialFieldStates
-    either errors return additionalArgumentsErrors
+    withPositionalArguments <- fillInPositionalArguments arguments $
+      project options initialFieldStates
 
     to . SOP . Z <$> collectResult withPositionalArguments
   where
@@ -253,8 +251,11 @@ positionalArgumentHelp Nil = []
 -- - missing positional arguments.
 -- The returned Either contains errors in case of too many positional arguments.
 fillInPositionalArguments :: (All Option xs) =>
-  [String] -> NP FieldState xs -> (NP FieldState xs, Either [String] ())
-fillInPositionalArguments = inner . Just
+  [String] -> NP FieldState xs -> Result (NP FieldState xs)
+fillInPositionalArguments args inputFieldStates = do
+    let (result, errs) = inner (Just args) inputFieldStates
+    either errors return errs
+    Success result
   where
     inner :: All Option xs =>
       Maybe [String] -> NP FieldState xs -> (NP FieldState xs, Either [String] ())
