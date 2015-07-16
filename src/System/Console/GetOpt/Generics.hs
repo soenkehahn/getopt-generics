@@ -403,8 +403,8 @@ instance Option Bool where
 
   parseArgument :: String -> Maybe Bool
   parseArgument s
-    | map toLower s == "true" = Just True
-    | map toLower s == "false" = Just False
+    | map toLower s `elem` ["true", "yes", "on"] = Just True
+    | map toLower s `elem` ["false", "no", "off"] = Just False
     | otherwise = case readMaybe s of
       Just (n :: Integer) -> Just (n > 0)
       Nothing -> Nothing

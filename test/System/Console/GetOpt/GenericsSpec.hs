@@ -251,13 +251,13 @@ part6 = do
 
   describe "Option.Bool" $ do
     describe "parseArgument" $ do
-      it "parses 'true' case-insensitively" $ do
-        forM_ ["true", "True", "tRue", "TRUE"] $ \ true ->
+      forM_ ["true", "True", "tRue", "TRUE", "yes", "yEs", "on", "oN"] $ \ true ->
+        it ("parses '" ++ true ++ "' as True") $ do
           parseArgument true `shouldBe` Just True
 
-      it "parses 'false' case-insensitively" $ do
-        forM_ ["false", "False", "falSE", "FALSE"] $ \ true ->
-          parseArgument true `shouldBe` Just False
+      forM_ ["false", "False", "falSE", "FALSE", "no", "nO", "off", "ofF"] $ \ false ->
+        it ("parses '" ++ false ++ "' as False") $ do
+          parseArgument false `shouldBe` Just False
 
       it "parses every positive integer as true" $ do
         property $ \ (n :: Int) ->
