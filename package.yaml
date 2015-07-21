@@ -42,8 +42,6 @@ tests:
       - hspec-expectations
       - markdown-unlit
       - QuickCheck
-      - name: silently
-        git: https://github.com/zalora/silently
-        ref: ed58ce54c90e8b2523008b981ca7f41574996b63
+      - silently
 
 github: zalora/getopt-generics
