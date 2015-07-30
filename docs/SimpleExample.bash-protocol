@@ -1,0 +1,7 @@
+$ runhaskell myProgram.hs foo 42 true
+("foo",42,True)
+$ runhaskell myProgram.hs foo 42 bar
+cannot parse as BOOL: bar
+$ runhaskell myProgram.hs --help
+myProgram.hs [OPTIONS] STRING INTEGER BOOL
+  -h  --help  show help and exit

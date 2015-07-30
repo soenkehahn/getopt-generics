@@ -35,7 +35,7 @@ tests:
     source-dirs:
       - src
       - test
-      - examples
+      - docs
 
     dependencies:
       - hspec >= 2.1.8

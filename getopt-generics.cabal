@@ -50,7 +50,7 @@ test-suite spec
   hs-source-dirs:
       src
     , test
-    , examples
+    , docs
   ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0 -pgmL markdown-unlit
   build-depends:
       base == 4.*
@@ -80,6 +80,8 @@ test-suite spec
       System.Console.GetOpt.Generics.SimpleSpec
       System.Console.GetOpt.GenericsSpec
       Util
+      CustomOptionsExample
       Example
-      Readme
+      RecordTypeExample
+      SimpleExample
   default-language: Haskell2010

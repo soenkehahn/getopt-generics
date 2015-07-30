@@ -2,6 +2,8 @@
 module System.Console.GetOpt.Generics (
   -- * IO API
   simpleCLI,
+  SimpleCLI,
+  ArgumentTypes,
   getArguments,
   modifiedGetArguments,
   -- * Pure API
@@ -13,9 +15,6 @@ module System.Console.GetOpt.Generics (
   -- * Available Field Types
   -- fixme: hide methods?
   Option(..),
-  -- * SimpleCLI class
-  SimpleCLI,
-  ArgumentTypes,
   -- * Re-exports from "Generics.SOP"
   Generic,
   HasDatatypeInfo,
