@@ -1,5 +1,5 @@
 name: getopt-generics
-version: "0.8"
+version: "0.9"
 category: "Console, System"
 synopsis: "Simple command line argument parsing"
 description: >
