@@ -47,8 +47,6 @@ class SingI (ArgumentTypes main) => SimpleCLI main where
 -- ### Start "docs/SimpleExample.hs" Haddock ###
 
 -- |
--- >  module SimpleExample where
--- >
 -- >  import           System.Console.GetOpt.Generics
 -- >
 -- >  main :: IO ()

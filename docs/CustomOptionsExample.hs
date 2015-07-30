@@ -1,8 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module CustomOptionsExample where
-
 import           Data.Typeable
 import qualified GHC.Generics
 import           System.Console.GetOpt.Generics
@@ -28,3 +26,6 @@ instance HasDatatypeInfo FileOptions
 -- Returns: FileOptions {file = File "some/file"}
 getFileOptions :: IO FileOptions
 getFileOptions = withArgs (words "--file some/file") getArguments
+
+main :: IO ()
+main = return ()

@@ -53,8 +53,6 @@ import           System.Console.GetOpt.Generics.Result
 -- |
 -- >  {-# LANGUAGE DeriveGeneric #-}
 -- >
--- >  module RecordTypeExample where
--- >
 -- >  import GHC.Generics
 -- >  import System.Console.GetOpt.Generics
 -- >
@@ -371,9 +369,8 @@ data FieldState a where
 -- ### Start "docs/CustomOptionsExample.hs" Haddock ###
 
 -- |
+-- >  {-# LANGUAGE DeriveDataTypeable #-}
 -- >  {-# LANGUAGE DeriveGeneric #-}
--- >
--- >  module CustomOptionsExample where
 -- >
 -- >  import           Data.Typeable
 -- >  import qualified GHC.Generics
@@ -400,6 +397,9 @@ data FieldState a where
 -- >  -- Returns: FileOptions {file = File "some/file"}
 -- >  getFileOptions :: IO FileOptions
 -- >  getFileOptions = withArgs (words "--file some/file") getArguments
+-- >
+-- >  main :: IO ()
+-- >  main = return ()
 
 -- ### End ###
 

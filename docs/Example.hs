@@ -1,7 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module Example where
-
 import qualified GHC.Generics
 import           System.Console.GetOpt.Generics
 

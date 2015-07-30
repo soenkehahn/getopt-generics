@@ -1,7 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module RecordTypeExample where
-
 import GHC.Generics
 import System.Console.GetOpt.Generics
 

@@ -1,5 +1,3 @@
-module SimpleExample where
-
 import           System.Console.GetOpt.Generics
 
 main :: IO ()

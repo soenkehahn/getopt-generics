@@ -12,8 +12,6 @@ interfaces. Here's an example:
 <!--- ### Start "docs/SimpleExample.hs" (MarkDown Haskell) ### -->
 
 ``` haskell
-module SimpleExample where
-
 import           System.Console.GetOpt.Generics
 
 main :: IO ()
