@@ -14,7 +14,7 @@ module System.Console.GetOpt.Generics (
   deriveShortOptions,
   -- * Available Field Types
   -- fixme: hide methods?
-  Option(..),
+  Option(argumentType, parseArgument),
   -- * Re-exports from "Generics.SOP"
   Generic,
   HasDatatypeInfo,

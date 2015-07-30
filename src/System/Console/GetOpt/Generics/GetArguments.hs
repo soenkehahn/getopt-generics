@@ -21,7 +21,7 @@
 
 -- | @getopt-generics@ tries to make it very simple to create command line
 -- argument parsers.
-module System.Console.GetOpt.Generics.GetArguments  where
+module System.Console.GetOpt.Generics.GetArguments where
 
 import           Data.Orphans ()
 import           Prelude ()
