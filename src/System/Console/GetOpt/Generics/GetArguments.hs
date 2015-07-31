@@ -88,14 +88,15 @@ import           System.Console.GetOpt.Generics.Result
 -- >  $ program  --port 8080 --daemonize
 -- >  Options {port = 8080, daemonize = True, config = Nothing}
 -- >  $ program --port foo
--- >  not an integer: foo
+-- >  cannot parse as INTEGER: foo
 -- >  $ program
--- >  missing option: --port=int
+-- >  missing option: --port=INTEGER
 -- >  $ program --help
--- >  program
--- >      --port=integer
--- >      --daemonize
--- >      --config=string (optional)
+-- >  program [OPTIONS]
+-- >        --port=INTEGER
+-- >        --daemonize
+-- >        --config=STRING (optional)
+-- >    -h  --help                      show help and exit
 
 -- ### End ###
 
