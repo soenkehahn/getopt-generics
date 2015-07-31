@@ -20,10 +20,8 @@
 {-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
 
 -- | @getopt-generics@ tries to make it very simple to create command line
--- argument parsers. An introductory example can be found in the
--- <https://github.com/zalora/getopt-generics#getopt-generics README>.
-
-module System.Console.GetOpt.Generics.GetArguments  where
+-- argument parsers.
+module System.Console.GetOpt.Generics.GetArguments where
 
 import           Data.Orphans ()
 import           Prelude ()
@@ -46,13 +44,61 @@ import           System.Console.GetOpt.Generics.Result
 -- | Parses command line arguments (gotten from 'withArgs') and returns the
 --   parsed value. This function should be enough for simple use-cases.
 --
---   May throw the following exceptions:
+--   Throws the same exceptions as 'simpleCLI'.
 --
---   - @'ExitFailure' 1@ in case of invalid options. Error messages are written
---     to @stderr@.
---   - @'ExitSuccess'@ in case @--help@ is given. (@'ExitSuccess'@ behaves like
---     a normal exception, except that -- if uncaught -- the process will exit
---     with exit-code @0@.) Help output is written to @stdout@.
+-- Here's an example:
+
+-- ### Start "docs/RecordTypeExample.hs" Haddock ###
+
+-- |
+-- >  {-# LANGUAGE DeriveGeneric #-}
+-- >
+-- >  import GHC.Generics
+-- >  import System.Console.GetOpt.Generics
+-- >
+-- >  -- All you have to do is to define a type and derive some instances:
+-- >
+-- >  data Options
+-- >    = Options {
+-- >      port :: Int,
+-- >      daemonize :: Bool,
+-- >      config :: Maybe FilePath
+-- >    }
+-- >    deriving (Show, GHC.Generics.Generic)
+-- >
+-- >  instance System.Console.GetOpt.Generics.Generic Options
+-- >  instance HasDatatypeInfo Options
+-- >
+-- >  -- Then you can use `getArguments` to create a command-line argument parser:
+-- >
+-- >  main :: IO ()
+-- >  main = do
+-- >    options <- getArguments
+-- >    print (options :: Options)
+
+-- ### End ###
+
+-- | And this is how the above program behaves:
+
+-- ### Start "docs/RecordTypeExample.bash-protocol" Haddock ###
+
+-- |
+-- >  $ program --port 8080 --config some/path
+-- >  Options {port = 8080, daemonize = False, config = Just "some/path"}
+-- >  $ program  --port 8080 --daemonize
+-- >  Options {port = 8080, daemonize = True, config = Nothing}
+-- >  $ program --port foo
+-- >  not an integer: foo
+-- >  $ program
+-- >  missing option: --port=int
+-- >  $ program --help
+-- >  program
+-- >      --port=integer
+-- >      --daemonize
+-- >      --config=string (optional)
+
+-- ### End ###
+
 getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
   IO a
 getArguments = modifiedGetArguments []
@@ -65,7 +111,7 @@ modifiedGetArguments modifiers = do
   progName <- getProgName
   handleResult $ parseArguments progName modifiers args
 
--- | Pure variant of 'getArguments'.
+-- | Pure variant of 'modifiedGetArguments'.
 --
 --   Does not throw any exceptions.
 parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
@@ -316,9 +362,47 @@ data FieldState a where
 --
 --   If you want to use custom field types you should implement an
 --   @instance Option YourCustomType@ containing implementations of
---   'argumentType' and 'parseArgument' (the minimal complete definition). For
---   an example see the
---   <https://github.com/zalora/getopt-generics#getopt-generics README>.
+--   'argumentType' and 'parseArgument' (the minimal complete definition).
+--
+-- Here's an example:
+
+-- ### Start "docs/CustomOptionsExample.hs" Haddock ###
+
+-- |
+-- >  {-# LANGUAGE DeriveDataTypeable #-}
+-- >  {-# LANGUAGE DeriveGeneric #-}
+-- >
+-- >  import           Data.Typeable
+-- >  import qualified GHC.Generics
+-- >  import           System.Console.GetOpt.Generics
+-- >  import           System.Environment
+-- >
+-- >  data File = File FilePath
+-- >    deriving (Show, Typeable)
+-- >
+-- >  instance Option File where
+-- >    argumentType Proxy = "file"
+-- >    parseArgument f = Just (File f)
+-- >
+-- >  data FileOptions
+-- >    = FileOptions {
+-- >      file :: File
+-- >    }
+-- >    deriving (Show, GHC.Generics.Generic)
+-- >
+-- >  instance System.Console.GetOpt.Generics.Generic FileOptions
+-- >  instance HasDatatypeInfo FileOptions
+-- >
+-- >  -- fixme: bash-protocol?
+-- >  -- Returns: FileOptions {file = File "some/file"}
+-- >  getFileOptions :: IO FileOptions
+-- >  getFileOptions = withArgs (words "--file some/file") getArguments
+-- >
+-- >  main :: IO ()
+-- >  main = return ()
+
+-- ### End ###
+
 class Typeable a => Option a where
   {-# MINIMAL argumentType, parseArgument #-}
   -- | Name of the argument type, e.g. "bool" or "integer".

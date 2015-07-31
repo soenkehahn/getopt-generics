@@ -31,17 +31,27 @@ library:
 tests:
   spec:
     main: "Spec.hs"
-    ghc-options: "-threaded -O0 -pgmL markdown-unlit"
+    ghc-options: "-threaded -O0"
     source-dirs:
       - src
       - test
-      - examples
 
     dependencies:
       - hspec >= 2.1.8
-      - hspec-expectations
-      - markdown-unlit
       - QuickCheck
       - silently
+
+  examples:
+    main: "Examples.hs"
+    ghc-options: "-threaded -O0"
+    source-dirs:
+      - test
+
+    dependencies:
+      - hspec >= 2.1.8
+      - temporary
+      - directory
+      - filepath
+      - process
 
 github: zalora/getopt-generics

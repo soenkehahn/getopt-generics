@@ -44,14 +44,12 @@ library
       System.Console.GetOpt.Generics.Simple
   default-language: Haskell2010
 
-test-suite spec
+test-suite examples
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: Examples.hs
   hs-source-dirs:
-      src
-    , test
-    , examples
-  ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0 -pgmL markdown-unlit
+      test
+  ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0
   build-depends:
       base == 4.*
     , base-compat >= 0.8
@@ -59,8 +57,37 @@ test-suite spec
     , generics-sop
     , tagged
     , hspec >= 2.1.8
-    , hspec-expectations
-    , markdown-unlit
+    , temporary
+    , directory
+    , filepath
+    , process
+  other-modules:
+      ModifiersSpec
+      ModifiersSpec.RenameOptionsSpec
+      ModifiersSpec.UseForPositionalArgumentsSpec
+      Spec
+      System.Console.GetOpt.Generics.FieldStringSpec
+      System.Console.GetOpt.Generics.ModifierSpec
+      System.Console.GetOpt.Generics.ResultSpec
+      System.Console.GetOpt.Generics.SimpleSpec
+      System.Console.GetOpt.GenericsSpec
+      Util
+  default-language: Haskell2010
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      src
+    , test
+  ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0
+  build-depends:
+      base == 4.*
+    , base-compat >= 0.8
+    , base-orphans
+    , generics-sop
+    , tagged
+    , hspec >= 2.1.8
     , QuickCheck
     , silently
   other-modules:
@@ -70,7 +97,7 @@ test-suite spec
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Result
       System.Console.GetOpt.Generics.Simple
-      ExamplesSpec
+      Examples
       ModifiersSpec
       ModifiersSpec.RenameOptionsSpec
       ModifiersSpec.UseForPositionalArgumentsSpec
@@ -80,6 +107,4 @@ test-suite spec
       System.Console.GetOpt.Generics.SimpleSpec
       System.Console.GetOpt.GenericsSpec
       Util
-      Example
-      Readme
   default-language: Haskell2010

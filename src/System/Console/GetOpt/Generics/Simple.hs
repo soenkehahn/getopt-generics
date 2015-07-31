@@ -26,28 +26,52 @@ class SingI (ArgumentTypes main) => SimpleCLI main where
   _initialFieldStates :: Proxy main -> NP FieldState (ArgumentTypes main)
   _run :: NP I (ArgumentTypes main) -> main -> IO ()
 
--- | 'simpleCLI' converts an IO operation into a program with a nice CLI. @main@ can have
---   arbitrarily many parameters provided all parameters have an instance for 'Option'.
+-- | 'simpleCLI' converts an IO operation into a program with a proper CLI.
+--   Retrieves command line arguments through 'withArgs'.
+--   @main@ (the given IO operation) can have arbitrarily many parameters
+--   provided all parameters have an instance for 'Option'.
+--
+--   May throw the following exceptions:
+--
+--   - @'ExitFailure' 1@ in case of invalid options. Error messages are written
+--     to @stderr@.
+--   - @'ExitSuccess'@ in case @--help@ is given. (@'ExitSuccess'@ behaves like
+--     a normal exception, except that -- if uncaught -- the process will exit
+--     with exit-code @0@.) Help output is written to @stdout@.
 --
 --   Example:
 --
 --   Given a file @myProgram.hs@:
 --
---   > main :: IO ()
---   > main = simpleCLI myMain
---   >
---   > myMain :: String -> Int -> Bool -> IO ()
---   > myMain s i b = print (s, i, b)
---
---   you get:
---
---   > $ runhaskell myProgram.hs foo 42 true
---   > ("foo",42,True)
---   > $ runhaskell myProgram.hs foo 42 bar
---   > cannot parse as BOOL: bar
---   > $ runhaskell myProgram.hs --help
---   > myProgram.hs [OPTIONS] STRING INTEGER BOOL
---   >   -h  --help  show help and exit
+
+-- ### Start "docs/SimpleExample.hs" Haddock ###
+
+-- |
+-- >  import           System.Console.GetOpt.Generics
+-- >
+-- >  main :: IO ()
+-- >  main = simpleCLI myMain
+-- >
+-- >  myMain :: String -> Int -> Bool -> IO ()
+-- >  myMain s i b = print (s, i, b)
+
+-- ### End ###
+
+-- | you get:
+
+-- ### Start "docs/SimpleExample.bash-protocol" Haddock ###
+
+-- |
+-- >  $ runhaskell myProgram.hs foo 42 true
+-- >  ("foo",42,True)
+-- >  $ runhaskell myProgram.hs foo 42 bar
+-- >  cannot parse as BOOL: bar
+-- >  $ runhaskell myProgram.hs --help
+-- >  myProgram.hs [OPTIONS] STRING INTEGER BOOL
+-- >    -h  --help  show help and exit
+
+-- ### End ###
+
 simpleCLI :: forall main . (SimpleCLI main, All Option (ArgumentTypes main)) =>
   main -> IO ()
 simpleCLI main = do
