@@ -1,15 +1,12 @@
 name: getopt-generics
 version: "0.10"
 category: "Console, System"
-synopsis: "Simple command line argument parsing"
-description: >
-  "getopt-generics" -- create command line interfaces with ease
+synopsis:    Create command line interfaces with ease
+description: Create command line interfaces with ease
 license: "BSD3"
 author: "Linh Nguyen, Sönke Hahn"
 copyright: "Zalora South East Asia Pte Ltd"
 maintainer: "linh.nguyen@zalora.com, soenke.hahn@zalora.com"
-
-extra-source-files: README.md
 
 ghc-options: -Wall -fno-warn-name-shadowing
 

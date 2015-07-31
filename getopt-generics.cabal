@@ -4,8 +4,8 @@
 
 name:           getopt-generics
 version:        0.10
-synopsis:       Simple command line argument parsing
-description:    "getopt-generics" -- create command line interfaces with ease
+synopsis:       Create command line interfaces with ease
+description:    Create command line interfaces with ease
 category:       Console, System
 homepage:       https://github.com/zalora/getopt-generics#readme
 bug-reports:    https://github.com/zalora/getopt-generics/issues
@@ -16,9 +16,6 @@ license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
-
-extra-source-files:
-    README.md
 
 source-repository head
   type: git
