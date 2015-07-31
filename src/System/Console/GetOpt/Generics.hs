@@ -13,7 +13,6 @@ module System.Console.GetOpt.Generics (
   Modifier(..),
   deriveShortOptions,
   -- * Available Field Types
-  -- fixme: hide methods?
   Option(argumentType, parseArgument),
   -- * Re-exports from "Generics.SOP"
   Generic,
