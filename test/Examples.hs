@@ -13,6 +13,9 @@ import           Test.Hspec
 main :: IO ()
 main = hspec spec
 
+cache :: FilePath
+cache = "test-build-cache"
+
 spec :: Spec
 spec = do
   files <- runIO $
@@ -22,16 +25,23 @@ spec = do
 
   forM_ files $ \ file -> do
     describe "docs directory ghc" $ do
-      it file $ do
+      it ("compile and run " ++ file) $ do
         withSystemTempDirectory "getopt-generics-test" $ \ tempDir -> do
-          let cache = "test-build-cache"
           createDirectoryIfMissing True cache
-          callCommandCompat $ "cabal exec -- ghc " ++ file ++
-            " -outputdir " ++ cache ++
-            " -o " ++ (tempDir </> "program") ++
-            " -isrc -O0" ++
-            " -Wall -Werror -fno-warn-unused-binds -fno-warn-name-shadowing"
-          callCommandCompat $ (tempDir </> "program") ++ " --help"
+          compile tempDir file >>= execute
+
+compile :: FilePath -> FilePath -> IO FilePath
+compile tempDir file = do
+  let program = tempDir </> "program"
+  callCommandCompat $ "cabal exec -- ghc " ++ file ++
+    " -outputdir " ++ cache ++
+    " -o " ++ program ++
+    " -isrc -O0" ++
+    " -Wall -Werror -fno-warn-unused-binds -fno-warn-name-shadowing"
+  return program
+
+execute :: FilePath -> IO ()
+execute program = callCommandCompat $ program ++ " --help"
 
 callCommandCompat :: String -> IO ()
 callCommandCompat command = do
