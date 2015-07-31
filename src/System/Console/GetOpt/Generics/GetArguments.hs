@@ -371,36 +371,20 @@ data FieldState a where
 
 -- |
 -- >  {-# LANGUAGE DeriveDataTypeable #-}
--- >  {-# LANGUAGE DeriveGeneric #-}
 -- >
 -- >  import           Data.Typeable
--- >  import qualified GHC.Generics
 -- >  import           System.Console.GetOpt.Generics
 -- >
 -- >  data File = File FilePath
 -- >    deriving (Show, Typeable)
 -- >
 -- >  instance Option File where
--- >    argumentType Proxy = "file"
+-- >    argumentType Proxy = "custom-file-type"
 -- >    parseArgument f = Just (File f)
 -- >
--- >  data FileOptions
--- >    = FileOptions {
--- >      file :: File
--- >    }
--- >    deriving (Show, GHC.Generics.Generic)
--- >
--- >  instance System.Console.GetOpt.Generics.Generic FileOptions
--- >  instance HasDatatypeInfo FileOptions
--- >
--- >  -- fixme: bash-protocol?
--- >  -- Returns: FileOptions {file = File "some/file"}
--- >  -- getFileOptions :: IO FileOptions
--- >
 -- >  main :: IO ()
--- >  main = do
--- >    options <- getArguments
--- >    print (options :: FileOptions)
+-- >  main = simpleCLI $ \ file -> do
+-- >    print (file :: File)
 
 -- ### End ###
 
@@ -409,12 +393,11 @@ data FieldState a where
 -- ### Start "docs/CustomOptionsExample.bash-protocol" Haddock ###
 
 -- |
--- >  $ program --file some/file
--- >  FileOptions {file = File "some/file"}
+-- >  $ program some/file
+-- >  File "some/file"
 -- >  $ program --help
--- >  program [OPTIONS]
--- >        --file=file
--- >    -h  --help       show help and exit
+-- >  program [OPTIONS] custom-file-type
+-- >    -h  --help  show help and exit
 
 -- ### End ###
 
