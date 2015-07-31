@@ -28,12 +28,12 @@ This is how the program behaves in bash:
 <!--- ### Start "docs/SimpleExample.bash-protocol" (MarkDown Bash) ### -->
 
 ``` bash
-$ runhaskell myProgram.hs foo 42 true
+$ program foo 42 true
 ("foo",42,True)
-$ runhaskell myProgram.hs foo 42 bar
+$ program foo 42 bar
 cannot parse as BOOL: bar
-$ runhaskell myProgram.hs --help
-myProgram.hs [OPTIONS] STRING INTEGER BOOL
+$ program --help
+program [OPTIONS] STRING INTEGER BOOL
   -h  --help  show help and exit
 ```
 

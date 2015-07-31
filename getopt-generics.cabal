@@ -61,7 +61,9 @@ test-suite examples
     , directory
     , filepath
     , process
+    , silently
   other-modules:
+      BashProtocol
       ModifiersSpec
       ModifiersSpec.RenameOptionsSpec
       ModifiersSpec.UseForPositionalArgumentsSpec
@@ -97,6 +99,7 @@ test-suite spec
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Result
       System.Console.GetOpt.Generics.Simple
+      BashProtocol
       Examples
       ModifiersSpec
       ModifiersSpec.RenameOptionsSpec

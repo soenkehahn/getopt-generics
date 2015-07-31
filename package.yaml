@@ -53,5 +53,6 @@ tests:
       - directory
       - filepath
       - process
+      - silently
 
 github: zalora/getopt-generics

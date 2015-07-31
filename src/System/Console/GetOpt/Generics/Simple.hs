@@ -40,9 +40,6 @@ class SingI (ArgumentTypes main) => SimpleCLI main where
 --     with exit-code @0@.) Help output is written to @stdout@.
 --
 --   Example:
---
---   Given a file @myProgram.hs@:
---
 
 -- ### Start "docs/SimpleExample.hs" Haddock ###
 
@@ -57,17 +54,17 @@ class SingI (ArgumentTypes main) => SimpleCLI main where
 
 -- ### End ###
 
--- | you get:
+-- | Using the above program in bash:
 
 -- ### Start "docs/SimpleExample.bash-protocol" Haddock ###
 
 -- |
--- >  $ runhaskell myProgram.hs foo 42 true
+-- >  $ program foo 42 true
 -- >  ("foo",42,True)
--- >  $ runhaskell myProgram.hs foo 42 bar
+-- >  $ program foo 42 bar
 -- >  cannot parse as BOOL: bar
--- >  $ runhaskell myProgram.hs --help
--- >  myProgram.hs [OPTIONS] STRING INTEGER BOOL
+-- >  $ program --help
+-- >  program [OPTIONS] STRING INTEGER BOOL
 -- >    -h  --help  show help and exit
 
 -- ### End ###

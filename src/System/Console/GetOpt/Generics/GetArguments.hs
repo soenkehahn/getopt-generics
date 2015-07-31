@@ -88,14 +88,15 @@ import           System.Console.GetOpt.Generics.Result
 -- >  $ program  --port 8080 --daemonize
 -- >  Options {port = 8080, daemonize = True, config = Nothing}
 -- >  $ program --port foo
--- >  not an integer: foo
+-- >  cannot parse as INTEGER: foo
 -- >  $ program
--- >  missing option: --port=int
+-- >  missing option: --port=INTEGER
 -- >  $ program --help
--- >  program
--- >      --port=integer
--- >      --daemonize
--- >      --config=string (optional)
+-- >  program [OPTIONS]
+-- >        --port=INTEGER
+-- >        --daemonize
+-- >        --config=STRING (optional)
+-- >    -h  --help                      show help and exit
 
 -- ### End ###
 
@@ -370,36 +371,33 @@ data FieldState a where
 
 -- |
 -- >  {-# LANGUAGE DeriveDataTypeable #-}
--- >  {-# LANGUAGE DeriveGeneric #-}
 -- >
 -- >  import           Data.Typeable
--- >  import qualified GHC.Generics
 -- >  import           System.Console.GetOpt.Generics
--- >  import           System.Environment
 -- >
 -- >  data File = File FilePath
 -- >    deriving (Show, Typeable)
 -- >
 -- >  instance Option File where
--- >    argumentType Proxy = "file"
+-- >    argumentType Proxy = "custom-file-type"
 -- >    parseArgument f = Just (File f)
 -- >
--- >  data FileOptions
--- >    = FileOptions {
--- >      file :: File
--- >    }
--- >    deriving (Show, GHC.Generics.Generic)
--- >
--- >  instance System.Console.GetOpt.Generics.Generic FileOptions
--- >  instance HasDatatypeInfo FileOptions
--- >
--- >  -- fixme: bash-protocol?
--- >  -- Returns: FileOptions {file = File "some/file"}
--- >  getFileOptions :: IO FileOptions
--- >  getFileOptions = withArgs (words "--file some/file") getArguments
--- >
 -- >  main :: IO ()
--- >  main = return ()
+-- >  main = simpleCLI $ \ file -> do
+-- >    print (file :: File)
+
+-- ### End ###
+
+-- | This would give you:
+
+-- ### Start "docs/CustomOptionsExample.bash-protocol" Haddock ###
+
+-- |
+-- >  $ program some/file
+-- >  File "some/file"
+-- >  $ program --help
+-- >  program [OPTIONS] custom-file-type
+-- >    -h  --help  show help and exit
 
 -- ### End ###
 
