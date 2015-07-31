@@ -4,7 +4,6 @@
 import           Data.Typeable
 import qualified GHC.Generics
 import           System.Console.GetOpt.Generics
-import           System.Environment
 
 data File = File FilePath
   deriving (Show, Typeable)
@@ -22,10 +21,7 @@ data FileOptions
 instance System.Console.GetOpt.Generics.Generic FileOptions
 instance HasDatatypeInfo FileOptions
 
--- fixme: bash-protocol?
--- Returns: FileOptions {file = File "some/file"}
-getFileOptions :: IO FileOptions
-getFileOptions = withArgs (words "--file some/file") getArguments
-
 main :: IO ()
-main = return ()
+main = do
+  options <- getArguments
+  print (options :: FileOptions)

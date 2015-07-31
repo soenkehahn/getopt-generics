@@ -1,0 +1,6 @@
+$ program --file some/file
+FileOptions {file = File "some/file"}
+$ program --help
+program [OPTIONS]
+      --file=file
+  -h  --help       show help and exit

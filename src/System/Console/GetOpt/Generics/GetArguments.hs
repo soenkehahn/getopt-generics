@@ -376,7 +376,6 @@ data FieldState a where
 -- >  import           Data.Typeable
 -- >  import qualified GHC.Generics
 -- >  import           System.Console.GetOpt.Generics
--- >  import           System.Environment
 -- >
 -- >  data File = File FilePath
 -- >    deriving (Show, Typeable)
@@ -396,11 +395,26 @@ data FieldState a where
 -- >
 -- >  -- fixme: bash-protocol?
 -- >  -- Returns: FileOptions {file = File "some/file"}
--- >  getFileOptions :: IO FileOptions
--- >  getFileOptions = withArgs (words "--file some/file") getArguments
+-- >  -- getFileOptions :: IO FileOptions
 -- >
 -- >  main :: IO ()
--- >  main = return ()
+-- >  main = do
+-- >    options <- getArguments
+-- >    print (options :: FileOptions)
+
+-- ### End ###
+
+-- | This would give you:
+
+-- ### Start "docs/CustomOptionsExample.bash-protocol" Haddock ###
+
+-- |
+-- >  $ program --file some/file
+-- >  FileOptions {file = File "some/file"}
+-- >  $ program --help
+-- >  program [OPTIONS]
+-- >        --file=file
+-- >    -h  --help       show help and exit
 
 -- ### End ###
 
