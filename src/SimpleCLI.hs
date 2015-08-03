@@ -11,14 +11,14 @@
 
 {-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
 
-module System.Console.GetOpt.Generics.Simple where
+module SimpleCLI where
 
 import           Generics.SOP
 import           System.Environment
 
+import           SimpleCLI.Result
 import           System.Console.GetOpt.Generics.GetArguments
 import           System.Console.GetOpt.Generics.Modifier
-import           System.Console.GetOpt.Generics.Result
 
 class SingI (ArgumentTypes main) => SimpleCLI main where
   {-# MINIMAL _initialFieldStates, _run #-}

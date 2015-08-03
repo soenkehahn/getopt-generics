@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 
-module System.Console.GetOpt.Generics.Result (
+module SimpleCLI.Result (
   Result(..),
   errors,
   outputAndExit,

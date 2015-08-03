@@ -37,9 +37,9 @@ import           System.Console.GetOpt
 import           System.Environment
 import           Text.Read.Compat
 
+import           SimpleCLI.Result
 import           System.Console.GetOpt.Generics.FieldString
 import           System.Console.GetOpt.Generics.Modifier
-import           System.Console.GetOpt.Generics.Result
 
 -- | Parses command line arguments (gotten from 'withArgs') and returns the
 --   parsed value. This function should be enough for simple use-cases.

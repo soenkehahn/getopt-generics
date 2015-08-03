@@ -1,5 +1,5 @@
 
-module System.Console.GetOpt.Generics.SimpleSpec where
+module SimpleCLISpec where
 
 import           System.Environment
 import           System.Exit
@@ -7,7 +7,7 @@ import           System.IO
 import           System.IO.Silently
 import           Test.Hspec
 
-import           System.Console.GetOpt.Generics.Simple
+import           SimpleCLI
 
 spec :: Spec
 spec = do

@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module System.Console.GetOpt.Generics.ResultSpec where
+module SimpleCLI.ResultSpec where
 
 import           Control.Exception
 import           Data.List
@@ -10,7 +10,7 @@ import           System.IO.Silently
 import           Test.Hspec
 import           Test.QuickCheck hiding (Result(..))
 
-import           System.Console.GetOpt.Generics.Result
+import           SimpleCLI.Result
 
 spec :: Spec
 spec = do

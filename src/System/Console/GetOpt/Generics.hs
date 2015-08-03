@@ -25,7 +25,7 @@ module System.Console.GetOpt.Generics (
 
 import           Generics.SOP
 
+import           SimpleCLI
+import           SimpleCLI.Result
 import           System.Console.GetOpt.Generics.GetArguments
 import           System.Console.GetOpt.Generics.Modifier
-import           System.Console.GetOpt.Generics.Result
-import           System.Console.GetOpt.Generics.Simple

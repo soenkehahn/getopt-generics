@@ -9,9 +9,9 @@ import           Generics.SOP
 import           Test.Hspec
 import           Test.QuickCheck hiding (Result(..))
 
+import           SimpleCLI.Result
 import           System.Console.GetOpt.Generics.GetArguments
 import           System.Console.GetOpt.Generics.Modifier
-import           System.Console.GetOpt.Generics.Result
 
 spec :: Spec
 spec = do
