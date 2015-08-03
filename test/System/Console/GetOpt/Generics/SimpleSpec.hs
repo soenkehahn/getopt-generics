@@ -53,7 +53,7 @@ spec = do
 
     it "works for IO operations with 2 arguments" $ do
       let main :: Int -> Bool -> IO ()
-          main n b = putStrLn ("success: " ++ show (n, b)) 
+          main n b = putStrLn ("success: " ++ show (n, b))
       (capture_ $ withArgs (words "42 yes") $ simpleCLI main)
         `shouldReturn` "success: (42,True)\n"
 
