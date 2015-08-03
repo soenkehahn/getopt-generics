@@ -20,7 +20,6 @@ cabal-version:  >= 1.10
 extra-source-files:
     docs/CustomOptionsExample.bash-protocol
     docs/CustomOptionsExample.hs
-    docs/Example.hs
     docs/RecordTypeExample.bash-protocol
     docs/RecordTypeExample.hs
     docs/SimpleExample.bash-protocol
