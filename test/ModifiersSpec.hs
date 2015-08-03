@@ -13,7 +13,7 @@ spec :: Spec
 spec = do
   describe "AddShortOption" $ do
     it "allows modifiers for short options" $ do
-      modsParse [AddShortOption "camel-case" 'x'] "-x foo"
+      modsParse [AddShortOption "camelCase" 'x'] "-x foo"
         `shouldBe` Success (CamelCaseOptions "foo")
 
     it "allows modifiers in camelCase" $ do
@@ -39,18 +39,16 @@ spec = do
 
       it "disregards the earlier renaming" $ do
         let Errors errs = parse' "--foo foo"
-        errs `shouldContain` ["unrecognized option `--foo'"]
+        errs `shouldContain` ["unrecognized option `--foo'\n"]
 
     it "contains renamed options in error messages" $ do
       let Errors errs = modsParse
             [RenameOption "camelCase" "foo"]
             "" :: Result CamelCaseOptions
+      -- _ <- error $ show errs
       show errs `shouldNotContain` "camelCase"
+      show errs `shouldNotContain` "camel-case"
       show errs `shouldContain` "foo"
-
-    it "allows to address fields in Modifiers in slugified form" $ do
-      modsParse [RenameOption "camel-case" "foo"] "--foo bar"
-        `shouldBe` Success (CamelCaseOptions "bar")
 
     it "" $ do
       modsParse [RenameOption "bar" "one", RenameOption "baz" "two"] "--one 1 --two foo"
@@ -59,7 +57,7 @@ spec = do
   describe "AddVersionFlag" $ do
     it "implements --version" $ do
       let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version" :: Result Foo
-      output `shouldBe` "prog-name version 1.0.0\n"
+      output `shouldBe` "prog-name version 1.0.0"
 
     it "--help takes precedence over --version" $ do
       let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version --help" :: Result Foo

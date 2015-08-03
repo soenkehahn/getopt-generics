@@ -4,8 +4,10 @@ $ program  --port 8080 --daemonize
 Options {port = 8080, daemonize = True, config = Nothing}
 $ program --port foo
 cannot parse as INTEGER: foo
+# exit-code 1
 $ program
 missing option: --port=INTEGER
+# exit-code 1
 $ program --help
 program [OPTIONS]
       --port=INTEGER

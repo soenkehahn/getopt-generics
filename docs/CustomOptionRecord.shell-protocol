@@ -1,0 +1,6 @@
+$ program --file some/file
+Options {file = File "some/file"}
+$ program --help
+program [OPTIONS]
+      --file=custom-file-type
+  -h  --help                   show help and exit

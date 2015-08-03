@@ -1,7 +1,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-import GHC.Generics
-import System.Console.GetOpt.Generics
+module SimpleRecord where
+
+import qualified GHC.Generics
+import           System.Console.GetOpt.Generics
 
 -- All you have to do is to define a type and derive some instances:
 
@@ -13,12 +15,12 @@ data Options
   }
   deriving (Show, GHC.Generics.Generic)
 
-instance System.Console.GetOpt.Generics.Generic Options
+instance Generic Options
 instance HasDatatypeInfo Options
+instance HasOptions Options
 
--- Then you can use `getArguments` to create a command-line argument parser:
+-- Then you can use `simpleCLI` to create a command-line argument parser:
 
 main :: IO ()
-main = do
-  options <- getArguments
+main = simpleCLI $ \ options -> do
   print (options :: Options)

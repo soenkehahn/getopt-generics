@@ -6,7 +6,7 @@ import           Data.Char
 import           Test.Hspec
 import           Test.QuickCheck hiding (Success)
 
-import           System.Console.GetOpt.Generics.FieldString
+import           System.Console.GetOpt.Generics.FieldString hiding (normalize)
 
 normalize :: String -> String
 normalize = normalized . mkFieldString

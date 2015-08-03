@@ -1,18 +1,22 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module SimpleCLI.Result (
   Result(..),
-  errors,
-  outputAndExit,
   handleResult,
+  sanitize,
  ) where
 
 import           Prelude ()
 import           Prelude.Compat
 
-import           Data.List
+import           Control.Arrow
+import           Data.List.Compat
 import           System.Exit
 import           System.IO
+
+-- fixme: hide non-smart constructors
 
 -- | Type to wrap results from the pure parsing functions.
 data Result a
@@ -30,12 +34,6 @@ data Result a
   | OutputAndExit String
     -- ^ The CLI was used with @--help@. The 'Result' contains the help message.
   deriving (Show, Eq, Ord, Functor)
-
-errors :: [String] -> Result a
-errors = Errors . map removeTrailingNewline
-
-outputAndExit :: String -> Result a
-outputAndExit = OutputAndExit . stripTrailingSpaces
 
 instance Applicative Result where
   pure = Success
@@ -58,24 +56,23 @@ handleResult :: Result a -> IO a
 handleResult result = case result of
   Success a -> return a
   OutputAndExit message -> do
-    putStr message
+    putStr $ sanitize message
     exitWith ExitSuccess
   Errors errs -> do
-    mapM_ (hPutStr stderr . addNewlineIfMissing) errs
+    hPutStr stderr $ sanitize $ intercalate "\n" errs
     exitWith $ ExitFailure 1
 
-addNewlineIfMissing :: String -> String
-addNewlineIfMissing s
-  | "\n" `isSuffixOf` s = s
-  | otherwise = s ++ "\n"
-
-removeTrailingNewline :: String -> String
-removeTrailingNewline s
-  | "\n" `isSuffixOf` s = init s
-  | otherwise = s
+sanitize :: String -> String
+sanitize =
+  lines >>>
+  map stripTrailingSpaces >>>
+  filter (not . null) >>>
+  map (++ "\n") >>>
+  concat
 
 stripTrailingSpaces :: String -> String
-stripTrailingSpaces = reverse . inner . dropWhile (== ' ') . reverse
+stripTrailingSpaces =
+  reverse . inner . dropWhile (`elem` [' ', '\n']) . reverse
   where
     inner s = case s of
       ('\n' : ' ' : r) -> inner ('\n' : r)

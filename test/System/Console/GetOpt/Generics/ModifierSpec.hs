@@ -9,9 +9,8 @@ import           Generics.SOP
 import           Test.Hspec
 import           Test.QuickCheck hiding (Result(..))
 
-import           SimpleCLI.Result
-import           System.Console.GetOpt.Generics.GetArguments
 import           System.Console.GetOpt.Generics.Modifier
+import           Util
 
 spec :: Spec
 spec = do
@@ -37,16 +36,8 @@ spec = do
 
   describe "getVersion" $ do
     it "returns the version" $ do
-      let modifiers = mkModifiers [AddVersionFlag "1.0.0"]
+      let modifiers = unsafeModifiers [AddVersionFlag "1.0.0"]
       getVersion modifiers `shouldBe` Just "1.0.0"
-
-  context "when used with Modifiers" $ do
-    describe "parseArguments" $ do
-      it "allows to specify a flag specific help" $ do
-        let OutputAndExit output =
-              parseArguments "prog-name" [AddOptionHelp "bar" "bar help text"]
-                (words "--help") :: Result Foo
-        output `shouldContain` "--bar=STRING  bar help text"
 
 data Foo
   = Foo {

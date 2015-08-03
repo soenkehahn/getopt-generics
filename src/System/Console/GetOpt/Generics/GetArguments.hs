@@ -34,94 +34,20 @@ import           Data.Proxy
 import           Data.Typeable
 import           Generics.SOP
 import           System.Console.GetOpt
-import           System.Environment
 import           Text.Read.Compat
 
+import           SimpleCLI.HelpFlag
 import           SimpleCLI.Result
 import           System.Console.GetOpt.Generics.FieldString
 import           System.Console.GetOpt.Generics.Modifier
 
--- | Parses command line arguments (gotten from 'withArgs') and returns the
---   parsed value. This function should be enough for simple use-cases.
---
---   Throws the same exceptions as 'simpleCLI'.
---
--- Here's an example:
-
--- ### Start "docs/RecordTypeExample.hs" Haddock ###
-
--- |
--- >  {-# LANGUAGE DeriveGeneric #-}
--- >
--- >  import GHC.Generics
--- >  import System.Console.GetOpt.Generics
--- >
--- >  -- All you have to do is to define a type and derive some instances:
--- >
--- >  data Options
--- >    = Options {
--- >      port :: Int,
--- >      daemonize :: Bool,
--- >      config :: Maybe FilePath
--- >    }
--- >    deriving (Show, GHC.Generics.Generic)
--- >
--- >  instance System.Console.GetOpt.Generics.Generic Options
--- >  instance HasDatatypeInfo Options
--- >
--- >  -- Then you can use `getArguments` to create a command-line argument parser:
--- >
--- >  main :: IO ()
--- >  main = do
--- >    options <- getArguments
--- >    print (options :: Options)
-
--- ### End ###
-
--- | And this is how the above program behaves:
-
--- ### Start "docs/RecordTypeExample.bash-protocol" Haddock ###
-
--- |
--- >  $ program --port 8080 --config some/path
--- >  Options {port = 8080, daemonize = False, config = Just "some/path"}
--- >  $ program  --port 8080 --daemonize
--- >  Options {port = 8080, daemonize = True, config = Nothing}
--- >  $ program --port foo
--- >  cannot parse as INTEGER: foo
--- >  $ program
--- >  missing option: --port=INTEGER
--- >  $ program --help
--- >  program [OPTIONS]
--- >        --port=INTEGER
--- >        --daemonize
--- >        --config=STRING (optional)
--- >    -h  --help                      show help and exit
-
--- ### End ###
-
-getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  IO a
-getArguments = modifiedGetArguments []
-
--- | Like 'getArguments` but allows you to pass in 'Modifier's.
-modifiedGetArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
-  [Modifier] -> IO a
-modifiedGetArguments modifiers = do
-  args <- getArgs
-  progName <- getProgName
-  handleResult $ parseArguments progName modifiers args
-
--- | Pure variant of 'modifiedGetArguments'.
---
---   Does not throw any exceptions.
-parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
+old :: forall a . (Generic a, HasDatatypeInfo a, All2 Option (Code a)) =>
      String -- ^ Name of the program (e.g. from 'getProgName').
   -> [Modifier] -- ^ List of 'Modifier's to manually tweak the command line interface.
   -> [String] -- ^ List of command line arguments to parse (e.g. from 'getArgs').
   -> Result a
-parseArguments progName modifiersList args = do
-    let modifiers = mkModifiers modifiersList
+old progName modifiersList args = do
+    modifiers <- mkModifiers modifiersList
     case datatypeInfo (Proxy :: Proxy a) of
       ADT typeName _ (constructorInfo :* Nil) ->
         case constructorInfo of
@@ -142,7 +68,7 @@ parseArguments progName modifiersList args = do
         err typeName "constructors without field labels"
   where
     err typeName message =
-      errors ["getopt-generics doesn't support " ++ message ++
+      Errors ["getopt-generics doesn't support " ++ message ++
               " (" ++ typeName ++ ")."]
 
 data Field a
@@ -173,7 +99,7 @@ processFields progName modifiers args fields = do
     reportGetOptErrors :: [String] -> Result ()
     reportGetOptErrors parseErrors = case parseErrors of
       [] -> pure ()
-      errs -> errors errs
+      errs -> Errors errs
 
 -- Creates a list of NS where every element corresponds to one field. To be
 -- used by 'getOpt'.
@@ -218,7 +144,7 @@ mkInitialFieldStates modifiers fields = case (sing :: Sing xs, fields) of
     then case cast (id :: FieldState x -> FieldState x) of
       (Just id' :: Maybe (FieldState [String] -> FieldState x)) ->
         Success $ id' PositionalArguments
-      Nothing -> errors
+      Nothing -> Errors
         ["UseForPositionalArguments can only be used " ++
          "for fields of type [String] not " ++
          show (typeOf (impossible "mkInitialFieldStates" :: x))]
@@ -238,18 +164,16 @@ outputInfo progName modifiers args fields =
     case (\ (a, b, c) -> (sort a, b, c)) (getOpt Permute options args) of
       ([], _, _) -> return ()
         -- no help or version flag given
-      (HelpFlag : _, _, _) -> outputAndExit $
-        usageInfo header $
-          toOptDescrUnit (mkOptDescrs modifiers fields) ++
-          toOptDescrUnit options
-      (VersionFlag version : _, _, _) -> outputAndExit $
+      (HelpFlag : _, _, _) -> OutputAndExit $ (error "fixme") progName
+        (positionalArgumentHelp fields)
+        (toOptDescrUnit (mkOptDescrs modifiers fields) ++
+         toOptDescrUnit options)
+        (getPositionalArgumentType modifiers)
+      (VersionFlag version : _, _, _) -> OutputAndExit $
         progName ++ " version " ++ version ++ "\n"
   where
     options :: [OptDescr OutputInfoFlag]
-    options = helpOption : maybeToList versionOption
-
-    helpOption :: OptDescr OutputInfoFlag
-    helpOption = Option ['h'] ["help"] (NoArg HelpFlag) "show help and exit"
+    options = helpOption HelpFlag : maybeToList versionOption
 
     versionOption :: Maybe (OptDescr OutputInfoFlag)
     versionOption = case getVersion modifiers of
@@ -258,15 +182,6 @@ outputInfo progName modifiers args fields =
 
     toOptDescrUnit :: [OptDescr a] -> [OptDescr ()]
     toOptDescrUnit = map (fmap (const ()))
-
-    header :: String
-    header = unwords $
-      progName :
-      "[OPTIONS]" :
-      positionalArgumentHelp fields ++
-      maybe [] (\ t -> ["[" ++ t ++ "]"])
-        (getPositionalArgumentType modifiers) ++
-      []
 
 positionalArgumentHelp :: (All Option xs) => NP (Field :.: FieldInfo) xs -> [String]
 positionalArgumentHelp (p@(Comp NoSelector) :* r) =
@@ -283,7 +198,7 @@ fillInPositionalArguments :: (All Option xs) =>
   [String] -> NP FieldState xs -> Result (NP FieldState xs)
 fillInPositionalArguments args inputFieldStates = do
     let (result, errs) = inner (Just args) inputFieldStates
-    either errors return errs
+    either Errors return errs
     Success result
   where
     inner :: All Option xs =>
@@ -322,8 +237,8 @@ collectResult input =
     inner :: FieldState x -> Result x
     inner s = case s of
       FieldSuccess v -> Success v
-      FieldErrors errs -> errors errs
-      Unset err -> errors [err]
+      FieldErrors errs -> Errors errs
+      Unset err -> Errors [err]
       PositionalArguments -> impossible "collectResult"
       PositionalArgument -> impossible "collectResult"
 
@@ -367,13 +282,14 @@ data FieldState a where
 --
 -- Here's an example:
 
--- ### Start "docs/CustomOptionsExample.hs" Haddock ###
+-- ### Start "docs/CustomOption.hs" Haddock ###
 
 -- |
--- >  {-# LANGUAGE DeriveDataTypeable #-}
+-- >  -- fixme: into haddock
+-- >  -- fixme: add explanation
+-- >  module CustomOption where
 -- >
--- >  import           Data.Typeable
--- >  import           System.Console.GetOpt.Generics
+-- >  import SimpleCLI
 -- >
 -- >  data File = File FilePath
 -- >    deriving (Show, Typeable)
@@ -381,6 +297,9 @@ data FieldState a where
 -- >  instance Option File where
 -- >    argumentType Proxy = "custom-file-type"
 -- >    parseArgument f = Just (File f)
+-- >
+-- >  instance HasOptions File where
+-- >    fromArguments = fromArgumentsOption
 -- >
 -- >  main :: IO ()
 -- >  main = simpleCLI $ \ file -> do
@@ -390,7 +309,7 @@ data FieldState a where
 
 -- | This would give you:
 
--- ### Start "docs/CustomOptionsExample.bash-protocol" Haddock ###
+-- ### Start "docs/CustomOption.shell-protocol" Haddock ###
 
 -- |
 -- >  $ program some/file
@@ -416,7 +335,8 @@ class Typeable a => Option a where
   -- | This is meant to be an internal function.
   _emptyOption :: Modifiers -> FieldString -> FieldState a
   _emptyOption modifiers flagName = Unset
-    ("missing option: --" ++ mkLongOption modifiers flagName ++
+    -- fixme:
+    ("foo: missing option: --" ++ mkLongOption modifiers flagName ++
      "=" ++ argumentType (Proxy :: Proxy a))
 
   -- | This is meant to be an internal function.
@@ -489,8 +409,8 @@ instance Option Integer where
   argumentType _ = "INTEGER"
   parseArgument = readMaybe
 
-readNumber :: (RealFloat n, Read n) => String -> Maybe n
-readNumber s = case readMaybe s of
+readFloat :: (RealFloat n, Read n) => String -> Maybe n
+readFloat s = case readMaybe s of
   Just n -> Just n
   Nothing
     | "." `isPrefixOf` s -> readMaybe ("0" ++ s)
@@ -498,8 +418,8 @@ readNumber s = case readMaybe s of
 
 instance Option Float where
   argumentType _ = "NUMBER"
-  parseArgument = readNumber
+  parseArgument = readFloat
 
 instance Option Double where
   argumentType _ = "NUMBER"
-  parseArgument = readNumber
+  parseArgument = readFloat

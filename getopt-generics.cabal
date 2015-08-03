@@ -18,12 +18,24 @@ build-type:     Simple
 cabal-version:  >= 1.10
 
 extra-source-files:
-    docs/CustomOptionsExample.bash-protocol
-    docs/CustomOptionsExample.hs
-    docs/RecordTypeExample.bash-protocol
-    docs/RecordTypeExample.hs
-    docs/SimpleExample.bash-protocol
-    docs/SimpleExample.hs
+    docs/CustomOption.hs
+    docs/CustomOption.shell-protocol
+    docs/CustomOptionRecord.hs
+    docs/CustomOptionRecord.shell-protocol
+    docs/RecordType.hs
+    docs/RecordType.shell-protocol
+    docs/Simple.hs
+    docs/Simple.shell-protocol
+    docs/SimpleRecord.hs
+    docs/SimpleRecord.shell-protocol
+    docs/Test01.hs
+    docs/Test01.shell-protocol
+    docs/Test02.hs
+    docs/Test02.shell-protocol
+    docs/Test03.hs
+    docs/Test03.shell-protocol
+    docs/Test04.hs
+    docs/Test04.shell-protocol
 
 source-repository head
   type: git
@@ -40,45 +52,18 @@ library
     , generics-sop
     , tagged
   exposed-modules:
+      SimpleCLI
       System.Console.GetOpt.Generics
   other-modules:
-      SimpleCLI
+      SimpleCLI.FromArguments
+      SimpleCLI.HasOptions
+      SimpleCLI.HelpFlag
+      SimpleCLI.Option
       SimpleCLI.Result
       System.Console.GetOpt.Generics.FieldString
       System.Console.GetOpt.Generics.GetArguments
       System.Console.GetOpt.Generics.Modifier
-  default-language: Haskell2010
-
-test-suite examples
-  type: exitcode-stdio-1.0
-  main-is: Examples.hs
-  hs-source-dirs:
-      test
-  ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0
-  build-depends:
-      base == 4.*
-    , base-compat >= 0.8
-    , base-orphans
-    , generics-sop
-    , tagged
-    , hspec >= 2.1.8
-    , temporary
-    , directory
-    , filepath
-    , process
-    , silently
-  other-modules:
-      BashProtocol
-      ModifiersSpec
-      ModifiersSpec.RenameOptionsSpec
-      ModifiersSpec.UseForPositionalArgumentsSpec
-      SimpleCLI.ResultSpec
-      SimpleCLISpec
-      Spec
-      System.Console.GetOpt.Generics.FieldStringSpec
-      System.Console.GetOpt.Generics.ModifierSpec
-      System.Console.GetOpt.GenericsSpec
-      Util
+      System.Console.GetOpt.Generics.Modifier.Types
   default-language: Haskell2010
 
 test-suite spec
@@ -87,6 +72,7 @@ test-suite spec
   hs-source-dirs:
       src
     , test
+    , docs
   ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0
   build-depends:
       base == 4.*
@@ -97,22 +83,39 @@ test-suite spec
     , hspec >= 2.1.8
     , QuickCheck
     , silently
+    , filepath
+    , safe
   other-modules:
       SimpleCLI
+      SimpleCLI.FromArguments
+      SimpleCLI.HasOptions
+      SimpleCLI.HelpFlag
+      SimpleCLI.Option
       SimpleCLI.Result
       System.Console.GetOpt.Generics
       System.Console.GetOpt.Generics.FieldString
       System.Console.GetOpt.Generics.GetArguments
       System.Console.GetOpt.Generics.Modifier
-      BashProtocol
-      Examples
+      System.Console.GetOpt.Generics.Modifier.Types
+      ExamplesSpec
       ModifiersSpec
       ModifiersSpec.RenameOptionsSpec
       ModifiersSpec.UseForPositionalArgumentsSpec
+      ShellProtocol
+      SimpleCLI.GetOptsSpec
       SimpleCLI.ResultSpec
       SimpleCLISpec
       System.Console.GetOpt.Generics.FieldStringSpec
       System.Console.GetOpt.Generics.ModifierSpec
       System.Console.GetOpt.GenericsSpec
       Util
+      CustomOption
+      CustomOptionRecord
+      RecordType
+      Simple
+      SimpleRecord
+      Test01
+      Test02
+      Test03
+      Test04
   default-language: Haskell2010

@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs            #-}
+{-# LANGUAGE LambdaCase       #-}
 {-# LANGUAGE TupleSections    #-}
 {-# LANGUAGE ViewPatterns     #-}
 
@@ -17,6 +18,9 @@ module System.Console.GetOpt.Generics.Modifier (
 
   deriveShortOptions,
 
+  applyModifiers,
+  applyModifiersLong,
+
   -- exported for testing
   mkShortModifiers,
   insertWith,
@@ -25,12 +29,18 @@ module System.Console.GetOpt.Generics.Modifier (
 import           Prelude ()
 import           Prelude.Compat
 
+import           Control.Arrow
+import           Control.Monad
 import           Data.Char
 import           Data.List (find, foldl')
 import           Data.Maybe
 import           Generics.SOP
+import           System.Console.GetOpt
 
+import           SimpleCLI.FromArguments
+import           SimpleCLI.Result
 import           System.Console.GetOpt.Generics.FieldString
+import           System.Console.GetOpt.Generics.Modifier.Types
 
 -- | 'Modifier's can be used to customize the command line parser.
 data Modifier
@@ -59,38 +69,33 @@ data Modifier
   | AddVersionFlag String
     -- ^ @AddVersionFlag version@ adds a @--version@ flag.
 
-data Modifiers = Modifiers {
-  _shortOptions :: [(String, [Char])],
-  _renaming :: FieldString -> FieldString,
-  positionalArgumentsField :: [(String, String)],
-  helpTexts :: [(String, String)],
-  version :: Maybe String
- }
+-- fixme: dcd
 
-mkModifiers :: [Modifier] -> Modifiers
-mkModifiers = foldl' inner empty
+mkModifiers :: [Modifier] -> Result Modifiers
+mkModifiers = foldM inner empty
   where
     empty :: Modifiers
-    empty = Modifiers [] id [] [] Nothing
+    empty = Modifiers [] id Nothing [] Nothing
 
-    inner :: Modifiers -> Modifier -> Modifiers
+    inner :: Modifiers -> Modifier -> Result Modifiers
     inner (Modifiers shorts renaming args help version) modifier = case modifier of
       (AddShortOption option short) ->
-        Modifiers (insertWith (++) option [short] shorts) renaming args help version
+        return $ Modifiers (insertWith (++) option [short] shorts) renaming args help version
       (RenameOption from to) ->
         let newRenaming :: FieldString -> FieldString
             newRenaming option = if from `matches` option
               then mkFieldString to
               else option
-        in Modifiers shorts (renaming . newRenaming) args help version
+        in return $ Modifiers shorts (renaming . newRenaming) args help version
       (RenameOptions newRenaming) ->
-        Modifiers shorts (renaming `combineRenamings` newRenaming) args help version
-      (UseForPositionalArguments option typ) ->
-        Modifiers shorts renaming ((option, map toUpper typ) : args) help version
+        return $ Modifiers shorts (renaming `combineRenamings` newRenaming) args help version
+      (UseForPositionalArguments option typ) -> case args of
+        Nothing -> return $ Modifiers shorts renaming (Just (option, map toUpper typ)) help version
+        Just _ -> Errors ["UseForPositionalArguments can only be used once"]
       (AddOptionHelp option helpText) ->
-        Modifiers shorts renaming args (insert option helpText help) version
+        return $ Modifiers shorts renaming args (insert option helpText help) version
       (AddVersionFlag v) ->
-        Modifiers shorts renaming args help (Just v)
+        return $ Modifiers shorts renaming args help (Just v)
 
     combineRenamings :: (FieldString -> FieldString) -> (String -> Maybe String)
       -> FieldString -> FieldString
@@ -107,21 +112,8 @@ mkLongOption :: Modifiers -> FieldString -> String
 mkLongOption (Modifiers _ renaming _ _ _) option =
   normalized (renaming option)
 
-hasPositionalArgumentsField :: Modifiers -> Bool
-hasPositionalArgumentsField = not . null . positionalArgumentsField
-
-isPositionalArgumentsField :: Modifiers -> FieldString -> Bool
-isPositionalArgumentsField modifiers field =
-  any (`matches` field) (map fst (positionalArgumentsField modifiers))
-
-getPositionalArgumentType :: Modifiers -> Maybe String
-getPositionalArgumentType = fmap snd . listToMaybe . positionalArgumentsField
-
 getHelpText :: Modifiers -> FieldString -> String
 getHelpText modifiers field = fromMaybe "" $ lookupMatching (helpTexts modifiers) field
-
-getVersion :: Modifiers -> Maybe String
-getVersion modifiers = version modifiers
 
 -- * deriving Modifiers
 
@@ -185,3 +177,36 @@ insert key value ((a, b) : r) =
   if a == key
     then (key, value) : r
     else (a, b) : insert key value r
+
+-- * transforming FromArguments
+
+applyModifiers :: Modifiers -> FromArguments Unnormalized a -> FromArguments Unnormalized a
+applyModifiers modifiers =
+  addShortOptions >>>
+  renameOptions
+  where
+    addShortOptions = modParserOptions $ map $
+      \ option ->
+        case filter (\ (needle, _) -> needle `elem` longs option) (shortOptions modifiers) of
+          [] -> option
+          (concat . map snd -> newShorts) ->
+            foldl' (flip addShort) option newShorts
+    renameOptions =
+      modParserOptions $ map $ modLongs $ renaming modifiers
+
+applyModifiersLong :: Modifiers -> String -> String
+applyModifiersLong modifiers long = (renaming modifiers) long
+
+longs :: OptDescr a -> [String]
+longs (Option _ ls _ _) = ls
+
+addShort :: Char -> OptDescr a -> OptDescr a
+addShort short (Option shorts longs argDescrs help) =
+  Option (shorts ++ [short]) longs argDescrs help
+
+modLongs :: (String -> String) -> OptDescr a -> OptDescr a
+modLongs f (Option shorts longs descrs help) =
+  Option shorts (map f longs) descrs help
+
+-- fixme: tests for conflicting flags
+-- todo: test for overlapping modifiers

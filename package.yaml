@@ -24,6 +24,7 @@ library:
   source-dirs:
     - src
   exposed-modules:
+    - SimpleCLI
     - System.Console.GetOpt.Generics
 
 tests:
@@ -33,24 +34,13 @@ tests:
     source-dirs:
       - src
       - test
+      - docs
 
     dependencies:
       - hspec >= 2.1.8
       - QuickCheck
       - silently
-
-  examples:
-    main: "Examples.hs"
-    ghc-options: "-threaded -O0"
-    source-dirs:
-      - test
-
-    dependencies:
-      - hspec >= 2.1.8
-      - temporary
-      - directory
       - filepath
-      - process
-      - silently
+      - safe
 
 github: zalora/getopt-generics

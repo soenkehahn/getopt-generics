@@ -1,0 +1,7 @@
+$ program --aa foo --bb bar
+(A {aa = "foo"},B {bb = "bar"})
+$ program --help
+program [OPTIONS]
+      --aa=STRING
+      --bb=STRING
+  -h  --help       show help and exit

@@ -8,16 +8,24 @@ module System.Console.GetOpt.GenericsSpec where
 import           Prelude ()
 import           Prelude.Compat
 
+import           Control.Exception
 import           Data.Foldable (forM_)
 import           Data.List (isPrefixOf, isSuffixOf)
 import           Data.Typeable
 import qualified GHC.Generics as GHC
 import           System.Environment
+import           System.Exit
+import           System.IO
+import           System.IO.Silently
 import           Test.Hspec
 import           Test.QuickCheck hiding (Result(..))
 
+import           SimpleCLI.HasOptions
+import           SimpleCLI.Result
 import           System.Console.GetOpt.Generics
 import           Util
+
+-- fixme: renumber
 
 spec :: Spec
 spec = do
@@ -25,7 +33,6 @@ spec = do
   part2
   part3
   part4
-  part5
   part6
 
 data Foo
@@ -67,7 +74,7 @@ part1 = do
       it "prints out an error" $ do
         let Errors messages = parse "--no-such-option" :: Result Foo
         messages `shouldBe`
-          ["unrecognized option `--no-such-option'",
+          ["unrecognized option `--no-such-option'\n",
            "missing option: --baz=STRING"]
 
       it "prints errors for missing options" $ do
@@ -101,8 +108,11 @@ part1 = do
         output `shouldContain` "show help and exit"
 
       it "does not contain trailing spaces" $ do
-        let OutputAndExit output = parse "--help" :: Result Foo
-        forM_ (lines output) $ \ line ->
+        output <-
+          hCapture_ [stdout] $
+          handle (\ ExitSuccess -> return ()) $
+          handleResult $ ((parse "--help" :: Result Foo) >> return ())
+        forM_ (lines output) $ \ line -> do
           line `shouldSatisfy` (not . (" " `isSuffixOf`))
 
       it "complains when the options datatype is not allowed" $ do
@@ -182,39 +192,6 @@ part4 = do
       parse "--with-underscore foo"
         `shouldBe` Success (WithUnderscore "foo")
 
-data CustomFields
-  = CustomFields {
-    custom :: Custom,
-    customList :: [Custom],
-    customMaybe :: Maybe Custom
-  }
-  deriving (GHC.Generic, Show, Eq)
-
-instance Generic CustomFields
-instance HasDatatypeInfo CustomFields
-
-data Custom
-  = CFoo
-  | CBar
-  | CBaz
-  deriving (Show, Eq, Typeable)
-
-instance Option Custom where
-  argumentType Proxy = "custom"
-  parseArgument x = case x of
-    "foo" -> Just CFoo
-    "bar" -> Just CBar
-    "baz" -> Just CBaz
-    _ -> Nothing
-
-part5 :: Spec
-part5 = do
-  describe "parseArguments" $ do
-    context "CustomFields" $ do
-      it "allows easy implementation of custom field types" $ do
-        parse "--custom foo --custom-list bar --custom-maybe baz"
-          `shouldBe` Success (CustomFields CFoo [CBar] (Just CBaz))
-
 data WithoutSelectors
   = WithoutSelectors String Bool Int
   deriving (Eq, Show, GHC.Generic)
@@ -249,28 +226,29 @@ part6 = do
         (parse "42 bar" :: Result (Int, String))
           `shouldBe` Success (42, "bar")
 
-  describe "Option.Bool" $ do
-    describe "parseArgument" $ do
-      forM_ ["true", "True", "tRue", "TRUE", "yes", "yEs", "on", "oN"] $ \ true ->
-        it ("parses '" ++ true ++ "' as True") $ do
-          parseArgument true `shouldBe` Just True
+-- fixme: put tests in correct modules
 
-      forM_ ["false", "False", "falSE", "FALSE", "no", "nO", "off", "ofF"] $ \ false ->
-        it ("parses '" ++ false ++ "' as False") $ do
-          parseArgument false `shouldBe` Just False
+  describe "parseBool" $ do
+    forM_ ["true", "True", "tRue", "TRUE", "yes", "yEs", "on", "oN"] $ \ true ->
+      it ("parses '" ++ true ++ "' as True") $ do
+        parseBool true `shouldBe` Just True
 
-      it "parses every positive integer as true" $ do
-        property $ \ (n :: Int) ->
-          n > 0 ==>
-          parseArgument (show n) `shouldBe` Just True
+    forM_ ["false", "False", "falSE", "FALSE", "no", "nO", "off", "ofF"] $ \ false ->
+      it ("parses '" ++ false ++ "' as False") $ do
+        parseBool false `shouldBe` Just False
 
-      it "parses every non-positive integer as false" $ do
-        property $ \ (n :: Int) ->
-          n <= 0 ==>
-          parseArgument (show n) `shouldBe` Just False
+    it "parses every positive integer as true" $ do
+      property $ \ (n :: Int) ->
+        n > 0 ==>
+        parseBool (show n) `shouldBe` Just True
 
-      it "doesn't parse 'foo'" $ do
-        parseArgument "foo" `shouldBe` (Nothing :: Maybe Bool)
+    it "parses every non-positive integer as false" $ do
+      property $ \ (n :: Int) ->
+        n <= 0 ==>
+        parseBool (show n) `shouldBe` Just False
+
+    it "doesn't parse 'foo'" $ do
+      parseBool "foo" `shouldBe` (Nothing :: Maybe Bool)
 
   describe "Option.Double" $ do
     it "parses doubles" $ do

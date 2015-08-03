@@ -1,9 +1,11 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module ModifiersSpec.UseForPositionalArgumentsSpec where
 
 import           Data.List
 import qualified GHC.Generics as GHC
+import           System.Environment
 import           Test.Hspec
 
 import           System.Console.GetOpt.Generics
@@ -43,7 +45,7 @@ spec = do
       [UseForPositionalArguments "positionalArguments" "type"]
       "--positional-arguments foo"
         `shouldBe`
-      (Errors ["unrecognized option `--positional-arguments'"]
+      (Errors ["unrecognized option `--positional-arguments'\n"]
         :: Result WithPositionalArguments)
 
   it "complains about fields that don't have type [String]" $ do
@@ -67,3 +69,14 @@ spec = do
           []
     (modsParse modifiers [] :: Result WithMultiplePositionalArguments)
       `shouldBe` Errors ["UseForPositionalArguments can only be used once"]
+
+  context "when used without selector" $ do
+    it "automatically uses positional arguments for [Int]" $ do
+      withArgs (words "1 2 3") $
+        simpleCLI $ \ (xs :: [Int]) -> do
+          xs `shouldBe` [1, 2, 3]
+
+    it "automatically uses positional arguments for [String]" $ do
+      withArgs (words "foo bar") $
+        simpleCLI $ \ (xs :: [String]) -> do
+          xs `shouldBe` (words "foo bar")

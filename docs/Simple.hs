@@ -1,4 +1,6 @@
-import           System.Console.GetOpt.Generics
+module Simple where
+
+import SimpleCLI
 
 main :: IO ()
 main = simpleCLI myMain

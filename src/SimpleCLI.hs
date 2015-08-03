@@ -1,30 +1,32 @@
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
 
-{-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
+module SimpleCLI (
+  simpleCLI,
+  SimpleCLI,
+  Option(argumentType, parseArgument),
+  HasOptions(fromArguments),
+  fromArgumentsOption,
 
-module SimpleCLI where
+  SOP.Generic,
+  SOP.HasDatatypeInfo,
+  Typeable,
+  Proxy(..),
+  ) where
 
-import           Generics.SOP
+import           Data.Typeable
+import qualified Generics.SOP as SOP
 import           System.Environment
 
+import           SimpleCLI.FromArguments
+import           SimpleCLI.HasOptions
+import           SimpleCLI.Option
 import           SimpleCLI.Result
-import           System.Console.GetOpt.Generics.GetArguments
 import           System.Console.GetOpt.Generics.Modifier
-
-class SingI (ArgumentTypes main) => SimpleCLI main where
-  {-# MINIMAL _initialFieldStates, _run #-}
-  type ArgumentTypes main :: [*]
-  _initialFieldStates :: Proxy main -> NP FieldState (ArgumentTypes main)
-  _run :: NP I (ArgumentTypes main) -> main -> IO ()
 
 -- | 'simpleCLI' converts an IO operation into a program with a proper CLI.
 --   Retrieves command line arguments through 'withArgs'.
@@ -41,10 +43,12 @@ class SingI (ArgumentTypes main) => SimpleCLI main where
 --
 --   Example:
 
--- ### Start "docs/SimpleExample.hs" Haddock ###
+-- ### Start "docs/Simple.hs" Haddock ###
 
 -- |
--- >  import           System.Console.GetOpt.Generics
+-- >  module Simple where
+-- >
+-- >  import SimpleCLI
 -- >
 -- >  main :: IO ()
 -- >  main = simpleCLI myMain
@@ -54,43 +58,51 @@ class SingI (ArgumentTypes main) => SimpleCLI main where
 
 -- ### End ###
 
--- | Using the above program in bash:
+-- | Using the above program in a shell:
 
--- ### Start "docs/SimpleExample.bash-protocol" Haddock ###
+-- ### Start "docs/Simple.shell-protocol" Haddock ###
 
 -- |
 -- >  $ program foo 42 true
 -- >  ("foo",42,True)
+-- >  $ program --help
+-- >  program [OPTIONS] STRING NUMBER BOOL
+-- >    -h  --help  show help and exit
 -- >  $ program foo 42 bar
 -- >  cannot parse as BOOL: bar
--- >  $ program --help
--- >  program [OPTIONS] STRING INTEGER BOOL
--- >    -h  --help  show help and exit
+-- >  # exit-code 1
+-- >  $ program
+-- >  missing argument of type STRING
+-- >  missing argument of type NUMBER
+-- >  missing argument of type BOOL
+-- >  # exit-code 1
+-- >  $ program foo 42 yes bar
+-- >  unknown argument: bar
+-- >  # exit-code 1
 
 -- ### End ###
 
-simpleCLI :: forall main . (SimpleCLI main, All Option (ArgumentTypes main)) =>
-  main -> IO ()
-simpleCLI main = do
+simpleCLI :: forall main . SimpleCLI main => main -> IO ()
+simpleCLI = modifiedSimpleCLI []
+
+modifiedSimpleCLI :: forall main . SimpleCLI main => [Modifier] -> main -> IO ()
+modifiedSimpleCLI mods main = do
   args <- getArgs
-  progName <- getProgName
-  let result = do
-        outputInfo progName (mkModifiers []) args
-          (hliftA (const $ Comp NoSelector) (_initialFieldStates (Proxy :: Proxy main)))
-        filledIn <- fillInPositionalArguments args (_initialFieldStates (Proxy :: Proxy main))
-        collectResult filledIn
-  f <- handleResult result
-  _run f main
+  modifiers <- handleResult (mkModifiers mods)
+  run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
+
+class SimpleCLI main where
+  -- fixme: hide 'run'
+  run :: Modifiers -> Result (FromArguments Unnormalized a) -> (a -> main) -> [String] -> IO ()
 
 instance SimpleCLI (IO ()) where
-  type ArgumentTypes (IO ()) = '[]
-  _initialFieldStates Proxy = Nil
-  _run Nil = id
-  _run _ = impossible "_run"
+  run modifiers fromArguments mkMain args = do
+    progName <- getProgName
+    fa <- handleResult fromArguments
+    a <- handleResult $ parseFromArguments progName modifiers
+      (normalizeFromArguments (applyModifiers modifiers fa)) args
+    mkMain a
 
-instance (Option a, SimpleCLI rest) =>
-  SimpleCLI (a -> rest) where
-    type ArgumentTypes (a -> rest) = a ': ArgumentTypes rest
-    _initialFieldStates Proxy = PositionalArgument :* _initialFieldStates (Proxy :: Proxy rest)
-    _run (I a :* r) main = _run r (main a)
-    _run _ _ = impossible "_run"
+instance (HasOptions a, SimpleCLI rest) => SimpleCLI (a -> rest) where
+  run modifiers fa mkMain args =
+    run modifiers (combine fa (fromArguments modifiers Nothing)) (\ (a, r) -> mkMain a r) args

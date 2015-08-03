@@ -8,8 +8,9 @@ import           Text.Read (readMaybe)
 main :: IO ()
 main = do
   process "README.md"
+  process "src/System/Console/GetOpt/Generics.hs"
   process "src/System/Console/GetOpt/Generics/GetArguments.hs"
-  process "src/System/Console/GetOpt/Generics/Simple.hs"
+  process "src/SimpleCLI.hs"
 
 process :: FilePath -> IO ()
 process file = do
@@ -43,12 +44,12 @@ data FileType
   deriving (Read)
 
 data CodeType
-  = Bash
+  = Shell
   | Haskell
   deriving (Read)
 
 renderCodeType :: CodeType -> String
-renderCodeType Bash = "bash"
+renderCodeType Shell = "shell"
 renderCodeType Haskell = "haskell"
 
 parseLines :: String -> [Line]

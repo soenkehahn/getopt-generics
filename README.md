@@ -9,10 +9,12 @@ This library is experimental.
 `getopt-generics` tries to make it very simple to create command line
 interfaces. Here's an example:
 
-<!--- ### Start "docs/SimpleExample.hs" (MarkDown Haskell) ### -->
+<!--- ### Start "docs/Simple.hs" (MarkDown Haskell) ### -->
 
 ``` haskell
-import           System.Console.GetOpt.Generics
+module Simple where
+
+import SimpleCLI
 
 main :: IO ()
 main = simpleCLI myMain
@@ -23,18 +25,27 @@ myMain s i b = print (s, i, b)
 
 <!--- ### End ### -->
 
-This is how the program behaves in bash:
+This is how the program behaves in a shell:
 
-<!--- ### Start "docs/SimpleExample.bash-protocol" (MarkDown Bash) ### -->
+<!--- ### Start "docs/Simple.shell-protocol" (MarkDown Shell) ### -->
 
-``` bash
+``` shell
 $ program foo 42 true
 ("foo",42,True)
+$ program --help
+program [OPTIONS] STRING NUMBER BOOL
+  -h  --help  show help and exit
 $ program foo 42 bar
 cannot parse as BOOL: bar
-$ program --help
-program [OPTIONS] STRING INTEGER BOOL
-  -h  --help  show help and exit
+# exit-code 1
+$ program
+missing argument of type STRING
+missing argument of type NUMBER
+missing argument of type BOOL
+# exit-code 1
+$ program foo 42 yes bar
+unknown argument: bar
+# exit-code 1
 ```
 
 <!--- ### End ### -->

@@ -1,7 +1,0 @@
-$ program foo 42 true
-("foo",42,True)
-$ program foo 42 bar
-cannot parse as BOOL: bar
-$ program --help
-program [OPTIONS] STRING INTEGER BOOL
-  -h  --help  show help and exit

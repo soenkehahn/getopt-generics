@@ -1,0 +1,7 @@
+$ program 42
+missing argument of type BOOL
+# exit-code 1
+$ program
+missing argument of type INTEGER
+missing argument of type BOOL
+# exit-code 1
