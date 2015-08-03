@@ -10,6 +10,9 @@ maintainer: "linh.nguyen@zalora.com, soenke.hahn@zalora.com"
 
 ghc-options: -Wall -fno-warn-name-shadowing
 
+extra-source-files:
+  - docs/*
+
 dependencies:
   - base == 4.*
   - base-compat >= 0.8
