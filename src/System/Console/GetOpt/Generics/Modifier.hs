@@ -8,12 +8,8 @@ module System.Console.GetOpt.Generics.Modifier (
   Modifier(..),
   Modifiers,
   mkModifiers,
-  mkShortOptions,
-  mkLongOption,
-  hasPositionalArgumentsField,
   isPositionalArgumentsField,
   getPositionalArgumentType,
-  getHelpText,
   getVersion,
 
   deriveShortOptions,
@@ -32,7 +28,7 @@ import           Prelude.Compat
 import           Control.Arrow
 import           Control.Monad
 import           Data.Char
-import           Data.List (find, foldl')
+import           Data.List (foldl')
 import           Data.Maybe
 import           Generics.SOP
 import           System.Console.GetOpt
@@ -101,19 +97,6 @@ mkModifiers = foldM inner empty
       -> FieldString -> FieldString
     combineRenamings old new fieldString =
       (old . renameUnnormalized new) fieldString
-
-lookupMatching :: [(String, a)] -> FieldString -> Maybe a
-lookupMatching list option = fmap snd $ find (\ (from, _) -> from `matches` option) list
-
-mkShortOptions :: Modifiers -> FieldString -> [Char]
-mkShortOptions (Modifiers shortMap _ _ _ _) option = fromMaybe [] (lookupMatching shortMap option)
-
-mkLongOption :: Modifiers -> FieldString -> String
-mkLongOption (Modifiers _ renaming _ _ _) option =
-  normalized (renaming option)
-
-getHelpText :: Modifiers -> FieldString -> String
-getHelpText modifiers field = fromMaybe "" $ lookupMatching (helpTexts modifiers) field
 
 -- * deriving Modifiers
 

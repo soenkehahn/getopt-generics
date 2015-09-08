@@ -15,10 +15,9 @@ import           Data.Orphans ()
 import           Prelude ()
 import           Prelude.Compat
 
+import           Data.List
 import           Data.Proxy
 import           Text.Read
-
-import           System.Console.GetOpt.Generics.GetArguments (readFloat)
 
 -- fixme: better names for HasOptions and Options
 
@@ -46,6 +45,13 @@ instance Option Double where
   argumentType _ = "NUMBER"
   parseArgument = readFloat
 
+readFloat :: (RealFloat n, Read n) => String -> Maybe n
+readFloat s = case readMaybe s of
+  Just n -> Just n
+  Nothing
+    | "." `isPrefixOf` s -> readMaybe ("0" ++ s)
+    | otherwise -> Nothing
+
 -- fixme: CustomOptionsExample
 
 -- todo: clean up old modules
@@ -53,4 +59,3 @@ instance Option Double where
 -- todo: figure out modifiers
 
 -- todo: clean up old modules 2
-

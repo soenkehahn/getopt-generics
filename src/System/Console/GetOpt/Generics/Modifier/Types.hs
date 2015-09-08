@@ -5,15 +5,12 @@ data Modifiers = Modifiers {
   shortOptions :: [(String, [Char])],
   renaming :: String -> String,
   positionalArgumentsField :: Maybe (String, String),
-  helpTexts :: [(String, String)],
+  _helpTexts :: [(String, String)],
   version :: Maybe String
  }
 
 getVersion :: Modifiers -> Maybe String
 getVersion modifiers = version modifiers
-
-hasPositionalArgumentsField :: Modifiers -> Bool
-hasPositionalArgumentsField = not . null . positionalArgumentsField
 
 isPositionalArgumentsField :: Modifiers -> String -> Bool
 isPositionalArgumentsField modifiers field =

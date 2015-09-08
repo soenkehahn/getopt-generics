@@ -61,7 +61,6 @@ library
       SimpleCLI.Option
       SimpleCLI.Result
       System.Console.GetOpt.Generics.FieldString
-      System.Console.GetOpt.Generics.GetArguments
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Modifier.Types
   default-language: Haskell2010
@@ -94,7 +93,6 @@ test-suite spec
       SimpleCLI.Result
       System.Console.GetOpt.Generics
       System.Console.GetOpt.Generics.FieldString
-      System.Console.GetOpt.Generics.GetArguments
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Modifier.Types
       ExamplesSpec
