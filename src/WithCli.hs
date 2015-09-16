@@ -7,6 +7,7 @@
 
 module WithCli (
   withCli,
+  withCliModified,
   WithCli(),
   Option(argumentType, parseArgument),
   HasOptions(fromArguments),
@@ -84,13 +85,14 @@ import           System.Console.GetOpt.Generics.Modifier
 withCli :: forall main . WithCli main => main -> IO ()
 withCli = withCliModified []
 
+-- | It is possible to tweak the generated command line interface by using
+--   'withCliModified' and providing a list of 'Modifier's.
 withCliModified :: forall main . WithCli main => [Modifier] -> main -> IO ()
 withCliModified mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)
   _run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
 
-  -- fixme: add withCliModified
   -- fixme: remove deriveShortOptions
   -- fixme: look through withCli docs
 

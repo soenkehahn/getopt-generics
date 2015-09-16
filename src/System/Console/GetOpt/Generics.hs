@@ -8,15 +8,16 @@ module System.Console.GetOpt.Generics (
   WithCli(),
   HasOptions,
   WithCli.Option(argumentType, parseArgument),
+  -- * Customizing the CLI
+  withCliModified,
+  Modifier(..),
+  deriveShortOptions,
   -- * IO API
   getArguments,
   modifiedGetArguments,
   -- * Pure API
   parseArguments,
   Result(..),
-  -- * Customizing the CLI
-  Modifier(..),
-  deriveShortOptions,
   -- * Re-exports from "Generics.SOP"
   Generics.SOP.Generic,
   HasDatatypeInfo,
