@@ -116,7 +116,7 @@ class HasOptions a where
     (SOP.Generic a, SOP.HasDatatypeInfo a, All2 HasOptions (Code a)) =>
     Modifiers ->
     Maybe String -> Result (FromArguments Unnormalized a)
-  fromArguments modifiers _ = fromArgumentsGeneric modifiers
+  fromArguments = const . fromArgumentsGeneric
 
 -- * atomic HasOptions
 
@@ -131,6 +131,12 @@ instance HasOptions Bool where
   fromArguments = wrapForPositionalArguments "Bool" (const fromArgumentsBool)
 
 instance HasOptions String where
+  fromArguments = fromArgumentsOption
+
+instance HasOptions Float where
+  fromArguments = fromArgumentsOption
+
+instance HasOptions Double where
   fromArguments = fromArgumentsOption
 
 wrapForPositionalArguments :: String -> (Modifiers -> Maybe String -> Result a) -> (Modifiers -> Maybe String -> Result a)
