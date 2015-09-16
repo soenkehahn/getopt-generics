@@ -35,11 +35,11 @@ import           Generics.SOP as SOP
 import           System.Console.GetOpt
 import           Text.Read
 
+import           System.Console.GetOpt.Generics.Modifier
 import           WithCli.FromArguments
+import           WithCli.Normalize
 import           WithCli.Option
 import           WithCli.Result
-import           System.Console.GetOpt.Generics.FieldString
-import           System.Console.GetOpt.Generics.Modifier
 
 parseArgumentResult :: forall a . Option a => Maybe String -> String -> Result a
 parseArgumentResult mMsg s = case parseArgument s of

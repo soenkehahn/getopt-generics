@@ -1,15 +1,12 @@
 {-# LANGUAGE ViewPatterns #-}
 
-module System.Console.GetOpt.Generics.FieldStringSpec where
+module WithCli.NormalizeSpec where
 
 import           Data.Char
 import           Test.Hspec
 import           Test.QuickCheck hiding (Success)
 
-import           System.Console.GetOpt.Generics.FieldString hiding (normalize)
-
-normalize :: String -> String
-normalize = normalized . mkFieldString
+import           WithCli.Normalize
 
 isValidInputChar :: Char -> Bool
 isValidInputChar c = c `elem` ['A' .. 'Z'] ++ ['a' .. 'z'] ++ ['0' .. '9'] ++ "-_"
@@ -22,7 +19,7 @@ upperCaseChar = elements ['A' .. 'Z']
 
 spec :: Spec
 spec = do
-  describe "normalized" $ do
+  describe "normalize" $ do
     it "is idempotent" $ do
       property $ \ x -> do
         let once = normalize x
@@ -59,21 +56,8 @@ spec = do
   describe "matches" $ do
     it "matches normalized strings" $ do
       property $ \ s ->
-        normalize s `matches` mkFieldString s
+        normalize s `matches` s
 
     it "matches unnormalized strings" $ do
       property $ \ s ->
-        s `matches` mkFieldString s
-
-  describe "renameUnnormalized" $ do
-    it "allows to rename the unnormalized field names" $ do
-      let f "camelCaseFoo" = Just "caseFoo"
-          f _ = Nothing
-      normalized (renameUnnormalized f (mkFieldString "camelCaseFoo")) `shouldBe`
-        "case-foo"
-
-    it "doesn't allow to rename normalized field names" $ do
-      let f "camel-case-foo" = Just "case-foo"
-          f _ = Nothing
-      normalized (renameUnnormalized f (mkFieldString "camelCaseFoo")) `shouldBe`
-        "camel-case-foo"
+        s `matches` s

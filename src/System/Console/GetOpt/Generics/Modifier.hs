@@ -33,10 +33,10 @@ import           Data.Maybe
 import           Generics.SOP
 import           System.Console.GetOpt
 
-import           WithCli.FromArguments
-import           WithCli.Result
-import           System.Console.GetOpt.Generics.FieldString
 import           System.Console.GetOpt.Generics.Modifier.Types
+import           WithCli.FromArguments
+import           WithCli.Normalize
+import           WithCli.Result
 
 -- | 'Modifier's can be used to customize the command line parser.
 data Modifier
@@ -65,8 +65,6 @@ data Modifier
   | AddVersionFlag String
     -- ^ @AddVersionFlag version@ adds a @--version@ flag.
 
--- fixme: dcd
-
 mkModifiers :: [Modifier] -> Result Modifiers
 mkModifiers = foldM inner empty
   where
@@ -78,9 +76,9 @@ mkModifiers = foldM inner empty
       (AddShortOption option short) ->
         return $ Modifiers (insertWith (++) option [short] shorts) renaming args help version
       (RenameOption from to) ->
-        let newRenaming :: FieldString -> FieldString
+        let newRenaming :: String -> String
             newRenaming option = if from `matches` option
-              then mkFieldString to
+              then to
               else option
         in return $ Modifiers shorts (renaming . newRenaming) args help version
       (RenameOptions newRenaming) ->
@@ -93,10 +91,8 @@ mkModifiers = foldM inner empty
       (AddVersionFlag v) ->
         return $ Modifiers shorts renaming args help (Just v)
 
-    combineRenamings :: (FieldString -> FieldString) -> (String -> Maybe String)
-      -> FieldString -> FieldString
-    combineRenamings old new fieldString =
-      (old . renameUnnormalized new) fieldString
+    combineRenamings :: (a -> a) -> (a -> Maybe a) -> (a -> a)
+    combineRenamings old new x = old (fromMaybe x (new x))
 
 -- * deriving Modifiers
 

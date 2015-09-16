@@ -1,32 +1,14 @@
 
-module System.Console.GetOpt.Generics.FieldString (
-  FieldString,
-  mkFieldString,
-  normalized,
-  matches,
-  renameUnnormalized,
+module WithCli.Normalize (
   normalize,
+  matches,
  ) where
 
 import           Data.Char
-import           Data.Maybe
 
-type FieldString = String
-
-normalized :: FieldString -> String
-normalized s = normalize s
-
-mkFieldString :: String -> FieldString
-mkFieldString = id
--- fixme: remove
-
-matches :: String -> FieldString -> Bool
-matches s field =
-  normalize s == normalized field
-
-renameUnnormalized :: (String -> Maybe String) -> (FieldString -> FieldString)
-renameUnnormalized f input =
-  fromMaybe input (f input)
+matches :: String -> String -> Bool
+matches a b =
+  normalize a == normalize b
 
 normalize :: String -> String
 normalize s =
