@@ -3,6 +3,9 @@
 
 module SimpleCLI.GetOptsSpec where
 
+import           Prelude ()
+import           Prelude.Compat
+
 import           Test.Hspec
 
 import           SimpleCLI.FromArguments
