@@ -10,6 +10,9 @@
 
 module SimpleCLI.FromArguments where
 
+import           Prelude ()
+import           Prelude.Compat
+
 import           Control.Arrow
 import           Control.Monad
 import           Data.Monoid
