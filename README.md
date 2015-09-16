@@ -33,14 +33,14 @@ This is how the program behaves in a shell:
 $ program foo 42 true
 ("foo",42,True)
 $ program --help
-program [OPTIONS] STRING NUMBER BOOL
+program [OPTIONS] STRING INTEGER BOOL
   -h  --help  show help and exit
 $ program foo 42 bar
 cannot parse as BOOL: bar
 # exit-code 1
 $ program
 missing argument of type STRING
-missing argument of type NUMBER
+missing argument of type INTEGER
 missing argument of type BOOL
 # exit-code 1
 $ program foo 42 yes bar

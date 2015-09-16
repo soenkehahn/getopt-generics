@@ -83,14 +83,14 @@ import           System.Console.GetOpt.Generics.Modifier
 -- >  $ program  --port 8080 --daemonize
 -- >  Options {port = 8080, daemonize = True, config = Nothing}
 -- >  $ program --port foo
--- >  cannot parse as NUMBER: foo
+-- >  cannot parse as INTEGER: foo
 -- >  # exit-code 1
 -- >  $ program
--- >  missing option: --port=NUMBER
+-- >  missing option: --port=INTEGER
 -- >  # exit-code 1
 -- >  $ program --help
 -- >  program [OPTIONS]
--- >        --port=NUMBER
+-- >        --port=INTEGER
 -- >        --daemonize
 -- >        --config=STRING (optional)
 -- >    -h  --help                      show help and exit

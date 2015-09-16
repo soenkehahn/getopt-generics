@@ -9,7 +9,6 @@ main :: IO ()
 main = do
   process "README.md"
   process "src/System/Console/GetOpt/Generics.hs"
-  process "src/System/Console/GetOpt/Generics/GetArguments.hs"
   process "src/SimpleCLI.hs"
 
 process :: FilePath -> IO ()
