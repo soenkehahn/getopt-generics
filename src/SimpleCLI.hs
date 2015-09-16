@@ -18,6 +18,7 @@ module SimpleCLI (
   Proxy(..),
   ) where
 
+import           Data.Proxy
 import           Data.Typeable
 import qualified Generics.SOP as SOP
 import           System.Environment
