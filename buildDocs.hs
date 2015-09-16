@@ -12,8 +12,8 @@ main = do
   mapM_ process $
     "README.md" :
     "src/WithCli.hs" :
-    "src/WithCli/HasOptions.hs" :
-    "src/WithCli/Option.hs" :
+    "src/WithCli/HasArguments.hs" :
+    "src/WithCli/Argument.hs" :
     "src/System/Console/GetOpt/Generics.hs" :
     []
 

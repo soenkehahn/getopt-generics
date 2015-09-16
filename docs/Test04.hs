@@ -18,7 +18,7 @@ data A
 
 instance Generic A
 instance HasDatatypeInfo A
-instance HasOptions A
+instance HasArguments A
 
 data B
   = B {
@@ -28,4 +28,4 @@ data B
 
 instance Generic B
 instance HasDatatypeInfo B
-instance HasOptions B
+instance HasArguments B

@@ -8,7 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module WithCli.FromArguments where
+module WithCli.Parser where
 
 import           Prelude ()
 import           Prelude.Compat
@@ -41,8 +41,8 @@ instance Monoid a => Monoid (Help a) where
 foldHelp :: [Help a] -> Help [a]
 foldHelp flags = mconcat $ map (fmap pure) flags
 
-parseFromArguments :: String -> Modifiers -> FromArguments Normalized a -> [String] -> Result a
-parseFromArguments progName modifiers FromArguments{..} args = do
+runParser :: String -> Modifiers -> Parser Normalized a -> [String] -> Result a
+runParser progName modifiers Parser{..} args = do
   let versionOptions = maybe []
         (\ v -> pure $ versionOption $ Version (progName ++ " version " ++ v))
         (getVersion modifiers)
@@ -67,34 +67,34 @@ parseFromArguments progName modifiers FromArguments{..} args = do
       [] -> return ()
       errs -> Errors errs
 
-data FromArguments phase a where
-  FromArguments :: {
+data Parser phase a where
+  Parser :: {
     parserDefault :: uninitialized,
     parserOptions :: [OptDescr (Result (uninitialized -> uninitialized))],
     -- fixme: better data type
     parserNonOptions :: [(String, [String] -> Result (uninitialized -> uninitialized, [String]))],
     parserConvert :: uninitialized -> Result a
-  } -> FromArguments phase a
+  } -> Parser phase a
 
-instance Functor (FromArguments phase) where
-  fmap f (FromArguments def options nonOptions convert) =
-    FromArguments def options nonOptions (fmap f . convert)
+instance Functor (Parser phase) where
+  fmap f (Parser def options nonOptions convert) =
+    Parser def options nonOptions (fmap f . convert)
 
 -- phases:
 data Unnormalized
 data Normalized
 
-emptyFromArguments :: a -> FromArguments phase a
-emptyFromArguments a = FromArguments {
+emptyParser :: a -> Parser phase a
+emptyParser a = Parser {
   parserDefault = a,
   parserOptions = [],
   parserNonOptions = [],
   parserConvert = return
 }
 
-normalizeFromArguments :: FromArguments Unnormalized a -> FromArguments Normalized a
-normalizeFromArguments (FromArguments d options nonOptions convert) =
-  FromArguments d (map (mapLongOptions normalize) options) nonOptions convert
+normalizeParser :: Parser Unnormalized a -> Parser Normalized a
+normalizeParser (Parser d options nonOptions convert) =
+  Parser d (map (mapLongOptions normalize) options) nonOptions convert
   where
     mapLongOptions :: (String -> String) -> OptDescr a -> OptDescr a
     mapLongOptions f descr = case descr of
@@ -103,18 +103,18 @@ normalizeFromArguments (FromArguments d options nonOptions convert) =
         Option shorts (map f longs) argDescr help
 
 modParserOptions :: (forall x . [OptDescr (Result x)] -> [OptDescr (Result x)])
-  -> FromArguments Unnormalized a -> FromArguments Unnormalized a
-modParserOptions f (FromArguments def options nonOptions convert) =
-  FromArguments def (f options) nonOptions convert
+  -> Parser Unnormalized a -> Parser Unnormalized a
+modParserOptions f (Parser def options nonOptions convert) =
+  Parser def (f options) nonOptions convert
 
 combine :: forall a b phase .
-  Result (FromArguments phase a) -> Result (FromArguments phase b)
-  -> Result (FromArguments phase (a, b))
+  Result (Parser phase a) -> Result (Parser phase b)
+  -> Result (Parser phase (a, b))
 combine a b = inner <$> a <*> b
   where
-    inner :: FromArguments phase a -> FromArguments phase b -> FromArguments phase (a, b)
-    inner (FromArguments defaultA optionsA nonOptionsA convertA) (FromArguments defaultB optionsB nonOptionsB convertB) =
-      FromArguments {
+    inner :: Parser phase a -> Parser phase b -> Parser phase (a, b)
+    inner (Parser defaultA optionsA nonOptionsA convertA) (Parser defaultB optionsB nonOptionsB convertB) =
+      Parser {
         parserDefault = (defaultA, defaultB),
         parserOptions =
           map (fmap (fmap first)) optionsA ++ map (fmap (fmap second)) optionsB,

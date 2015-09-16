@@ -21,7 +21,7 @@
 
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 
-module WithCli.HasOptions where
+module WithCli.HasArguments where
 
 import           Data.Orphans ()
 import           Prelude ()
@@ -36,12 +36,12 @@ import           System.Console.GetOpt
 import           Text.Read
 
 import           System.Console.GetOpt.Generics.Modifier
-import           WithCli.FromArguments
+import           WithCli.Parser
 import           WithCli.Normalize
-import           WithCli.Option
+import           WithCli.Argument
 import           WithCli.Result
 
-parseArgumentResult :: forall a . Option a => Maybe String -> String -> Result a
+parseArgumentResult :: forall a . Argument a => Maybe String -> String -> Result a
 parseArgumentResult mMsg s = case parseArgument s of
   Just x -> return x
   Nothing -> parseError (argumentType (Proxy :: Proxy a)) mMsg s
@@ -52,10 +52,10 @@ parseError typ mMsg s = Errors $ pure $
   maybe "" (\ msg -> " (" ++ msg ++ ")") mMsg ++
   ": " ++ s
 
--- | Everything that can be used as a parameter to your @main@ function
---   (see 'withCli') needs to have a 'HasOptions' instance.
+-- | Everything that can be used as an argument to your @main@ function
+--   (see 'withCli') needs to have a 'HasArguments' instance.
 --
---   'HasOptions' also allows to conjure up instances for record types
+--   'HasArguments' also allows to conjure up instances for record types
 --   to create more complex command line interfaces. Here's an example:
 
 -- ### Start "docs/SimpleRecord.hs" "module SimpleRecord where\n\n" Haddock ###
@@ -76,7 +76,7 @@ parseError typ mMsg s = Errors $ pure $
 -- >
 -- >  instance Generic Options
 -- >  instance HasDatatypeInfo Options
--- >  instance HasOptions Options
+-- >  instance HasArguments Options
 -- >
 -- >  main :: IO ()
 -- >  main = withCli $ \ options -> do
@@ -110,34 +110,33 @@ parseError typ mMsg s = Errors $ pure $
 
 -- ### End ###
 
-class HasOptions a where
-  fromArguments :: Modifiers -> Maybe String -> Result (FromArguments Unnormalized a)
-  default fromArguments ::
-    (SOP.Generic a, SOP.HasDatatypeInfo a, All2 HasOptions (Code a)) =>
+class HasArguments a where
+  argumentsParser :: Modifiers -> Maybe String -> Result (Parser Unnormalized a)
+  default argumentsParser ::
+    (SOP.Generic a, SOP.HasDatatypeInfo a, All2 HasArguments (Code a)) =>
     Modifiers ->
-    Maybe String -> Result (FromArguments Unnormalized a)
-  fromArguments = const . fromArgumentsGeneric
+    Maybe String -> Result (Parser Unnormalized a)
+  argumentsParser = const . genericParser
 
--- * atomic HasOptions
+-- * atomic HasArguments
 
--- todo: better instance derivation for HasOptions
--- todo: HasOptions for Float and Double
--- todo: better names for HasOptions and Option
+-- todo: better instance derivation for HasArguments
+-- todo: better names for HasArguments and Option
 
-instance HasOptions Int where
-  fromArguments = fromArgumentsOption
+instance HasArguments Int where
+  argumentsParser = atomicArgumentParser
 
-instance HasOptions Bool where
-  fromArguments = wrapForPositionalArguments "Bool" (const fromArgumentsBool)
+instance HasArguments Bool where
+  argumentsParser = wrapForPositionalArguments "Bool" (const boolParser)
 
-instance HasOptions String where
-  fromArguments = fromArgumentsOption
+instance HasArguments String where
+  argumentsParser = atomicArgumentParser
 
-instance HasOptions Float where
-  fromArguments = fromArgumentsOption
+instance HasArguments Float where
+  argumentsParser = atomicArgumentParser
 
-instance HasOptions Double where
-  fromArguments = fromArgumentsOption
+instance HasArguments Double where
+  argumentsParser = atomicArgumentParser
 
 wrapForPositionalArguments :: String -> (Modifiers -> Maybe String -> Result a) -> (Modifiers -> Maybe String -> Result a)
 wrapForPositionalArguments typ wrapped modifiers (Just field) =
@@ -147,30 +146,30 @@ wrapForPositionalArguments typ wrapped modifiers (Just field) =
 wrapForPositionalArguments _ wrapped modifiers Nothing = wrapped modifiers Nothing
 
 -- | todo
-instance Option a => HasOptions (Maybe a) where
-  fromArguments _ = fromArgumentsMaybe
+instance Argument a => HasArguments (Maybe a) where
+  argumentsParser _ = maybeParser
 
-instance Option a => HasOptions [a] where
-  fromArguments modifiers (Just field) =
+instance Argument a => HasArguments [a] where
+  argumentsParser modifiers (Just field) =
     if isPositionalArgumentsField modifiers field
-      then return $ fromArgumentsPositionalArguments field
-      else fromArgumentsList (Just field)
-  fromArguments _ Nothing =
-    fromArgumentsList Nothing
+      then return $ positionalArgumentsParser field
+      else listParser (Just field)
+  argumentsParser _ Nothing =
+    listParser Nothing
 
 -- fixme: warnings
 
--- | Useful for implementing your own instances of 'HasOptions' on top
---   of a custom 'Option' instance.
-fromArgumentsOption :: forall a . Option a =>
+-- | Useful for implementing your own instances of 'HasArguments' on top
+--   of a custom 'Argument' instance.
+atomicArgumentParser :: forall a . Argument a =>
   Modifiers ->
-  Maybe String -> Result (FromArguments Unnormalized a)
-fromArgumentsOption =
+  Maybe String -> Result (Parser Unnormalized a)
+atomicArgumentParser =
   -- fixme: code layout
   wrapForPositionalArguments (argumentType (Proxy :: Proxy a)) $
   \ modifiers mLong ->
   return $ case mLong of
-  Nothing -> FromArguments {
+  Nothing -> Parser {
     parserDefault = Nothing,
     parserOptions = [],
     parserNonOptions =
@@ -180,7 +179,7 @@ fromArgumentsOption =
       Nothing -> Errors $ pure $
         "missing argument of type " ++ typ
   }
-  Just long -> FromArguments {
+  Just long -> Parser {
     parserDefault = Left (),
     parserOptions = pure $
       Option [] [long]
@@ -196,11 +195,11 @@ fromArgumentsOption =
   where
     typ = argumentType (Proxy :: Proxy a)
 
-fromArgumentsList :: forall a . Option a =>
-  Maybe String -> Result (FromArguments Unnormalized [a])
-fromArgumentsList mLong = return $ case mLong of
-  Nothing -> fromArgumentsPositionalArguments "fixme"
-  Just long -> FromArguments {
+listParser :: forall a . Argument a =>
+  Maybe String -> Result (Parser Unnormalized [a])
+listParser mLong = return $ case mLong of
+  Nothing -> positionalArgumentsParser "fixme"
+  Just long -> Parser {
     parserDefault = [],
     parserOptions = pure $
       Option [] [long]
@@ -212,9 +211,9 @@ fromArgumentsList mLong = return $ case mLong of
     parserConvert = return
   }
 
-fromArgumentsPositionalArguments :: forall a . Option a =>
-  String -> FromArguments Unnormalized [a]
-fromArgumentsPositionalArguments selector = FromArguments {
+positionalArgumentsParser :: forall a . Argument a =>
+  String -> Parser Unnormalized [a]
+positionalArgumentsParser selector = Parser {
   parserDefault = [],
   parserOptions = [],
   parserNonOptions = [(selector, parse)],
@@ -229,11 +228,11 @@ fromArgumentsPositionalArguments selector = FromArguments {
           Nothing -> parseError (argumentType (Proxy :: Proxy a)) Nothing arg
       return (foldl' (.) id mods, [])
 
-fromArgumentsMaybe :: forall a . Option a =>
-  Maybe String -> Result (FromArguments Unnormalized (Maybe a))
-fromArgumentsMaybe mLong = return $ case mLong of
+maybeParser :: forall a . Argument a =>
+  Maybe String -> Result (Parser Unnormalized (Maybe a))
+maybeParser mLong = return $ case mLong of
   Nothing -> (error "fixme")
-  Just long -> FromArguments {
+  Just long -> Parser {
     parserDefault = Nothing,
     parserOptions = pure $
       Option [] [long]
@@ -245,9 +244,9 @@ fromArgumentsMaybe mLong = return $ case mLong of
     parserConvert = return
   }
 
-fromArgumentsBool :: Maybe String -> Result (FromArguments Unnormalized Bool)
-fromArgumentsBool mLong = return $ case mLong of
-  Nothing -> FromArguments {
+boolParser :: Maybe String -> Result (Parser Unnormalized Bool)
+boolParser mLong = return $ case mLong of
+  Nothing -> Parser {
     parserDefault = Nothing,
     parserOptions = [],
     parserNonOptions = pure $
@@ -257,7 +256,7 @@ fromArgumentsBool mLong = return $ case mLong of
       Nothing -> Errors $ pure $
         "missing argument of type BOOL"
   }
-  Just long -> FromArguments {
+  Just long -> Parser {
     parserDefault = False,
     parserOptions = pure $
       Option [] [long]
@@ -275,19 +274,19 @@ parseBool s
     Just (n :: Integer) -> Just (n > 0)
     Nothing -> Nothing
 
--- * generic HasOptions
+-- * generic HasArguments
 
-fromArgumentsGeneric :: forall a .
-  (Generic a, HasDatatypeInfo a, All2 HasOptions (Code a)) =>
+genericParser :: forall a .
+  (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
   Modifiers ->
-  Result (FromArguments Unnormalized a)
-fromArgumentsGeneric modifiers = fmap (fmap to) $ case datatypeInfo (Proxy :: Proxy a) of
+  Result (Parser Unnormalized a)
+genericParser modifiers = fmap (fmap to) $ case datatypeInfo (Proxy :: Proxy a) of
   ADT _ typeName (constructorInfo :* Nil) ->
     case constructorInfo of
       (Record _ fields) ->
-        fmap (fmap (SOP . Z)) (fromArgumentsFields modifiers fields)
+        fmap (fmap (SOP . Z)) (fieldsParser modifiers fields)
       Constructor{} ->
-        fmap (fmap (SOP . Z)) (fromArgumentsNoSelectors modifiers shape)
+        fmap (fmap (SOP . Z)) (noSelectorsParser modifiers shape)
       Infix{} ->
         err typeName "infix constructors"
   ADT _ typeName Nil ->
@@ -305,16 +304,16 @@ fromArgumentsGeneric modifiers = fmap (fmap to) $ case datatypeInfo (Proxy :: Pr
 
 -- fixme: combinators?
 -- fixme: consistent syntax
-fromArgumentsFields :: All HasOptions xs => Modifiers -> NP FieldInfo xs -> Result (FromArguments Unnormalized (NP I xs))
-fromArgumentsFields _ Nil = return $ emptyFromArguments Nil
-fromArgumentsFields modifiers (FieldInfo fieldName :* rest) =
+fieldsParser :: All HasArguments xs => Modifiers -> NP FieldInfo xs -> Result (Parser Unnormalized (NP I xs))
+fieldsParser _ Nil = return $ emptyParser Nil
+fieldsParser modifiers (FieldInfo fieldName :* rest) =
   fmap (fmap (\ (a, r) -> a :* r)) $
-    combine (fmap (fmap I) $ (fromArguments modifiers (Just fieldName))) (fromArgumentsFields modifiers rest)
+    combine (fmap (fmap I) $ (argumentsParser modifiers (Just fieldName))) (fieldsParser modifiers rest)
 
-fromArgumentsNoSelectors :: All HasOptions xs =>
-  Modifiers -> Shape xs -> Result (FromArguments Unnormalized (NP I xs))
-fromArgumentsNoSelectors modifiers = \ case
-  ShapeNil -> return $ emptyFromArguments Nil
+noSelectorsParser :: All HasArguments xs =>
+  Modifiers -> Shape xs -> Result (Parser Unnormalized (NP I xs))
+noSelectorsParser modifiers = \ case
+  ShapeNil -> return $ emptyParser Nil
   ShapeCons rest -> 
     fmap (fmap (\ (a, r) -> a :* r)) $
-      combine (fmap (fmap I) $ (fromArguments modifiers Nothing)) (fromArgumentsNoSelectors modifiers rest)
+      combine (fmap (fmap I) $ (argumentsParser modifiers Nothing)) (noSelectorsParser modifiers rest)

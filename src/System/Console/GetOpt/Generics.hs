@@ -6,8 +6,8 @@ module System.Console.GetOpt.Generics (
   -- * Simple IO API
   withCli,
   WithCli(),
-  HasOptions,
-  WithCli.Option(argumentType, parseArgument),
+  HasArguments,
+  WithCli.Argument(argumentType, parseArgument),
   -- * Customizing the CLI
   withCliModified,
   Modifier(..),
@@ -28,8 +28,8 @@ import           Generics.SOP
 import           System.Environment
 
 import           WithCli
-import           WithCli.FromArguments
-import           WithCli.HasOptions
+import           WithCli.Parser
+import           WithCli.HasArguments
 import           WithCli.Result
 import           System.Console.GetOpt.Generics.Modifier
 
@@ -96,12 +96,12 @@ import           System.Console.GetOpt.Generics.Modifier
 
 -- ### End ###
 
-getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasOptions (Code a)) =>
+getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
   IO a
 getArguments = modifiedGetArguments []
 
 -- | Like 'getArguments` but allows you to pass in 'Modifier's.
-modifiedGetArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasOptions (Code a)) =>
+modifiedGetArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
   [Modifier] -> IO a
 modifiedGetArguments modifiers = do
   args <- getArgs
@@ -111,13 +111,13 @@ modifiedGetArguments modifiers = do
 -- | Pure variant of 'modifiedGetArguments'.
 --
 --   Does not throw any exceptions.
-parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasOptions (Code a)) =>
+parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
      String -- ^ Name of the program (e.g. from 'getProgName').
   -> [Modifier] -- ^ List of 'Modifier's to manually tweak the command line interface.
   -> [String] -- ^ List of command line arguments to parse (e.g. from 'getArgs').
   -> Result a
 parseArguments progName mods args = do
   modifiers <- mkModifiers mods
-  fromArguments <- fromArgumentsGeneric modifiers
-  parseFromArguments progName modifiers
-    (normalizeFromArguments (applyModifiers modifiers fromArguments)) args
+  parser <- genericParser modifiers
+  runParser progName modifiers
+    (normalizeParser (applyModifiers modifiers parser)) args

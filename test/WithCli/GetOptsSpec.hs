@@ -8,16 +8,16 @@ import           Prelude.Compat
 
 import           Test.Hspec
 
-import           WithCli.FromArguments
+import           WithCli.Parser
 import           WithCli.Result
 import           Util
 
 spec :: Spec
 spec = do
-  describe "parseFromArguments" $ do
+  describe "runParser" $ do
     it "foo" $ do
-      let fa :: FromArguments phase Int
-          fa = FromArguments {
+      let fa :: Parser phase Int
+          fa = Parser {
             parserDefault = Nothing,
             parserOptions = [],
             parserNonOptions =
@@ -25,5 +25,5 @@ spec = do
               [],
             parserConvert = \ (Just x) -> return x
           }
-      let i = parseFromArguments "program" (unsafeModifiers []) fa ["42"]
+      let i = runParser "program" (unsafeModifiers []) fa ["42"]
       i `shouldBe` Success 42

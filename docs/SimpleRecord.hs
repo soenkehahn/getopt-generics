@@ -15,7 +15,7 @@ data Options
 
 instance Generic Options
 instance HasDatatypeInfo Options
-instance HasOptions Options
+instance HasArguments Options
 
 main :: IO ()
 main = withCli $ \ options -> do

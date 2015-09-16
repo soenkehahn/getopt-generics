@@ -5,11 +5,11 @@ module Util where
 import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
 
-parse :: (Generic a, HasDatatypeInfo a, All2 HasOptions (Code a)) =>
+parse :: (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
   String -> Result a
 parse = modsParse []
 
-modsParse :: (Generic a, HasDatatypeInfo a, All2 HasOptions (Code a)) =>
+modsParse :: (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
   [Modifier] -> String -> Result a
 modsParse modifiers = parseArguments "prog-name" modifiers . words
 

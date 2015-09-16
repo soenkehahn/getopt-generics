@@ -7,12 +7,12 @@ import WithCli
 data File = File FilePath
   deriving (Show, Typeable)
 
-instance Option File where
+instance Argument File where
   argumentType Proxy = "custom-file-type"
   parseArgument f = Just (File f)
 
-instance HasOptions File where
-  fromArguments = fromArgumentsOption
+instance HasArguments File where
+  argumentsParser = atomicArgumentParser
 
 main :: IO ()
 main = withCli $ \ file -> do

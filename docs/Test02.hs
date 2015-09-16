@@ -18,7 +18,7 @@ data Options
 
 instance Generic Options
 instance HasDatatypeInfo Options
-instance HasOptions Options
+instance HasArguments Options
 
 -- Then you can use `getArguments` to create a command-line argument parser:
 

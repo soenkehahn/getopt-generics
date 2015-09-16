@@ -9,7 +9,7 @@
 
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 
-module WithCli.Option where
+module WithCli.Argument where
 
 import           Data.Orphans ()
 import           Prelude ()
@@ -19,9 +19,7 @@ import           Data.List
 import           Data.Proxy
 import           Text.Read
 
--- fixme: better names for HasOptions and Options
-
--- | 'Option' is a typeclass for things that can be parsed as atomic values from
+-- | 'Argument' is a typeclass for things that can be parsed as atomic values from
 --   single command line arguments, e.g. strings (and filenames) and numbers.
 --
 --   Occasionally you might want to declare your own instance for additional
@@ -38,12 +36,12 @@ import           Text.Read
 -- >  data File = File FilePath
 -- >    deriving (Show, Typeable)
 -- >
--- >  instance Option File where
+-- >  instance Argument File where
 -- >    argumentType Proxy = "custom-file-type"
 -- >    parseArgument f = Just (File f)
 -- >
--- >  instance HasOptions File where
--- >    fromArguments = fromArgumentsOption
+-- >  instance HasArguments File where
+-- >    argumentsParser = atomicArgumentParser
 -- >
 -- >  main :: IO ()
 -- >  main = withCli $ \ file -> do
@@ -64,27 +62,27 @@ import           Text.Read
 
 -- ### End ###
 
-class Option a where
+class Argument a where
   argumentType :: Proxy a -> String
   parseArgument :: String -> Maybe a
 
-instance Option String where
+instance Argument String where
   argumentType Proxy = "STRING"
   parseArgument = Just
 
-instance Option Int where
+instance Argument Int where
   argumentType _ = "INTEGER"
   parseArgument = readMaybe
 
-instance Option Integer where
+instance Argument Integer where
   argumentType _ = "INTEGER"
   parseArgument = readMaybe
 
-instance Option Float where
+instance Argument Float where
   argumentType _ = "NUMBER"
   parseArgument = readFloat
 
-instance Option Double where
+instance Argument Double where
   argumentType _ = "NUMBER"
   parseArgument = readFloat
 

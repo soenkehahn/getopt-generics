@@ -8,9 +8,9 @@
 module WithCli (
   withCli,
   WithCli(),
-  HasOptions(fromArguments),
-  fromArgumentsOption,
-  Option(argumentType, parseArgument),
+  HasArguments(argumentsParser),
+  atomicArgumentParser,
+  Argument(argumentType, parseArgument),
   -- * Modifiers
   withCliModified,
   Modifier(..),
@@ -25,20 +25,21 @@ module WithCli (
 
 -- todo: add pure api with withCli
 
+import           Data.Proxy
 import           Data.Typeable
 import qualified Generics.SOP as SOP
 import           System.Environment
 
 import           System.Console.GetOpt.Generics.Modifier
-import           WithCli.FromArguments
-import           WithCli.HasOptions
-import           WithCli.Option
+import           WithCli.Argument
+import           WithCli.HasArguments
+import           WithCli.Parser
 import           WithCli.Result
 
 -- | 'withCli' converts an IO operation into a program with a proper CLI.
 --   Retrieves command line arguments through 'withArgs'.
 --   @main@ (the given IO operation) can have arbitrarily many parameters
---   provided all parameters have instances for 'HasOptions'.
+--   provided all parameters have instances for 'HasArguments'.
 --
 --   May throw the following exceptions:
 --
@@ -96,22 +97,22 @@ withCliModified :: forall main . WithCli main => [Modifier] -> main -> IO ()
 withCliModified mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)
-  _run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
+  _run modifiers (return $ emptyParser ()) (\ () -> main) args
 
 -- | Everything that can be used as a @main@ function with 'withCli' needs to
 --   have an instance of 'WithCli'. You shouldn't need to implement your own
 --   instances.
 class WithCli main where
-  _run :: Modifiers -> Result (FromArguments Unnormalized a) -> (a -> main) -> [String] -> IO ()
+  _run :: Modifiers -> Result (Parser Unnormalized a) -> (a -> main) -> [String] -> IO ()
 
 instance WithCli (IO ()) where
-  _run modifiers fromArguments mkMain args = do
+  _run modifiers mkParser mkMain args = do
     progName <- getProgName
-    fa <- handleResult fromArguments
-    a <- handleResult $ parseFromArguments progName modifiers
-      (normalizeFromArguments (applyModifiers modifiers fa)) args
+    parser <- handleResult mkParser
+    a <- handleResult $ runParser progName modifiers
+      (normalizeParser (applyModifiers modifiers parser)) args
     mkMain a
 
-instance (HasOptions a, WithCli rest) => WithCli (a -> rest) where
+instance (HasArguments a, WithCli rest) => WithCli (a -> rest) where
   _run modifiers fa mkMain args =
-    _run modifiers (combine fa (fromArguments modifiers Nothing)) (\ (a, r) -> mkMain a r) args
+    _run modifiers (combine fa (argumentsParser modifiers Nothing)) (\ (a, r) -> mkMain a r) args

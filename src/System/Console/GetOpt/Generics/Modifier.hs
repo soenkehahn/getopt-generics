@@ -30,7 +30,7 @@ import           Data.Maybe
 import           System.Console.GetOpt
 
 import           System.Console.GetOpt.Generics.Modifier.Types
-import           WithCli.FromArguments
+import           WithCli.Parser
 import           WithCli.Normalize
 import           WithCli.Result
 
@@ -106,9 +106,9 @@ insert key value ((a, b) : r) =
     then (key, value) : r
     else (a, b) : insert key value r
 
--- * transforming FromArguments
+-- * transforming Parsers
 
-applyModifiers :: Modifiers -> FromArguments Unnormalized a -> FromArguments Unnormalized a
+applyModifiers :: Modifiers -> Parser Unnormalized a -> Parser Unnormalized a
 applyModifiers modifiers =
   addShortOptions >>>
   renameOptions
