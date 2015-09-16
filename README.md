@@ -9,7 +9,7 @@ This library is experimental.
 `getopt-generics` tries to make it very simple to create command line
 interfaces. Here's an example:
 
-<!--- ### Start "docs/Simple.hs" (MarkDown Haskell) ### -->
+<!--- ### Start "docs/Simple.hs" "" (MarkDown Haskell) ### -->
 
 ``` haskell
 module Simple where
@@ -27,7 +27,7 @@ myMain s i b = print (s, i, b)
 
 This is how the program behaves in a shell:
 
-<!--- ### Start "docs/Simple.shell-protocol" (MarkDown Shell) ### -->
+<!--- ### Start "docs/Simple.shell-protocol" "" (MarkDown Shell) ### -->
 
 ``` shell
 $ program foo 42 true

@@ -41,7 +41,7 @@ import           System.Console.GetOpt.Generics.Modifier
 --
 -- Here's an example:
 
--- ### Start "docs/RecordType.hs" Haddock ###
+-- ### Start "docs/RecordType.hs" "" Haddock ###
 
 -- |
 -- >  {-# LANGUAGE DeriveGeneric #-}
@@ -75,7 +75,7 @@ import           System.Console.GetOpt.Generics.Modifier
 
 -- | And this is how the above program behaves:
 
--- ### Start "docs/RecordType.shell-protocol" Haddock ###
+-- ### Start "docs/RecordType.shell-protocol" "" Haddock ###
 
 -- |
 -- >  $ program --port 8080 --config some/path

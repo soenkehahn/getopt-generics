@@ -2,6 +2,7 @@
 
 import           Control.DeepSeq
 import           Data.List
+import           Data.Maybe
 import           System.IO
 import           Text.Read (readMaybe)
 
@@ -33,7 +34,7 @@ isEndInstruction (Instruction _ End) = True
 isEndInstruction _ = False
 
 data Instruction
-  = Start FilePath FileType
+  = Start FilePath String FileType
   | End
   deriving (Read)
 
@@ -70,9 +71,12 @@ fillInLines :: [Line] -> IO [Line]
 fillInLines lines = case lines of
   [] -> return []
   (String s : rest) -> (String s :) <$> fillInLines rest
-  (Instruction startLine (Start file fileType) : rest) -> do
+  (Instruction startLine (Start file dropPrefix fileType) : rest) -> do
     hPutStrLn stderr ("splicing in " ++ file)
-    fileContent <- readFile file
+    fileContent <-
+      fromMaybe (error ("not a prefix: " ++ dropPrefix)) <$>
+      stripPrefix dropPrefix <$>
+      readFile file
     let (Instruction endLine End : afterEnd) =
           dropWhile (not . isEndInstruction) rest
     filledInAfterEnd <- fillInLines afterEnd

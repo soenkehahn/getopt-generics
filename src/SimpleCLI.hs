@@ -43,11 +43,9 @@ import           System.Console.GetOpt.Generics.Modifier
 --
 --   Example:
 
--- ### Start "docs/Simple.hs" Haddock ###
+-- ### Start "docs/Simple.hs" "module Simple where\n\n" Haddock ###
 
 -- |
--- >  module Simple where
--- >
 -- >  import SimpleCLI
 -- >
 -- >  main :: IO ()
@@ -60,7 +58,7 @@ import           System.Console.GetOpt.Generics.Modifier
 
 -- | Using the above program in a shell:
 
--- ### Start "docs/Simple.shell-protocol" Haddock ###
+-- ### Start "docs/Simple.shell-protocol" "" Haddock ###
 
 -- |
 -- >  $ program foo 42 true
