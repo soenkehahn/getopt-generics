@@ -4,7 +4,7 @@
 module Test02 where
 
 import qualified GHC.Generics
-import           SimpleCLI
+import           WithCli
 
 -- All you have to do is to define a type and derive some instances:
 
@@ -23,5 +23,5 @@ instance HasOptions Options
 -- Then you can use `getArguments` to create a command-line argument parser:
 
 main :: IO ()
-main = simpleCLI $ \ options -> do
+main = withCli $ \ options -> do
   print (options :: Options)

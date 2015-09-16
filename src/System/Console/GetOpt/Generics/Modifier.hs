@@ -33,8 +33,8 @@ import           Data.Maybe
 import           Generics.SOP
 import           System.Console.GetOpt
 
-import           SimpleCLI.FromArguments
-import           SimpleCLI.Result
+import           WithCli.FromArguments
+import           WithCli.Result
 import           System.Console.GetOpt.Generics.FieldString
 import           System.Console.GetOpt.Generics.Modifier.Types
 

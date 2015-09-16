@@ -8,7 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module SimpleCLI.FromArguments where
+module WithCli.FromArguments where
 
 import           Prelude ()
 import           Prelude.Compat
@@ -18,8 +18,8 @@ import           Control.Monad
 import           Data.Monoid
 import           System.Console.GetOpt as Base
 
-import           SimpleCLI.HelpFlag
-import           SimpleCLI.Result
+import           WithCli.HelpFlag
+import           WithCli.Result
 import           System.Console.GetOpt.Generics.FieldString
 import           System.Console.GetOpt.Generics.Modifier.Types
 

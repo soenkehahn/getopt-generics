@@ -2,7 +2,7 @@
 
 module CustomOption where
 
-import SimpleCLI
+import WithCli
 
 data File = File FilePath
   deriving (Show, Typeable)
@@ -15,5 +15,5 @@ instance HasOptions File where
   fromArguments = fromArgumentsOption
 
 main :: IO ()
-main = simpleCLI $ \ file -> do
+main = withCli $ \ file -> do
   print (file :: File)

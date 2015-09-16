@@ -18,7 +18,7 @@ instance HasDatatypeInfo Options
 instance HasOptions Options
 
 main :: IO ()
-main = simpleCLI $ \ options -> do
+main = withCli $ \ options -> do
   print (options :: Options)
 
   -- todo: use myMain functions in docs?

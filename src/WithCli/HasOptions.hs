@@ -21,7 +21,7 @@
 
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 
-module SimpleCLI.HasOptions where
+module WithCli.HasOptions where
 
 import           Data.Orphans ()
 import           Prelude ()
@@ -35,9 +35,9 @@ import           Generics.SOP as SOP
 import           System.Console.GetOpt
 import           Text.Read
 
-import           SimpleCLI.FromArguments
-import           SimpleCLI.Option
-import           SimpleCLI.Result
+import           WithCli.FromArguments
+import           WithCli.Option
+import           WithCli.Result
 import           System.Console.GetOpt.Generics.FieldString
 import           System.Console.GetOpt.Generics.Modifier
 
@@ -53,7 +53,7 @@ parseError typ mMsg s = Errors $ pure $
   ": " ++ s
 
 -- | Everything that can be used as a parameter to your @main@ function
---   (see 'simpleCLI') needs to have a 'HasOptions' instance.
+--   (see 'withCli') needs to have a 'HasOptions' instance.
 --
 --   'HasOptions' also allows to conjure up instances for record types
 --   to create more complex command line interfaces. Here's an example:
@@ -79,7 +79,7 @@ parseError typ mMsg s = Errors $ pure $
 -- >  instance HasOptions Options
 -- >
 -- >  main :: IO ()
--- >  main = simpleCLI $ \ options -> do
+-- >  main = withCli $ \ options -> do
 -- >    print (options :: Options)
 -- >
 -- >    -- todo: use myMain functions in docs?

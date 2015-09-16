@@ -11,9 +11,9 @@ main :: IO ()
 main = do
   mapM_ process $
     "README.md" :
-    "src/SimpleCLI.hs" :
-    "src/SimpleCLI/HasOptions.hs" :
-    "src/SimpleCLI/Option.hs" :
+    "src/WithCli.hs" :
+    "src/WithCli/HasOptions.hs" :
+    "src/WithCli/Option.hs" :
     "src/System/Console/GetOpt/Generics.hs" :
     []
 

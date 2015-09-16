@@ -4,10 +4,10 @@
 module Test04 where
 
 import qualified GHC.Generics
-import           SimpleCLI
+import           WithCli
 
 main :: IO ()
-main = simpleCLI $ \ a b -> do
+main = withCli $ \ a b -> do
   print ((a, b) :: (A, B))
 
 data A

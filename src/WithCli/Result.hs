@@ -2,7 +2,7 @@
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module SimpleCLI.Result (
+module WithCli.Result (
   Result(..),
   handleResult,
   sanitize,

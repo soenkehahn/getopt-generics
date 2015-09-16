@@ -73,10 +73,10 @@ spec = do
   context "when used without selector" $ do
     it "automatically uses positional arguments for [Int]" $ do
       withArgs (words "1 2 3") $
-        simpleCLI $ \ (xs :: [Int]) -> do
+        withCli $ \ (xs :: [Int]) -> do
           xs `shouldBe` [1, 2, 3]
 
     it "automatically uses positional arguments for [String]" $ do
       withArgs (words "foo bar") $
-        simpleCLI $ \ (xs :: [String]) -> do
+        withCli $ \ (xs :: [String]) -> do
           xs `shouldBe` (words "foo bar")

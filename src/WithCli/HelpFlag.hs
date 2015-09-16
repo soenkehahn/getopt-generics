@@ -1,5 +1,5 @@
 
-module SimpleCLI.HelpFlag where
+module WithCli.HelpFlag where
 
 import           System.Console.GetOpt
 

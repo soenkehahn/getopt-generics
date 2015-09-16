@@ -1,8 +1,8 @@
 
 module Test01 where
 
-import SimpleCLI
+import WithCli
 
 main :: IO ()
-main = simpleCLI $ \ i b ->
+main = withCli $ \ i b ->
   print (i :: Int, b :: Bool)

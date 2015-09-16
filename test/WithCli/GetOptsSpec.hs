@@ -1,15 +1,15 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
-module SimpleCLI.GetOptsSpec where
+module WithCli.GetOptsSpec where
 
 import           Prelude ()
 import           Prelude.Compat
 
 import           Test.Hspec
 
-import           SimpleCLI.FromArguments
-import           SimpleCLI.Result
+import           WithCli.FromArguments
+import           WithCli.Result
 import           Util
 
 spec :: Spec

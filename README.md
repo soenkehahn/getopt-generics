@@ -14,10 +14,10 @@ interfaces. Here's an example:
 ``` haskell
 module Simple where
 
-import SimpleCLI
+import WithCli
 
 main :: IO ()
-main = simpleCLI myMain
+main = withCli myMain
 
 myMain :: String -> Int -> Bool -> IO ()
 myMain s i b = print (s, i, b)

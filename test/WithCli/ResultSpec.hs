@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module SimpleCLI.ResultSpec where
+module WithCli.ResultSpec where
 
 import           Data.Char
 import           Data.List
@@ -10,7 +10,7 @@ import           System.Exit
 import           Test.Hspec
 import           Test.QuickCheck hiding (Result(..))
 
-import           SimpleCLI.Result
+import           WithCli.Result
 
 spec :: Spec
 spec = do

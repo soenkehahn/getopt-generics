@@ -4,10 +4,10 @@
 
 module System.Console.GetOpt.Generics (
   -- * Simple IO API
-  simpleCLI,
-  SimpleCLI(),
+  withCli,
+  WithCli(),
   HasOptions,
-  SimpleCLI.Option(argumentType, parseArgument),
+  WithCli.Option(argumentType, parseArgument),
   -- * IO API
   getArguments,
   modifiedGetArguments,
@@ -27,16 +27,16 @@ module System.Console.GetOpt.Generics (
 import           Generics.SOP
 import           System.Environment
 
-import           SimpleCLI
-import           SimpleCLI.FromArguments
-import           SimpleCLI.HasOptions
-import           SimpleCLI.Result
+import           WithCli
+import           WithCli.FromArguments
+import           WithCli.HasOptions
+import           WithCli.Result
 import           System.Console.GetOpt.Generics.Modifier
 
 -- | Parses command line arguments (gotten from 'withArgs') and returns the
 --   parsed value. This function should be enough for simple use-cases.
 --
---   Throws the same exceptions as 'simpleCLI'.
+--   Throws the same exceptions as 'withCli'.
 --
 -- Here's an example:
 

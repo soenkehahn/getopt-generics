@@ -24,7 +24,7 @@ library:
   source-dirs:
     - src
   exposed-modules:
-    - SimpleCLI
+    - WithCli
     - System.Console.GetOpt.Generics
 
 tests:

@@ -9,7 +9,9 @@ import           System.FilePath
 import           Test.Hspec
 
 import           ShellProtocol
+
 import qualified CustomOption
+import qualified CustomOptionRecord
 import qualified RecordType
 import qualified Simple
 import qualified SimpleRecord
@@ -30,6 +32,7 @@ examples =
   (RecordType.main, "RecordType") :
   (SimpleRecord.main, "SimpleRecord") :
   (CustomOption.main, "CustomOption") :
+  (CustomOptionRecord.main, "CustomOptionRecord") :
   []
 
 main :: IO ()

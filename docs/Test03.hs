@@ -5,10 +5,10 @@
 module Test03 where
 
 import qualified GHC.Generics
-import           SimpleCLI
+import           WithCli
 
 main :: IO ()
-main = simpleCLI $ \ options -> do
+main = withCli $ \ options -> do
   print (options :: (A, B))
 
 data A

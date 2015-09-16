@@ -5,9 +5,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module SimpleCLI (
-  simpleCLI,
-  SimpleCLI(),
+module WithCli (
+  withCli,
+  WithCli(),
   Option(argumentType, parseArgument),
   HasOptions(fromArguments),
   fromArgumentsOption,
@@ -23,13 +23,13 @@ import           Data.Typeable
 import qualified Generics.SOP as SOP
 import           System.Environment
 
-import           SimpleCLI.FromArguments
-import           SimpleCLI.HasOptions
-import           SimpleCLI.Option
-import           SimpleCLI.Result
+import           WithCli.FromArguments
+import           WithCli.HasOptions
+import           WithCli.Option
+import           WithCli.Result
 import           System.Console.GetOpt.Generics.Modifier
 
--- | 'simpleCLI' converts an IO operation into a program with a proper CLI.
+-- | 'withCli' converts an IO operation into a program with a proper CLI.
 --   Retrieves command line arguments through 'withArgs'.
 --   @main@ (the given IO operation) can have arbitrarily many parameters
 --   provided all parameters have instances for 'HasOptions'.
@@ -47,10 +47,10 @@ import           System.Console.GetOpt.Generics.Modifier
 -- ### Start "docs/Simple.hs" "module Simple where\n\n" Haddock ###
 
 -- |
--- >  import SimpleCLI
+-- >  import WithCli
 -- >
 -- >  main :: IO ()
--- >  main = simpleCLI myMain
+-- >  main = withCli myMain
 -- >
 -- >  myMain :: String -> Int -> Bool -> IO ()
 -- >  myMain s i b = print (s, i, b)
@@ -81,27 +81,26 @@ import           System.Console.GetOpt.Generics.Modifier
 
 -- ### End ###
 
-simpleCLI :: forall main . SimpleCLI main => main -> IO ()
-simpleCLI = modifiedSimpleCLI []
+withCli :: forall main . WithCli main => main -> IO ()
+withCli = withCliModified []
 
-modifiedSimpleCLI :: forall main . SimpleCLI main => [Modifier] -> main -> IO ()
-modifiedSimpleCLI mods main = do
+withCliModified :: forall main . WithCli main => [Modifier] -> main -> IO ()
+withCliModified mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)
   _run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
 
-  -- fixme: look through generics docs
-  -- fixme: add simpleCLIModified
+  -- fixme: add withCliModified
   -- fixme: remove deriveShortOptions
-  -- fixme: look through simpleCLI docs
+  -- fixme: look through withCli docs
 
--- | Everything that can be used as a @main@ function with 'simpleCLI' needs to
---   have an instance of 'SimpleCLI'. You shouldn't need to implement your own
+-- | Everything that can be used as a @main@ function with 'withCli' needs to
+--   have an instance of 'WithCli'. You shouldn't need to implement your own
 --   instances.
-class SimpleCLI main where
+class WithCli main where
   _run :: Modifiers -> Result (FromArguments Unnormalized a) -> (a -> main) -> [String] -> IO ()
 
-instance SimpleCLI (IO ()) where
+instance WithCli (IO ()) where
   _run modifiers fromArguments mkMain args = do
     progName <- getProgName
     fa <- handleResult fromArguments
@@ -109,6 +108,6 @@ instance SimpleCLI (IO ()) where
       (normalizeFromArguments (applyModifiers modifiers fa)) args
     mkMain a
 
-instance (HasOptions a, SimpleCLI rest) => SimpleCLI (a -> rest) where
+instance (HasOptions a, WithCli rest) => WithCli (a -> rest) where
   _run modifiers fa mkMain args =
     _run modifiers (combine fa (fromArguments modifiers Nothing)) (\ (a, r) -> mkMain a r) args

@@ -20,8 +20,8 @@ import           System.IO.Silently
 import           Test.Hspec
 import           Test.QuickCheck hiding (Result(..))
 
-import           SimpleCLI.HasOptions
-import           SimpleCLI.Result
+import           WithCli.HasOptions
+import           WithCli.Result
 import           System.Console.GetOpt.Generics
 import           Util
 

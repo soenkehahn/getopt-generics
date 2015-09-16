@@ -9,7 +9,7 @@
 
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 
-module SimpleCLI.Option where
+module WithCli.Option where
 
 import           Data.Orphans ()
 import           Prelude ()
@@ -33,7 +33,7 @@ import           Text.Read
 -- |
 -- >  {-# LANGUAGE DeriveDataTypeable #-}
 -- >
--- >  import SimpleCLI
+-- >  import WithCli
 -- >
 -- >  data File = File FilePath
 -- >    deriving (Show, Typeable)
@@ -46,7 +46,7 @@ import           Text.Read
 -- >    fromArguments = fromArgumentsOption
 -- >
 -- >  main :: IO ()
--- >  main = simpleCLI $ \ file -> do
+-- >  main = withCli $ \ file -> do
 -- >    print (file :: File)
 
 -- ### End ###
