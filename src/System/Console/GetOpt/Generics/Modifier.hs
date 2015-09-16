@@ -12,13 +12,10 @@ module System.Console.GetOpt.Generics.Modifier (
   getPositionalArgumentType,
   getVersion,
 
-  deriveShortOptions,
-
   applyModifiers,
   applyModifiersLong,
 
   -- exported for testing
-  mkShortModifiers,
   insertWith,
  ) where
 
@@ -30,7 +27,6 @@ import           Control.Monad
 import           Data.Char
 import           Data.List (foldl')
 import           Data.Maybe
-import           Generics.SOP
 import           System.Console.GetOpt
 
 import           System.Console.GetOpt.Generics.Modifier.Types
@@ -93,53 +89,6 @@ mkModifiers = foldM inner empty
 
     combineRenamings :: (a -> a) -> (a -> Maybe a) -> (a -> a)
     combineRenamings old new x = old (fromMaybe x (new x))
-
--- * deriving Modifiers
-
--- | Derives 'AddShortOption's for all fields of the datatype that start with a
---   unique character.
-deriveShortOptions :: (HasDatatypeInfo a, SingI (Code a)) =>
-  Proxy a -> [Modifier]
-deriveShortOptions proxy =
-  mkShortModifiers (flags proxy)
-
-flags :: (SingI (Code a), HasDatatypeInfo a) =>
-  Proxy a -> [String]
-flags proxy = case datatypeInfo proxy of
-    ADT _ _ ci -> fromNPConstructorInfo ci
-    Newtype _ _ ci -> fromConstructorInfo ci
-  where
-    fromNPConstructorInfo :: NP ConstructorInfo xs -> [String]
-    fromNPConstructorInfo Nil = []
-    fromNPConstructorInfo (a :* r) =
-      fromConstructorInfo a ++ fromNPConstructorInfo r
-
-    fromConstructorInfo :: ConstructorInfo x -> [String]
-    fromConstructorInfo (Constructor _) = []
-    fromConstructorInfo (Infix _ _ _) = []
-    fromConstructorInfo (Record _ fields) =
-      fromFields fields
-
-    fromFields :: NP FieldInfo xs -> [String]
-    fromFields (FieldInfo name :* r) = name : fromFields r
-    fromFields Nil = []
-
-mkShortModifiers :: [String] -> [Modifier]
-mkShortModifiers fields =
-    let withShorts = mapMaybe (\ field -> (field, ) <$> toShort field) fields
-        allShorts = map snd withShorts
-        isUnique c = case filter (== c) allShorts of
-          [_] -> True
-          _ -> False
-    in (flip mapMaybe) withShorts $ \ (field, short) ->
-          if isUnique short
-            then Just (AddShortOption field short)
-            else Nothing
-  where
-    toShort :: String -> Maybe Char
-    toShort s = case dropWhile (\ c -> not (isAscii c && isAlpha c)) s of
-      [] -> Nothing
-      (a : _) -> Just (toLower a)
 
 -- * list utils to replace Data.Map
 

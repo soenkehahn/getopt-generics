@@ -93,7 +93,6 @@ withCliModified mods main = do
   modifiers <- handleResult (mkModifiers mods)
   _run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
 
-  -- fixme: remove deriveShortOptions
   -- fixme: look through withCli docs
 
 -- | Everything that can be used as a @main@ function with 'withCli' needs to

@@ -25,15 +25,13 @@ import           WithCli.Result
 import           System.Console.GetOpt.Generics
 import           Util
 
--- fixme: renumber
-
 spec :: Spec
 spec = do
   part1
   part2
   part3
   part4
-  part6
+  part5
 
 data Foo
   = Foo {
@@ -199,8 +197,8 @@ data WithoutSelectors
 instance Generic WithoutSelectors
 instance HasDatatypeInfo WithoutSelectors
 
-part6 :: Spec
-part6 = do
+part5 :: Spec
+part5 = do
   describe "parseArguments" $ do
     context "WithoutSelectors" $ do
       it "populates fields without selectors from positional arguments" $ do

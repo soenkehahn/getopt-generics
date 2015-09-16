@@ -11,7 +11,6 @@ module System.Console.GetOpt.Generics (
   -- * Customizing the CLI
   withCliModified,
   Modifier(..),
-  deriveShortOptions,
   -- * IO API
   getArguments,
   modifiedGetArguments,
