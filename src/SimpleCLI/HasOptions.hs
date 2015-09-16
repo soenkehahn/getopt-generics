@@ -63,24 +63,23 @@ class HasOptions a where
 -- * atomic HasOptions
 
 -- todo: better instance derivation for HasOptions
--- fixme: DRY up
+-- todo: HasOptions for Float and Double
 
 instance HasOptions Int where
-  fromArguments modifiers (Just field) =
-    if isPositionalArgumentsField modifiers field
-      then Errors ["UseForPositionalArguments can only be used for fields of type [String] not Int"]
-      else fromArgumentsOption modifiers (Just field)
-  fromArguments modifiers Nothing = fromArgumentsOption modifiers Nothing
+  fromArguments = fromArgumentsOption
 
 instance HasOptions Bool where
-  fromArguments modifiers (Just field) =
-    if isPositionalArgumentsField modifiers field
-      then Errors ["UseForPositionalArguments can only be used for fields of type [String] not Bool"]
-      else fromArgumentsBool (Just field)
-  fromArguments _ Nothing = fromArgumentsBool Nothing
+  fromArguments = wrapForPositionalArguments "Bool" (const fromArgumentsBool)
 
 instance HasOptions String where
   fromArguments = fromArgumentsOption
+
+wrapForPositionalArguments :: String -> (Modifiers -> Maybe String -> Result a) -> (Modifiers -> Maybe String -> Result a)
+wrapForPositionalArguments typ wrapped modifiers (Just field) =
+  if isPositionalArgumentsField modifiers field
+    then Errors ["UseForPositionalArguments can only be used for fields of type [String] not " ++ typ]
+    else wrapped modifiers (Just field)
+wrapForPositionalArguments _ wrapped modifiers Nothing = wrapped modifiers Nothing
 
 -- | todo
 instance Option a => HasOptions (Maybe a) where
@@ -99,7 +98,11 @@ instance Option a => HasOptions [a] where
 fromArgumentsOption :: forall a . Option a =>
   Modifiers ->
   Maybe String -> Result (FromArguments Unnormalized a)
-fromArgumentsOption modifiers mLong = return $ case mLong of
+fromArgumentsOption =
+  -- fixme: code layout
+  wrapForPositionalArguments (argumentType (Proxy :: Proxy a)) $
+  \ modifiers mLong ->
+  return $ case mLong of
   Nothing -> FromArguments {
     parserDefault = Nothing,
     parserOptions = [],
