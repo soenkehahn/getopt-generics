@@ -11,6 +11,7 @@ import           Prelude.Compat
 import           Control.Exception
 import           Data.Foldable (forM_)
 import           Data.List (isPrefixOf, isSuffixOf)
+import           Data.Proxy
 import qualified GHC.Generics as GHC
 import           System.Environment
 import           System.Exit

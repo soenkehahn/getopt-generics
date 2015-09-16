@@ -3,10 +3,12 @@
 {-# LANGUAGE ViewPatterns #-}
 
 module System.Console.GetOpt.Generics (
-  -- * IO API
+  -- * Simple IO API
   simpleCLI,
-  SimpleCLI,
+  SimpleCLI(),
   HasOptions,
+  SimpleCLI.Option(argumentType, parseArgument),
+  -- * IO API
   getArguments,
   modifiedGetArguments,
   -- * Pure API
@@ -15,15 +17,11 @@ module System.Console.GetOpt.Generics (
   -- * Customizing the CLI
   Modifier(..),
   deriveShortOptions,
-  -- * Available Field Types
-  SimpleCLI.Option(argumentType, parseArgument),
   -- * Re-exports from "Generics.SOP"
   Generics.SOP.Generic,
   HasDatatypeInfo,
   Code,
   All2,
-  SingI,
-  Proxy(..),
  ) where
 
 import           Generics.SOP

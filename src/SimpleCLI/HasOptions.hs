@@ -64,6 +64,7 @@ class HasOptions a where
 
 -- todo: better instance derivation for HasOptions
 -- todo: HasOptions for Float and Double
+-- todo: better names for HasOptions and Option
 
 instance HasOptions Int where
   fromArguments = fromArgumentsOption

@@ -7,7 +7,7 @@
 
 module SimpleCLI (
   simpleCLI,
-  SimpleCLI,
+  SimpleCLI(),
   Option(argumentType, parseArgument),
   HasOptions(fromArguments),
   fromArgumentsOption,
@@ -32,7 +32,7 @@ import           System.Console.GetOpt.Generics.Modifier
 -- | 'simpleCLI' converts an IO operation into a program with a proper CLI.
 --   Retrieves command line arguments through 'withArgs'.
 --   @main@ (the given IO operation) can have arbitrarily many parameters
---   provided all parameters have an instance for 'Option'.
+--   provided all parameters have instances for 'HasOptions'.
 --
 --   May throw the following exceptions:
 --
@@ -88,14 +88,19 @@ modifiedSimpleCLI :: forall main . SimpleCLI main => [Modifier] -> main -> IO ()
 modifiedSimpleCLI mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)
-  run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
+  _run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
 
+  -- fixme: look through generics docs
+  -- fixme: look through simpleCLI docs
+
+-- | Everything that can be used as @main@ function with 'simpleCLI' needs to
+--   have an instance of 'SimpleCLI'. You shouldn't need to implement your own
+--   instances.
 class SimpleCLI main where
-  -- fixme: hide 'run'
-  run :: Modifiers -> Result (FromArguments Unnormalized a) -> (a -> main) -> [String] -> IO ()
+  _run :: Modifiers -> Result (FromArguments Unnormalized a) -> (a -> main) -> [String] -> IO ()
 
 instance SimpleCLI (IO ()) where
-  run modifiers fromArguments mkMain args = do
+  _run modifiers fromArguments mkMain args = do
     progName <- getProgName
     fa <- handleResult fromArguments
     a <- handleResult $ parseFromArguments progName modifiers
@@ -103,5 +108,5 @@ instance SimpleCLI (IO ()) where
     mkMain a
 
 instance (HasOptions a, SimpleCLI rest) => SimpleCLI (a -> rest) where
-  run modifiers fa mkMain args =
-    run modifiers (combine fa (fromArguments modifiers Nothing)) (\ (a, r) -> mkMain a r) args
+  _run modifiers fa mkMain args =
+    _run modifiers (combine fa (fromArguments modifiers Nothing)) (\ (a, r) -> mkMain a r) args
