@@ -7,28 +7,33 @@
 
 module WithCli (
   withCli,
-  withCliModified,
   WithCli(),
-  Option(argumentType, parseArgument),
   HasOptions(fromArguments),
   fromArgumentsOption,
-
+  Option(argumentType, parseArgument),
+  -- * Modifiers
+  withCliModified,
+  Modifier(..),
+  -- * Useful Re-exports
   SOP.Generic,
   SOP.HasDatatypeInfo,
+  SOP.Code,
+  SOP.All2,
   Typeable,
   Proxy(..),
   ) where
 
-import           Data.Proxy
+-- todo: add pure api with withCli
+
 import           Data.Typeable
 import qualified Generics.SOP as SOP
 import           System.Environment
 
+import           System.Console.GetOpt.Generics.Modifier
 import           WithCli.FromArguments
 import           WithCli.HasOptions
 import           WithCli.Option
 import           WithCli.Result
-import           System.Console.GetOpt.Generics.Modifier
 
 -- | 'withCli' converts an IO operation into a program with a proper CLI.
 --   Retrieves command line arguments through 'withArgs'.
@@ -85,15 +90,13 @@ import           System.Console.GetOpt.Generics.Modifier
 withCli :: forall main . WithCli main => main -> IO ()
 withCli = withCliModified []
 
--- | It is possible to tweak the generated command line interface by using
---   'withCliModified' and providing a list of 'Modifier's.
+-- | This is a variant of 'withCli' that allows to tweak the generated
+--   command line interface by providing a list of 'Modifier's.
 withCliModified :: forall main . WithCli main => [Modifier] -> main -> IO ()
 withCliModified mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)
   _run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
-
-  -- fixme: look through withCli docs
 
 -- | Everything that can be used as a @main@ function with 'withCli' needs to
 --   have an instance of 'WithCli'. You shouldn't need to implement your own

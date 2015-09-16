@@ -160,6 +160,8 @@ instance Option a => HasOptions [a] where
 
 -- fixme: warnings
 
+-- | Useful for implementing your own instances of 'HasOptions' on top
+--   of a custom 'Option' instance.
 fromArgumentsOption :: forall a . Option a =>
   Modifiers ->
   Maybe String -> Result (FromArguments Unnormalized a)
