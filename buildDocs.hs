@@ -1,5 +1,6 @@
 #!/usr/bin/env runhaskell
 
+import           Control.Applicative
 import           Control.DeepSeq
 import           Data.List
 import           Data.Maybe
@@ -8,9 +9,13 @@ import           Text.Read (readMaybe)
 
 main :: IO ()
 main = do
-  process "README.md"
-  process "src/System/Console/GetOpt/Generics.hs"
-  process "src/SimpleCLI.hs"
+  mapM_ process $
+    "README.md" :
+    "src/SimpleCLI.hs" :
+    "src/SimpleCLI/HasOptions.hs" :
+    "src/SimpleCLI/Option.hs" :
+    "src/System/Console/GetOpt/Generics.hs" :
+    []
 
 process :: FilePath -> IO ()
 process file = do
@@ -74,8 +79,8 @@ fillInLines lines = case lines of
   (Instruction startLine (Start file dropPrefix fileType) : rest) -> do
     hPutStrLn stderr ("splicing in " ++ file)
     fileContent <-
-      fromMaybe (error ("not a prefix: " ++ dropPrefix)) <$>
-      stripPrefix dropPrefix <$>
+      fromMaybe (error ("not an infix: " ++ dropPrefix)) <$>
+      stripInfix dropPrefix <$>
       readFile file
     let (Instruction endLine End : afterEnd) =
           dropWhile (not . isEndInstruction) rest
@@ -113,3 +118,10 @@ lines' [] = []
 lines' s = case span (/= '\n') s of
   (line, '\n' : rest) -> (line ++ "\n") : lines' rest
   (s, []) -> [s]
+
+stripInfix :: String -> String -> Maybe String
+stripInfix needle hay = case hay of
+  [] -> Nothing
+  (a : r) ->
+    stripPrefix needle hay <|>
+    fmap (a :) (stripInfix needle r)

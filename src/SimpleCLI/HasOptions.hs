@@ -52,6 +52,64 @@ parseError typ mMsg s = Errors $ pure $
   maybe "" (\ msg -> " (" ++ msg ++ ")") mMsg ++
   ": " ++ s
 
+-- | Everything that can be used as a parameter to your @main@ function
+--   (see 'simpleCLI') needs to have a 'HasOptions' instance.
+--
+--   'HasOptions' also allows to conjure up instances for record types
+--   to create more complex command line interfaces. Here's an example:
+
+-- ### Start "docs/SimpleRecord.hs" "module SimpleRecord where\n\n" Haddock ###
+
+-- |
+-- >  {-# LANGUAGE DeriveGeneric #-}
+-- >
+-- >  import qualified GHC.Generics
+-- >  import           System.Console.GetOpt.Generics
+-- >
+-- >  data Options
+-- >    = Options {
+-- >      port :: Int,
+-- >      daemonize :: Bool,
+-- >      config :: Maybe FilePath
+-- >    }
+-- >    deriving (Show, GHC.Generics.Generic)
+-- >
+-- >  instance Generic Options
+-- >  instance HasDatatypeInfo Options
+-- >  instance HasOptions Options
+-- >
+-- >  main :: IO ()
+-- >  main = simpleCLI $ \ options -> do
+-- >    print (options :: Options)
+-- >
+-- >    -- todo: use myMain functions in docs?
+
+-- ### End ###
+
+-- | In a shell this program behaves like this:
+
+-- ### Start "docs/SimpleRecord.shell-protocol" "" Haddock ###
+
+-- |
+-- >  $ program --port 8080 --config some/path
+-- >  Options {port = 8080, daemonize = False, config = Just "some/path"}
+-- >  $ program  --port 8080 --daemonize
+-- >  Options {port = 8080, daemonize = True, config = Nothing}
+-- >  $ program --port foo
+-- >  cannot parse as INTEGER: foo
+-- >  # exit-code 1
+-- >  $ program
+-- >  missing option: --port=INTEGER
+-- >  # exit-code 1
+-- >  $ program --help
+-- >  program [OPTIONS]
+-- >        --port=INTEGER
+-- >        --daemonize
+-- >        --config=STRING (optional)
+-- >    -h  --help                      show help and exit
+
+-- ### End ###
+
 class HasOptions a where
   fromArguments :: Modifiers -> Maybe String -> Result (FromArguments Unnormalized a)
   default fromArguments ::

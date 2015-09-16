@@ -1,5 +1,3 @@
--- fixme: into haddock
--- fixme: add explanation
 {-# LANGUAGE DeriveDataTypeable #-}
 
 module CustomOption where

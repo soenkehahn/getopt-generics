@@ -91,9 +91,11 @@ modifiedSimpleCLI mods main = do
   _run modifiers (return $ emptyFromArguments ()) (\ () -> main) args
 
   -- fixme: look through generics docs
+  -- fixme: add simpleCLIModified
+  -- fixme: remove deriveShortOptions
   -- fixme: look through simpleCLI docs
 
--- | Everything that can be used as @main@ function with 'simpleCLI' needs to
+-- | Everything that can be used as a @main@ function with 'simpleCLI' needs to
 --   have an instance of 'SimpleCLI'. You shouldn't need to implement your own
 --   instances.
 class SimpleCLI main where
