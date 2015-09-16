@@ -76,7 +76,9 @@ data FromArguments phase a where
     parserConvert :: uninitialized -> Result a
   } -> FromArguments phase a
 
-deriving instance Functor (FromArguments phase)
+instance Functor (FromArguments phase) where
+  fmap f (FromArguments def options nonOptions convert) =
+    FromArguments def options nonOptions (fmap f . convert)
 
 -- phases:
 data Unnormalized
