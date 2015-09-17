@@ -58,8 +58,8 @@ library
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Modifier.Types
       WithCli.Argument
+      WithCli.Flag
       WithCli.HasArguments
-      WithCli.HelpFlag
       WithCli.Normalize
       WithCli.Parser
       WithCli.Result
@@ -90,8 +90,8 @@ test-suite spec
       System.Console.GetOpt.Generics.Modifier.Types
       WithCli
       WithCli.Argument
+      WithCli.Flag
       WithCli.HasArguments
-      WithCli.HelpFlag
       WithCli.Normalize
       WithCli.Parser
       WithCli.Result

@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -16,50 +15,31 @@ import           Prelude.Compat
 
 import           Control.Arrow
 import           Control.Monad
-import           Data.Monoid
 import           System.Console.GetOpt as Base
 
 import           System.Console.GetOpt.Generics.Modifier.Types
-import           WithCli.HelpFlag
+import           WithCli.Flag
 import           WithCli.Normalize
 import           WithCli.Result
-
-data Help a
-  = Help
-  | Version String
-  | NoHelp a
-  deriving (Functor)
-
-instance Monoid a => Monoid (Help a) where
-  mappend a b = case (a, b) of
-    (Help, _) -> Help
-    (_, Help) -> Help
-    (Version s, _) -> Version s
-    (_, Version s) -> Version s
-    (NoHelp a, NoHelp b) -> NoHelp (a <> b)
-  mempty = NoHelp mempty
-
-foldHelp :: [Help a] -> Help [a]
-foldHelp flags = mconcat $ map (fmap pure) flags
 
 runParser :: String -> Modifiers -> Parser Normalized a -> [String] -> Result a
 runParser progName modifiers Parser{..} args = do
   let versionOptions = maybe []
-        (\ v -> pure $ versionOption $ Version (progName ++ " version " ++ v))
+        (\ v -> pure $ versionOption (progName ++ " version " ++ v))
         (getVersion modifiers)
-      options = map (fmap NoHelp) parserOptions ++ [helpOption Help] ++ versionOptions
-      (flagsHelp, nonOptions, errs) =
+      options = map (fmap NoHelp) parserOptions ++ [helpOption] ++ versionOptions
+      (flags, nonOptions, errs) =
         Base.getOpt Base.Permute options args
-  case foldHelp flagsHelp of
+  case foldFlags flags of
     Help -> OutputAndExit $
       let fields = case getPositionalArgumentType modifiers of
             Nothing -> map fst parserNonOptions
             Just typ -> ["[" ++ typ ++ "]"]
       in usage progName fields (map void options)
     Version msg -> OutputAndExit msg
-    NoHelp flags ->
+    NoHelp innerFlags ->
       reportErrors errs *>
-      (fillInOptions flags parserDefault >>=
+      (fillInOptions innerFlags parserDefault >>=
        fillInNonOptions (map snd parserNonOptions) nonOptions >>=
        parserConvert)
   where
