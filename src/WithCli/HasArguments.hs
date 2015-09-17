@@ -157,8 +157,6 @@ instance Argument a => HasArguments [a] where
   argumentsParser _ Nothing =
     return $ listParser Nothing
 
--- fixme: warnings
-
 -- | Useful for implementing your own instances of 'HasArguments' on top
 --   of a custom 'Argument' instance.
 atomicArgumentParser :: forall a . Argument a =>
@@ -230,8 +228,6 @@ positionalArgumentsParser = Parser {
           Just a -> return (a :)
           Nothing -> parseError (argumentType (Proxy :: Proxy a)) Nothing arg
       return (foldl' (.) id mods, [])
-
--- fixme: grep for error
 
 maybeParser :: forall a . Argument a =>
   Maybe String -> Result (Parser Unnormalized (Maybe a))
@@ -307,13 +303,13 @@ genericParser modifiers = fmap (fmap to) $ case datatypeInfo (Proxy :: Proxy a) 
       "getopt-generics doesn't support " ++ message ++
       " (" ++ typeName ++ ")."
 
--- fixme: combinators?
--- fixme: consistent syntax
-fieldsParser :: All HasArguments xs => Modifiers -> NP FieldInfo xs -> Result (Parser Unnormalized (NP I xs))
-fieldsParser _ Nil = return $ emptyParser Nil
-fieldsParser modifiers (FieldInfo fieldName :* rest) =
-  fmap (fmap (\ (a, r) -> a :* r)) $
-    combine (fmap (fmap I) $ (argumentsParser modifiers (Just fieldName))) (fieldsParser modifiers rest)
+fieldsParser :: All HasArguments xs =>
+  Modifiers -> NP FieldInfo xs -> Result (Parser Unnormalized (NP I xs))
+fieldsParser modifiers = \ case
+  Nil -> return $ emptyParser Nil
+  FieldInfo fieldName :* rest ->
+    fmap (fmap (\ (a, r) -> a :* r)) $
+      combine (fmap (fmap I) $ (argumentsParser modifiers (Just fieldName))) (fieldsParser modifiers rest)
 
 noSelectorsParser :: All HasArguments xs =>
   Modifiers -> Shape xs -> Result (Parser Unnormalized (NP I xs))
