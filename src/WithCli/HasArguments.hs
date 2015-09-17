@@ -298,8 +298,8 @@ genericParser modifiers = fmap (fmap to) $ case datatypeInfo (Proxy :: Proxy a) 
     err typeName "empty data types"
   ADT _ typeName (_ :* _ :* _) ->
     err typeName "sum types"
-  Newtype _ _ (Record _ _fields) ->
-    (error "fixme") -- mapSingleNS $ h fields
+  Newtype _ _ (Record _ fields) ->
+    fmap (fmap (SOP . Z)) (fieldsParser modifiers fields)
   Newtype _ typeName (Constructor _) ->
     err typeName "constructors without field labels"
   where
