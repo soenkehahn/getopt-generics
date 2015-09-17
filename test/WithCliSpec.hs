@@ -37,3 +37,9 @@ spec = do
             main n = putStrLn ("error: " ++ show n)
         output <- hCapture_ [stderr] (withArgs (words "12 foo") (withCli main) `shouldThrow` (== ExitFailure 1))
         output `shouldBe` "unknown argument: foo\n"
+
+      it "handle Maybes as positional arguments with a proper error message" $ do
+        let main :: Maybe Int -> IO ()
+            main = error "main"
+        output <- hCapture_ [stderr] (withCli main `shouldThrow` (== ExitFailure 1))
+        output `shouldBe` "cannot use Maybes for positional arguments\n"

@@ -231,11 +231,13 @@ positionalArgumentsParser selector = Parser {
           Nothing -> parseError (argumentType (Proxy :: Proxy a)) Nothing arg
       return (foldl' (.) id mods, [])
 
+-- fixme: grep for error
+
 maybeParser :: forall a . Argument a =>
   Maybe String -> Result (Parser Unnormalized (Maybe a))
-maybeParser mLong = return $ case mLong of
-  Nothing -> (error "fixme")
-  Just long -> Parser {
+maybeParser mLong = case mLong of
+  Nothing -> Errors ["cannot use Maybes for positional arguments"]
+  Just long -> return $ Parser {
     parserDefault = Nothing,
     parserOptions = pure $
       Option [] [long]
