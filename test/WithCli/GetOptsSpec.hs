@@ -21,7 +21,7 @@ spec = do
             parserDefault = Nothing,
             parserOptions = [],
             parserNonOptions =
-              ("type", \ (s : r) -> (, r) <$> Success (const $ Just $ read s)) :
+              (NonOptionsParser "type" (\ (s : r) -> (, r) <$> Success (const $ Just $ read s))) :
               [],
             parserConvert = \ (Just x) -> return x
           }

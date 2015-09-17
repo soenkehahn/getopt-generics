@@ -152,7 +152,7 @@ instance Argument a => HasArguments (Maybe a) where
 instance Argument a => HasArguments [a] where
   argumentsParser modifiers (Just field) =
     if isPositionalArgumentsField modifiers field
-      then return $ positionalArgumentsParser field
+      then return positionalArgumentsParser
       else listParser (Just field)
   argumentsParser _ Nothing =
     listParser Nothing
@@ -177,7 +177,7 @@ atomicArgumentParser =
       parserDefault = Nothing,
       parserOptions = [],
       parserNonOptions =
-        [(typ, \ (s : r) -> fmap ((, r) . const . Just) $ parseArgumentResult Nothing s)],
+        [NonOptionsParser typ (\ (s : r) -> fmap ((, r) . const . Just) $ parseArgumentResult Nothing s)],
       parserConvert = \ case
         Just a -> return a
         Nothing -> Errors $ pure $
@@ -201,7 +201,7 @@ atomicArgumentParser =
 listParser :: forall a . Argument a =>
   Maybe String -> Result (Parser Unnormalized [a])
 listParser mLong = return $ case mLong of
-  Nothing -> positionalArgumentsParser "fixme"
+  Nothing -> positionalArgumentsParser
   Just long -> Parser {
     parserDefault = [],
     parserOptions = pure $
@@ -215,11 +215,11 @@ listParser mLong = return $ case mLong of
   }
 
 positionalArgumentsParser :: forall a . Argument a =>
-  String -> Parser Unnormalized [a]
-positionalArgumentsParser selector = Parser {
+  Parser Unnormalized [a]
+positionalArgumentsParser = Parser {
   parserDefault = [],
   parserOptions = [],
-  parserNonOptions = [(selector, parse)],
+  parserNonOptions = [NonOptionsParser (argumentType (Proxy :: Proxy a)) parse],
   parserConvert = return
 }
   where
@@ -255,7 +255,7 @@ boolParser mLong = return $ case mLong of
     parserDefault = Nothing,
     parserOptions = [],
     parserNonOptions = pure $
-      ("BOOL", \ (s : r) -> (, r) <$> maybe (parseError "BOOL" Nothing s) (return . const . Just) (parseBool s)),
+      (NonOptionsParser "BOOL" (\ (s : r) -> (, r) <$> maybe (parseError "BOOL" Nothing s) (return . const . Just) (parseBool s))),
     parserConvert = \ case
       Just x -> return x
       Nothing -> Errors $ pure $

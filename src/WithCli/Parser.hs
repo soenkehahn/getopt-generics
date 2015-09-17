@@ -22,38 +22,27 @@ import           WithCli.Flag
 import           WithCli.Normalize
 import           WithCli.Result
 
-runParser :: String -> Modifiers -> Parser Normalized a -> [String] -> Result a
-runParser progName modifiers Parser{..} args = do
-  let versionOptions = maybe []
-        (\ v -> pure $ versionOption (progName ++ " version " ++ v))
-        (getVersion modifiers)
-      options = map (fmap NoHelp) parserOptions ++ [helpOption] ++ versionOptions
-      (flags, nonOptions, errs) =
-        Base.getOpt Base.Permute options args
-  case foldFlags flags of
-    Help -> OutputAndExit $
-      let fields = case getPositionalArgumentType modifiers of
-            Nothing -> map fst parserNonOptions
-            Just typ -> ["[" ++ typ ++ "]"]
-      in usage progName fields (map void options)
-    Version msg -> OutputAndExit msg
-    NoHelp innerFlags ->
-      reportErrors errs *>
-      (fillInOptions innerFlags parserDefault >>=
-       fillInNonOptions (map snd parserNonOptions) nonOptions >>=
-       parserConvert)
+data NonOptionsParser uninitialized =
+  NonOptionsParser {
+    nonOptionsType :: String,
+    nonOptionsParser :: [String] -> Result (uninitialized -> uninitialized, [String])
+  }
+
+combineNonOptionsParser :: [NonOptionsParser u] -> [NonOptionsParser v]
+  -> [NonOptionsParser (u, v)]
+combineNonOptionsParser a b =
+  map (modMod first) a ++
+  map (modMod second) b
   where
-    reportErrors :: [String] -> Result ()
-    reportErrors = \ case
-      [] -> return ()
-      errs -> Errors errs
+    modMod :: ((a -> a) -> (b -> b)) -> NonOptionsParser a -> NonOptionsParser b
+    modMod f (NonOptionsParser field parser) =
+      NonOptionsParser field (fmap (fmap (first f)) parser)
 
 data Parser phase a where
   Parser :: {
     parserDefault :: uninitialized,
     parserOptions :: [OptDescr (Result (uninitialized -> uninitialized))],
-    -- fixme: better data type
-    parserNonOptions :: [(String, [String] -> Result (uninitialized -> uninitialized, [String]))],
+    parserNonOptions :: [NonOptionsParser uninitialized],
     parserConvert :: uninitialized -> Result a
   } -> Parser phase a
 
@@ -97,9 +86,7 @@ combine a b = inner <$> a <*> b
         parserDefault = (defaultA, defaultB),
         parserOptions =
           map (fmap (fmap first)) optionsA ++ map (fmap (fmap second)) optionsB,
-        parserNonOptions =
-          map (fmap (fmap (fmap (first first)))) nonOptionsA ++
-          map (fmap (fmap (fmap (first second)))) nonOptionsB,
+        parserNonOptions = combineNonOptionsParser nonOptionsA nonOptionsB,
         parserConvert =
           \ (u, v) -> (,) <$> (convertA u) <*> (convertB v)
       }
@@ -120,3 +107,29 @@ fillInNonOptions [] [] u =
 fillInNonOptions [] nonOptions _ =
   Errors (map ("unknown argument: " ++) nonOptions)
 fillInNonOptions _ [] u = return u
+
+runParser :: String -> Modifiers -> Parser Normalized a -> [String] -> Result a
+runParser progName modifiers Parser{..} args = do
+  let versionOptions = maybe []
+        (\ v -> pure $ versionOption (progName ++ " version " ++ v))
+        (getVersion modifiers)
+      options = map (fmap NoHelp) parserOptions ++ [helpOption] ++ versionOptions
+      (flags, nonOptions, errs) =
+        Base.getOpt Base.Permute options args
+  case foldFlags flags of
+    Help -> OutputAndExit $
+      let fields = case getPositionalArgumentType modifiers of
+            Nothing -> map nonOptionsType parserNonOptions
+            Just typ -> ["[" ++ typ ++ "]"]
+      in usage progName fields (map void options)
+    Version msg -> OutputAndExit msg
+    NoHelp innerFlags ->
+      reportErrors errs *>
+      (fillInOptions innerFlags parserDefault >>=
+       fillInNonOptions (map nonOptionsParser parserNonOptions) nonOptions >>=
+       parserConvert)
+  where
+    reportErrors :: [String] -> Result ()
+    reportErrors = \ case
+      [] -> return ()
+      errs -> Errors errs
