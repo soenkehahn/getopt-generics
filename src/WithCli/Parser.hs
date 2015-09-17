@@ -97,10 +97,8 @@ normalizeParser (Parser d options nonOptions convert) =
   Parser d (map (mapLongOptions normalize) options) nonOptions convert
   where
     mapLongOptions :: (String -> String) -> OptDescr a -> OptDescr a
-    mapLongOptions f descr = case descr of
-      -- fixme: no case
-      Option shorts longs argDescr help ->
-        Option shorts (map f longs) argDescr help
+    mapLongOptions f (Option shorts longs argDescr help) =
+      Option shorts (map f longs) argDescr help
 
 modParserOptions :: (forall x . [OptDescr (Result x)] -> [OptDescr (Result x)])
   -> Parser Unnormalized a -> Parser Unnormalized a

@@ -16,8 +16,6 @@ import           Data.List.Compat
 import           System.Exit
 import           System.IO
 
--- fixme: hide non-smart constructors
-
 -- | Type to wrap results from the pure parsing functions.
 data Result a
   = Success a

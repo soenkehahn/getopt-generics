@@ -165,35 +165,38 @@ atomicArgumentParser :: forall a . Argument a =>
   Modifiers ->
   Maybe String -> Result (Parser Unnormalized a)
 atomicArgumentParser =
-  -- fixme: code layout
-  wrapForPositionalArguments (argumentType (Proxy :: Proxy a)) $
-  \ modifiers mLong ->
-  return $ case mLong of
-  Nothing -> Parser {
-    parserDefault = Nothing,
-    parserOptions = [],
-    parserNonOptions =
-      [(typ, \ (s : r) -> fmap ((, r) . const . Just) $ parseArgumentResult Nothing s)],
-    parserConvert = \ case
-      Just a -> return a
-      Nothing -> Errors $ pure $
-        "missing argument of type " ++ typ
-  }
-  Just long -> Parser {
-    parserDefault = Left (),
-    parserOptions = pure $
-      Option [] [long]
-        (fmap (fmap (const . Right)) $
-          ReqArg (parseArgumentResult Nothing) typ)
-        "",
-    parserNonOptions = [],
-    parserConvert = \ case
-      Right a -> return a
-      Left () -> Errors $ pure $
-        "missing option: --" ++ normalize (applyModifiersLong modifiers long) ++ "=" ++ typ
-  }
+  wrapForPositionalArguments typ inner
   where
     typ = argumentType (Proxy :: Proxy a)
+
+    inner modifiers mLong = return $ case mLong of
+      Nothing -> withoutLongOption
+      Just long -> withLongOption modifiers long
+
+    withoutLongOption = Parser {
+      parserDefault = Nothing,
+      parserOptions = [],
+      parserNonOptions =
+        [(typ, \ (s : r) -> fmap ((, r) . const . Just) $ parseArgumentResult Nothing s)],
+      parserConvert = \ case
+        Just a -> return a
+        Nothing -> Errors $ pure $
+          "missing argument of type " ++ typ
+    }
+
+    withLongOption modifiers long = Parser {
+      parserDefault = Left (),
+      parserOptions = pure $
+        Option [] [long]
+          (fmap (fmap (const . Right)) $
+            ReqArg (parseArgumentResult Nothing) typ)
+          "",
+      parserNonOptions = [],
+      parserConvert = \ case
+        Right a -> return a
+        Left () -> Errors $ pure $
+          "missing option: --" ++ normalize (applyModifiersLong modifiers long) ++ "=" ++ typ
+    }
 
 listParser :: forall a . Argument a =>
   Maybe String -> Result (Parser Unnormalized [a])
