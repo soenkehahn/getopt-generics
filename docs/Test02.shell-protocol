@@ -1,11 +1,11 @@
 $ program --port 8080 --config some/path
-Options {port = 8080, daemonize = False, config = Just "some/path"}
+Options {port = 8080, daemonize = False, config = Just "some/path", args = []}
 $ program --port 8080 --config some/path --foo true
 unrecognized option `--foo'
 unknown argument: true
 # exit-code 1
 $ program  --port 8080 --daemonize --config some
-Options {port = 8080, daemonize = True, config = Just "some"}
+Options {port = 8080, daemonize = True, config = Just "some", args = []}
 $ program --port foo
 cannot parse as INTEGER: foo
 # exit-code 1
@@ -17,4 +17,5 @@ program [OPTIONS]
       --port=INTEGER
       --daemonize
       --config=STRING (optional)
-  -h  --help                      show help and exit
+      --args=STRING (multiple possible)
+  -h  --help                             show help and exit

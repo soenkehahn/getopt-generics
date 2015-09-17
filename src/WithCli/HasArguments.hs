@@ -151,11 +151,11 @@ instance Argument a => HasArguments (Maybe a) where
 
 instance Argument a => HasArguments [a] where
   argumentsParser modifiers (Just field) =
-    if isPositionalArgumentsField modifiers field
-      then return positionalArgumentsParser
+    return $ if isPositionalArgumentsField modifiers field
+      then positionalArgumentsParser
       else listParser (Just field)
   argumentsParser _ Nothing =
-    listParser Nothing
+    return $ listParser Nothing
 
 -- fixme: warnings
 
@@ -199,8 +199,8 @@ atomicArgumentParser =
     }
 
 listParser :: forall a . Argument a =>
-  Maybe String -> Result (Parser Unnormalized [a])
-listParser mLong = return $ case mLong of
+  Maybe String -> Parser Unnormalized [a]
+listParser mLong = case mLong of
   Nothing -> positionalArgumentsParser
   Just long -> Parser {
     parserDefault = [],
@@ -208,7 +208,7 @@ listParser mLong = return $ case mLong of
       Option [] [long]
         (ReqArg
           (\ s -> fmap (\ a -> (++ [a])) (parseArgumentResult (Just "multiple possible") s))
-          (argumentType (Proxy :: Proxy a) ++ (error "fixme") "<multiple> fixme"))
+          (argumentType (Proxy :: Proxy a) ++ " (multiple possible)"))
         "",
     parserNonOptions = [],
     parserConvert = return
