@@ -10,6 +10,7 @@
 
 module WithCli.Parser where
 
+import           Data.Orphans ()
 import           Prelude ()
 import           Prelude.Compat
 
