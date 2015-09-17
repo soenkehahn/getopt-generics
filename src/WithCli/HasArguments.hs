@@ -138,6 +138,10 @@ instance HasArguments Float where
 instance HasArguments Double where
   argumentsParser = atomicArgumentParser
 
+instance (HasArguments a, HasArguments b) => HasArguments (a, b)
+
+instance (HasArguments a, HasArguments b, HasArguments c) => HasArguments (a, b, c)
+
 wrapForPositionalArguments :: String -> (Modifiers -> Maybe String -> Result a) -> (Modifiers -> Maybe String -> Result a)
 wrapForPositionalArguments typ wrapped modifiers (Just field) =
   if isPositionalArgumentsField modifiers field

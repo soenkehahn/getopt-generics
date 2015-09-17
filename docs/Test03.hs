@@ -33,5 +33,3 @@ data B
 instance Generic B
 instance HasDatatypeInfo B
 instance HasArguments B
-
-instance HasArguments (A, B)
