@@ -20,5 +20,7 @@ instance HasDatatypeInfo Options
 instance HasArguments Options
 
 main :: IO ()
-main = withCli $ \ options -> do
-  print (options :: Options)
+main = withCli run
+
+run :: Options -> IO ()
+run = print

@@ -18,7 +18,7 @@ instance HasDatatypeInfo Options
 instance HasArguments Options
 
 main :: IO ()
-main = withCli $ \ options -> do
-  print (options :: Options)
+main = withCli run
 
-  -- todo: use myMain functions in docs?
+run :: Options -> IO ()
+run = print

@@ -8,7 +8,10 @@ import qualified GHC.Generics
 import           WithCli
 
 main :: IO ()
-main = withCli $ \ options -> do
+main = withCli run
+
+run :: (A, B) -> IO ()
+run options = do
   print (options :: (A, B))
 
 data A

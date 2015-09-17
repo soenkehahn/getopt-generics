@@ -3,7 +3,7 @@ module Simple where
 import WithCli
 
 main :: IO ()
-main = withCli myMain
+main = withCli run
 
-myMain :: String -> Int -> Bool -> IO ()
-myMain s i b = print (s, i, b)
+run :: String -> Int -> Bool -> IO ()
+run s i b = print (s, i, b)

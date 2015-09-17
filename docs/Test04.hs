@@ -7,8 +7,11 @@ import qualified GHC.Generics
 import           WithCli
 
 main :: IO ()
-main = withCli $ \ a b -> do
-  print ((a, b) :: (A, B))
+main = withCli run
+
+run :: A -> B -> IO ()
+run a b = do
+  print (a, b)
 
 data A
   = A {

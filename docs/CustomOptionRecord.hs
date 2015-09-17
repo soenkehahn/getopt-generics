@@ -29,5 +29,7 @@ instance HasArguments File where
   argumentsParser = atomicArgumentParser
 
 main :: IO ()
-main = withCli $ \ file -> do
-  print (file :: Options)
+main = withCli run
+
+run :: Options -> IO ()
+run = print
