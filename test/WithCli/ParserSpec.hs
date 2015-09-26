@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
-module WithCli.GetOptsSpec where
+module WithCli.ParserSpec where
 
 import           Prelude ()
 import           Prelude.Compat

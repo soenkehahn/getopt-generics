@@ -68,6 +68,10 @@ part1 = do
       parse "--bool --baz foo" `shouldBe`
         Success (Foo Nothing "foo" True)
 
+    it "allows to overwrite String options" $ do
+      parse "--baz one --baz two"
+        `shouldBe` Success (Foo Nothing "two" False)
+
     context "with invalid arguments" $ do
       it "prints out an error" $ do
         let Errors messages = parse "--no-such-option" :: Result Foo
@@ -120,11 +124,6 @@ part1 = do
       it "outputs a header including \"[OPTIONS]\"" $ do
         let OutputAndExit output = parse "--help" :: Result Foo
         output `shouldSatisfy` ("prog-name [OPTIONS]\n" `isPrefixOf`)
-
-  describe "parseArguments" $ do
-    it "allows to overwrite String options" $ do
-      parse "--baz one --baz two"
-        `shouldBe` Success (Foo Nothing "two" False)
 
 data ListOptions
   = ListOptions {
@@ -223,8 +222,6 @@ part5 = do
       it "allows to use tuples" $ do
         (parse "42 bar" :: Result (Int, String))
           `shouldBe` Success (42, "bar")
-
--- fixme: put tests in correct modules
 
   describe "parseBool" $ do
     forM_ ["true", "True", "tRue", "TRUE", "yes", "yEs", "on", "oN"] $ \ true ->

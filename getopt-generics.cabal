@@ -103,8 +103,8 @@ test-suite spec
       System.Console.GetOpt.Generics.ModifierSpec
       System.Console.GetOpt.GenericsSpec
       Util
-      WithCli.GetOptsSpec
       WithCli.NormalizeSpec
+      WithCli.ParserSpec
       WithCli.ResultSpec
       WithCliSpec
       CustomOption
