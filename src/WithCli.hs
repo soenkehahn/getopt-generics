@@ -9,7 +9,7 @@ module WithCli (
   withCli,
   WithCli(),
   HasArguments(argumentsParser),
-  atomicArgumentParser,
+  atomicArgumentsParser,
   Argument(argumentType, parseArgument),
   -- * Modifiers
   withCliModified,

@@ -41,7 +41,7 @@ import           Text.Read
 -- >    parseArgument f = Just (File f)
 -- >
 -- >  instance HasArguments File where
--- >    argumentsParser = atomicArgumentParser
+-- >    argumentsParser = atomicArgumentsParser
 -- >
 -- >  main :: IO ()
 -- >  main = withCli run

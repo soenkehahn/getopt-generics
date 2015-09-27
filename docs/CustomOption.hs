@@ -12,7 +12,7 @@ instance Argument File where
   parseArgument f = Just (File f)
 
 instance HasArguments File where
-  argumentsParser = atomicArgumentParser
+  argumentsParser = atomicArgumentsParser
 
 main :: IO ()
 main = withCli run

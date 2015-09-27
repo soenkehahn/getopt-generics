@@ -26,7 +26,7 @@ instance Generic Options
 instance HasDatatypeInfo Options
 instance HasArguments Options
 instance HasArguments File where
-  argumentsParser = atomicArgumentParser
+  argumentsParser = atomicArgumentsParser
 
 main :: IO ()
 main = withCli run

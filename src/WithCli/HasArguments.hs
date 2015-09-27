@@ -124,19 +124,19 @@ class HasArguments a where
 -- todo: better names for HasArguments and Option
 
 instance HasArguments Int where
-  argumentsParser = atomicArgumentParser
+  argumentsParser = atomicArgumentsParser
 
 instance HasArguments Bool where
   argumentsParser = wrapForPositionalArguments "Bool" (const boolParser)
 
 instance HasArguments String where
-  argumentsParser = atomicArgumentParser
+  argumentsParser = atomicArgumentsParser
 
 instance HasArguments Float where
-  argumentsParser = atomicArgumentParser
+  argumentsParser = atomicArgumentsParser
 
 instance HasArguments Double where
-  argumentsParser = atomicArgumentParser
+  argumentsParser = atomicArgumentsParser
 
 instance (HasArguments a, HasArguments b) => HasArguments (a, b)
 
@@ -163,10 +163,10 @@ instance Argument a => HasArguments [a] where
 
 -- | Useful for implementing your own instances of 'HasArguments' on top
 --   of a custom 'Argument' instance.
-atomicArgumentParser :: forall a . Argument a =>
+atomicArgumentsParser :: forall a . Argument a =>
   Modifiers ->
   Maybe String -> Result (Parser Unnormalized a)
-atomicArgumentParser =
+atomicArgumentsParser =
   wrapForPositionalArguments typ inner
   where
     typ = argumentType (Proxy :: Proxy a)
