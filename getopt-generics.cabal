@@ -36,6 +36,7 @@ extra-source-files:
     docs/Test03.shell-protocol
     docs/Test04.hs
     docs/Test04.shell-protocol
+    README.md
 
 source-repository head
   type: git

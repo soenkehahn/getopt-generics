@@ -9,11 +9,9 @@ This library is experimental.
 `getopt-generics` tries to make it very simple to create command line
 interfaces. Here's an example:
 
-<!--- ### Start "docs/Simple.hs" "" (MarkDown Haskell) ### -->
+<!--- ### Start "docs/Simple.hs" "module Simple where\n\n" (MarkDown Haskell) ### -->
 
 ``` haskell
-module Simple where
-
 import WithCli
 
 main :: IO ()
