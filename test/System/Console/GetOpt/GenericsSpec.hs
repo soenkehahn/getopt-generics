@@ -11,16 +11,13 @@ import           Prelude.Compat
 import           Control.Exception
 import           Data.Foldable (forM_)
 import           Data.List (isPrefixOf, isSuffixOf)
-import           Data.Proxy
 import qualified GHC.Generics as GHC
 import           System.Environment
 import           System.Exit
 import           System.IO
 import           System.IO.Silently
 import           Test.Hspec
-import           Test.QuickCheck hiding (Result(..))
 
-import           WithCli.HasArguments
 import           WithCli.Result
 import           System.Console.GetOpt.Generics
 import           Util
@@ -222,42 +219,3 @@ part5 = do
       it "allows to use tuples" $ do
         (parse "42 bar" :: Result (Int, String))
           `shouldBe` Success (42, "bar")
-
-  describe "parseBool" $ do
-    forM_ ["true", "True", "tRue", "TRUE", "yes", "yEs", "on", "oN"] $ \ true ->
-      it ("parses '" ++ true ++ "' as True") $ do
-        parseBool true `shouldBe` Just True
-
-    forM_ ["false", "False", "falSE", "FALSE", "no", "nO", "off", "ofF"] $ \ false ->
-      it ("parses '" ++ false ++ "' as False") $ do
-        parseBool false `shouldBe` Just False
-
-    it "parses every positive integer as true" $ do
-      property $ \ (n :: Int) ->
-        n > 0 ==>
-        parseBool (show n) `shouldBe` Just True
-
-    it "parses every non-positive integer as false" $ do
-      property $ \ (n :: Int) ->
-        n <= 0 ==>
-        parseBool (show n) `shouldBe` Just False
-
-    it "doesn't parse 'foo'" $ do
-      parseBool "foo" `shouldBe` (Nothing :: Maybe Bool)
-
-  describe "Option.Double" $ do
-    it "parses doubles" $ do
-      parseArgument "1.2" `shouldBe` Just (1.2 :: Double)
-
-    it "renders as NUMBER in help and error output" $ do
-      argumentType (Proxy :: Proxy Double) `shouldBe` "NUMBER"
-
-    it "parses doubles that start with a dot" $ do
-      parseArgument ".4" `shouldBe` Just (0.4 :: Double)
-
-  describe "Option.Float" $ do
-    it "parses floats" $ do
-      parseArgument "1.2" `shouldBe` Just (1.2 :: Float)
-
-    it "renders as NUMBER in help and error output" $ do
-      argumentType (Proxy :: Proxy Float) `shouldBe` "NUMBER"
