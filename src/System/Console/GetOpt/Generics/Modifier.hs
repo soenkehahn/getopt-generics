@@ -135,6 +135,3 @@ addShort short (Option shorts longs argDescrs help) =
 modLongs :: (String -> String) -> OptDescr a -> OptDescr a
 modLongs f (Option shorts longs descrs help) =
   Option shorts (map f longs) descrs help
-
--- fixme: tests for conflicting flags
--- todo: test for overlapping modifiers

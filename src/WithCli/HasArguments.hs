@@ -120,9 +120,6 @@ class HasArguments a where
 
 -- * atomic HasArguments
 
--- todo: better instance derivation for HasArguments
--- todo: better names for HasArguments and Option
-
 instance HasArguments Int where
   argumentsParser = atomicArgumentsParser
 
@@ -149,7 +146,6 @@ wrapForPositionalArguments typ wrapped modifiers (Just field) =
     else wrapped modifiers (Just field)
 wrapForPositionalArguments _ wrapped modifiers Nothing = wrapped modifiers Nothing
 
--- | todo
 instance Argument a => HasArguments (Maybe a) where
   argumentsParser _ = maybeParser
 

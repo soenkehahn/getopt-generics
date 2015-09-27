@@ -18,9 +18,9 @@ import           System.IO
 import           System.IO.Silently
 import           Test.Hspec
 
-import           WithCli.Result
 import           System.Console.GetOpt.Generics
 import           Util
+import           WithCli.Result
 
 spec :: Spec
 spec = do

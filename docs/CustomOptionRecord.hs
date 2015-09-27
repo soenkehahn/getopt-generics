@@ -20,8 +20,6 @@ data Options
   }
   deriving (Show, GHC.Generics.Generic)
 
--- fixme: less needed?
-
 instance Generic Options
 instance HasDatatypeInfo Options
 instance HasArguments Options

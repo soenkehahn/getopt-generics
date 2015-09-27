@@ -94,9 +94,3 @@ readFloat s = case readMaybe s of
   Nothing
     | "." `isPrefixOf` s -> readMaybe ("0" ++ s)
     | otherwise -> Nothing
-
--- todo: clean up old modules
-
--- todo: figure out modifiers
-
--- todo: clean up old modules 2
