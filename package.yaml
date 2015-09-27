@@ -11,7 +11,6 @@ maintainer: "linh.nguyen@zalora.com, soenke.hahn@zalora.com"
 ghc-options: -Wall -fno-warn-name-shadowing
 
 extra-source-files:
-  - README.md
   - docs/*
 
 dependencies:
