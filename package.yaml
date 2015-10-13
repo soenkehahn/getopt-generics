@@ -43,4 +43,4 @@ tests:
       - filepath
       - safe
 
-github: zalora/getopt-generics
+github: soenkehahn/getopt-generics
