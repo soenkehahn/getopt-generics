@@ -10,7 +10,7 @@ category:       Console, System
 homepage:       https://github.com/zalora/getopt-generics#readme
 bug-reports:    https://github.com/zalora/getopt-generics/issues
 author:         Linh Nguyen, Sönke Hahn
-maintainer:     linh.nguyen@zalora.com, soenke.hahn@zalora.com
+maintainer:     linh.nguyen@zalora.com, soenkehahn@gmail.com
 copyright:      Zalora South East Asia Pte Ltd
 license:        BSD3
 license-file:   LICENSE

@@ -6,7 +6,7 @@ description: Create command line interfaces with ease
 license: "BSD3"
 author: "Linh Nguyen, Sönke Hahn"
 copyright: "Zalora South East Asia Pte Ltd"
-maintainer: "linh.nguyen@zalora.com, soenke.hahn@zalora.com"
+maintainer: "linh.nguyen@zalora.com, soenkehahn@gmail.com"
 
 ghc-options: -Wall -fno-warn-name-shadowing
 
