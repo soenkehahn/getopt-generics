@@ -49,7 +49,7 @@ library
       base == 4.*
     , base-compat >= 0.8
     , base-orphans
-    , generics-sop
+    , generics-sop >= 0.1 && < 0.3
     , tagged
   exposed-modules:
       WithCli
