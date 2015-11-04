@@ -1,6 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeFamilies #-}
 
 module CustomOptionRecord where
 
@@ -17,9 +17,8 @@ data Options
   = Options {
     file :: File
   }
-  deriving (Show, Generic)
+  deriving (Show, Generic, HasArguments)
 
-instance HasArguments Options
 instance HasArguments File where
   argumentsParser = atomicArgumentsParser
 

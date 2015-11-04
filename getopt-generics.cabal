@@ -95,7 +95,7 @@ test-suite spec
       WithCli.Normalize
       WithCli.Parser
       WithCli.Result
-      ExamplesSpec
+      DocsSpec
       ModifiersSpec
       ModifiersSpec.RenameOptionsSpec
       ModifiersSpec.UseForPositionalArgumentsSpec

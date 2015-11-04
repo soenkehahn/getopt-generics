@@ -1,5 +1,6 @@
+{-# LANGUAGE CPP #-}
 
-module ExamplesSpec where
+module DocsSpec where
 
 import           Prelude ()
 import           Prelude.Compat
@@ -10,29 +11,31 @@ import           Test.Hspec
 
 import           ShellProtocol
 
+import qualified Test01
 import qualified CustomOption
-import qualified CustomOptionRecord
 import qualified RecordType
 import qualified Simple
-import qualified SimpleRecord
-import qualified Test01
+#if MIN_VERSION_base(4,8,0)
 import qualified Test02
 import qualified Test03
 import qualified Test04
+import qualified SimpleRecord
+import qualified CustomOptionRecord
+#endif
 
 examples :: [(IO (), String)]
 examples =
   (Test01.main, "Test01") :
+  (CustomOption.main, "CustomOption") :
+  (RecordType.main, "RecordType") :
+  (Simple.main, "Simple") :
+#if MIN_VERSION_base(4,8,0)
   (Test02.main, "Test02") :
   (Test03.main, "Test03") :
   (Test04.main, "Test04") :
-
-  (Simple.main, "Simple") :
   (SimpleRecord.main, "SimpleRecord") :
-  (RecordType.main, "RecordType") :
-  (SimpleRecord.main, "SimpleRecord") :
-  (CustomOption.main, "CustomOption") :
   (CustomOptionRecord.main, "CustomOptionRecord") :
+#endif
   []
 
 main :: IO ()

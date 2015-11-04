@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeFamilies #-}
 
@@ -12,9 +13,7 @@ data Options
     config :: Maybe FilePath,
     args :: [String]
   }
-  deriving (Show, Generic)
-
-instance HasArguments Options
+  deriving (Show, Generic, HasArguments)
 
 main :: IO ()
 main = withCli run

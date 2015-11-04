@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module SimpleRecord where
@@ -10,9 +11,7 @@ data Options
     daemonize :: Bool,
     config :: Maybe FilePath
   }
-  deriving (Show, Generic)
-
-instance HasArguments Options
+  deriving (Show, Generic, HasArguments)
 
 main :: IO ()
 main = withCli run

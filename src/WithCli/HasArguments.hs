@@ -1,5 +1,4 @@
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFunctor #-}
@@ -63,6 +62,7 @@ parseError typ mMsg s = Errors $ pure $
 -- ### Start "docs/SimpleRecord.hs" "module SimpleRecord where\n\n" Haddock ###
 
 -- |
+-- >  {-# LANGUAGE DeriveAnyClass #-}
 -- >  {-# LANGUAGE DeriveGeneric #-}
 -- >
 -- >  import           System.Console.GetOpt.Generics
@@ -73,9 +73,7 @@ parseError typ mMsg s = Errors $ pure $
 -- >      daemonize :: Bool,
 -- >      config :: Maybe FilePath
 -- >    }
--- >    deriving (Show, Generic)
--- >
--- >  instance HasArguments Options
+-- >    deriving (Show, Generic, HasArguments)
 -- >
 -- >  main :: IO ()
 -- >  main = withCli run

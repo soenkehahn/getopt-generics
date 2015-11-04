@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module Test04 where
@@ -16,14 +16,10 @@ data A
   = A {
     aa :: String
   }
-  deriving (Show, Generic)
-
-instance HasArguments A
+  deriving (Show, Generic, HasArguments)
 
 data B
   = B {
     bb :: String
   }
-  deriving (Show, Generic)
-
-instance HasArguments B
+  deriving (Show, Generic, HasArguments)
