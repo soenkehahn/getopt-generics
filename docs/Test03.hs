@@ -20,8 +20,6 @@ data A
   }
   deriving (Show, GHC.Generics.Generic)
 
-instance Generic A
-instance HasDatatypeInfo A
 instance HasArguments A
 
 data B
@@ -30,6 +28,4 @@ data B
   }
   deriving (Show, GHC.Generics.Generic)
 
-instance Generic B
-instance HasDatatypeInfo B
 instance HasArguments B

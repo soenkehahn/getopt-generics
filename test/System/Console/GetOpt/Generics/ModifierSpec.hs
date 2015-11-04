@@ -27,15 +27,9 @@ data Foo
   }
   deriving (GHC.Generics.Generic)
 
-instance Generic Foo
-instance HasDatatypeInfo Foo
-
 data Overlap
   = Overlap {
     foo :: String,
     fooo :: String
   }
   deriving (GHC.Generics.Generic)
-
-instance Generic Overlap
-instance HasDatatypeInfo Overlap

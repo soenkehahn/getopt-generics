@@ -18,9 +18,6 @@ data WithPositionalArguments
   }
   deriving (GHC.Generic, Show, Eq)
 
-instance Generic WithPositionalArguments
-instance HasDatatypeInfo WithPositionalArguments
-
 data WithMultiplePositionalArguments
   = WithMultiplePositionalArguments {
     positionalArgumentsA :: [String],
@@ -28,9 +25,6 @@ data WithMultiplePositionalArguments
     someOtherFlag :: Bool
   }
   deriving (GHC.Generic, Show, Eq)
-
-instance Generic WithMultiplePositionalArguments
-instance HasDatatypeInfo WithMultiplePositionalArguments
 
 spec :: Spec
 spec = do

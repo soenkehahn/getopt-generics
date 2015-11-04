@@ -1,16 +1,20 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Util where
+
+import qualified GHC.Generics as GHC
+import           Generics.SOP.GGP
 
 import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
 
-parse :: (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+parse :: (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
   String -> Result a
 parse = modsParse []
 
-modsParse :: (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+modsParse :: (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
   [Modifier] -> String -> Result a
 modsParse modifiers = parseArguments "prog-name" modifiers . words
 

@@ -17,9 +17,6 @@ data Foo
   }
   deriving (Eq, Show, GHC.Generics.Generic)
 
-instance Generic Foo
-instance HasDatatypeInfo Foo
-
 data CommonPrefixes
   = CP {
     prefixFoo :: Int,
@@ -27,9 +24,6 @@ data CommonPrefixes
     notPrefixBaz :: Int
   }
   deriving (Eq, Show, GHC.Generics.Generic)
-
-instance Generic CommonPrefixes
-instance HasDatatypeInfo CommonPrefixes
 
 spec :: Spec
 spec = do

@@ -15,9 +15,6 @@ data Options
   }
   deriving (Show, GHC.Generics.Generic)
 
-instance Generic Options
-instance HasDatatypeInfo Options
-
 -- Then you can use `getArguments` to create a command-line argument parser:
 
 main :: IO ()

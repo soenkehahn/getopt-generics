@@ -38,16 +38,10 @@ data Foo
   }
   deriving (GHC.Generic, Show, Eq)
 
-instance Generic Foo
-instance HasDatatypeInfo Foo
-
 data NotAllowed
   = NotAllowed1
   | NotAllowed2
   deriving (GHC.Generic, Show, Eq)
-
-instance Generic NotAllowed
-instance HasDatatypeInfo NotAllowed
 
 part1 :: Spec
 part1 = do
@@ -128,9 +122,6 @@ data ListOptions
   }
   deriving (GHC.Generic, Show, Eq)
 
-instance Generic ListOptions
-instance HasDatatypeInfo ListOptions
-
 part2 :: Spec
 part2 = do
   describe "parseArguments" $ do
@@ -148,9 +139,6 @@ data CamelCaseOptions
     camelCase :: String
   }
   deriving (GHC.Generic, Show, Eq)
-
-instance Generic CamelCaseOptions
-instance HasDatatypeInfo CamelCaseOptions
 
 part3 :: Spec
 part3 = do
@@ -176,9 +164,6 @@ data WithUnderscore
   }
   deriving (GHC.Generic, Show, Eq)
 
-instance Generic WithUnderscore
-instance HasDatatypeInfo WithUnderscore
-
 part4 :: Spec
 part4 = do
   describe "parseArguments" $ do
@@ -189,9 +174,6 @@ part4 = do
 data WithoutSelectors
   = WithoutSelectors String Bool Int
   deriving (Eq, Show, GHC.Generic)
-
-instance Generic WithoutSelectors
-instance HasDatatypeInfo WithoutSelectors
 
 part5 :: Spec
 part5 = do

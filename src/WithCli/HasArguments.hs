@@ -31,14 +31,16 @@ import           Data.Char
 import           Data.List.Compat
 import           Data.Proxy
 import           Data.Traversable
+import qualified GHC.Generics as GHC
 import           Generics.SOP as SOP
+import           Generics.SOP.GGP as SOP
 import           System.Console.GetOpt
 import           Text.Read
 
 import           System.Console.GetOpt.Generics.Modifier
-import           WithCli.Parser
-import           WithCli.Normalize
 import           WithCli.Argument
+import           WithCli.Normalize
+import           WithCli.Parser
 import           WithCli.Result
 
 parseArgumentResult :: forall a . Argument a => Maybe String -> String -> Result a
@@ -74,8 +76,6 @@ parseError typ mMsg s = Errors $ pure $
 -- >    }
 -- >    deriving (Show, GHC.Generics.Generic)
 -- >
--- >  instance Generic Options
--- >  instance HasDatatypeInfo Options
 -- >  instance HasArguments Options
 -- >
 -- >  main :: IO ()
@@ -113,7 +113,7 @@ parseError typ mMsg s = Errors $ pure $
 class HasArguments a where
   argumentsParser :: Modifiers -> Maybe String -> Result (Parser Unnormalized a)
   default argumentsParser ::
-    (SOP.Generic a, SOP.HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+    (GHC.Generic a, GTo a, SOP.GDatatypeInfo a, All2 HasArguments (GCode a)) =>
     Modifiers ->
     Maybe String -> Result (Parser Unnormalized a)
   argumentsParser = const . genericParser
@@ -278,10 +278,10 @@ parseBool s
 -- * generic HasArguments
 
 genericParser :: forall a .
-  (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+  (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
   Modifiers ->
   Result (Parser Unnormalized a)
-genericParser modifiers = fmap (fmap to) $ case datatypeInfo (Proxy :: Proxy a) of
+genericParser modifiers = fmap (fmap gto) $ case gdatatypeInfo (Proxy :: Proxy a) of
   ADT _ typeName (constructorInfo :* Nil) ->
     case constructorInfo of
       (Record _ fields) ->

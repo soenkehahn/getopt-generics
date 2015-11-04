@@ -20,8 +20,6 @@ data Options
   }
   deriving (Show, GHC.Generics.Generic)
 
-instance Generic Options
-instance HasDatatypeInfo Options
 instance HasArguments Options
 instance HasArguments File where
   argumentsParser = atomicArgumentsParser
