@@ -1,10 +1,9 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeFamilies #-}
 
 module Test02 where
 
-import           WithCli
+import WithCli
 
 data Options
   = Options {

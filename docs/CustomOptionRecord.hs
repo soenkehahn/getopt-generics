@@ -4,7 +4,7 @@
 
 module CustomOptionRecord where
 
-import           WithCli
+import WithCli
 
 data File = File FilePath
   deriving (Show, Typeable)

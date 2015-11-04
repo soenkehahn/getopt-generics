@@ -24,8 +24,6 @@ module WithCli (
 import           Data.Proxy
 import           Data.Typeable
 import qualified GHC.Generics as GHC
-import qualified Generics.SOP as SOP
-import qualified Generics.SOP.GGP as SOP
 import           System.Environment
 
 import           System.Console.GetOpt.Generics.Modifier

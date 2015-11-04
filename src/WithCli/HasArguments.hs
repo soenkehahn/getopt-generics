@@ -65,7 +65,7 @@ parseError typ mMsg s = Errors $ pure $
 -- >  {-# LANGUAGE DeriveAnyClass #-}
 -- >  {-# LANGUAGE DeriveGeneric #-}
 -- >
--- >  import           System.Console.GetOpt.Generics
+-- >  import WithCli
 -- >
 -- >  data Options
 -- >    = Options {

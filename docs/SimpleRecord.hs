@@ -3,7 +3,7 @@
 
 module SimpleRecord where
 
-import           System.Console.GetOpt.Generics
+import WithCli
 
 data Options
   = Options {

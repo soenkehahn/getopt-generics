@@ -3,7 +3,7 @@
 
 module Test03 where
 
-import           WithCli
+import WithCli
 
 main :: IO ()
 main = withCli run
