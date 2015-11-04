@@ -3,7 +3,6 @@
 
 module Test02 where
 
-import qualified GHC.Generics
 import           WithCli
 
 data Options
@@ -13,7 +12,7 @@ data Options
     config :: Maybe FilePath,
     args :: [String]
   }
-  deriving (Show, GHC.Generics.Generic)
+  deriving (Show, Generic)
 
 instance HasArguments Options
 

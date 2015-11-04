@@ -15,6 +15,7 @@ module WithCli (
   withCliModified,
   Modifier(..),
   -- * Useful Re-exports
+  GHC.Generic,
   SOP.GDatatypeInfo,
   SOP.GCode,
   SOP.All2,
@@ -26,6 +27,7 @@ module WithCli (
 
 import           Data.Proxy
 import           Data.Typeable
+import qualified GHC.Generics as GHC
 import qualified Generics.SOP as SOP
 import qualified Generics.SOP.GGP as SOP
 import           System.Environment

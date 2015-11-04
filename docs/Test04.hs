@@ -3,7 +3,6 @@
 
 module Test04 where
 
-import qualified GHC.Generics
 import           WithCli
 
 main :: IO ()
@@ -17,7 +16,7 @@ data A
   = A {
     aa :: String
   }
-  deriving (Show, GHC.Generics.Generic)
+  deriving (Show, Generic)
 
 instance HasArguments A
 
@@ -25,6 +24,6 @@ data B
   = B {
     bb :: String
   }
-  deriving (Show, GHC.Generics.Generic)
+  deriving (Show, Generic)
 
 instance HasArguments B

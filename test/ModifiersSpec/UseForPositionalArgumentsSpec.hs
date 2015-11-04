@@ -4,7 +4,6 @@
 module ModifiersSpec.UseForPositionalArgumentsSpec where
 
 import           Data.List
-import qualified GHC.Generics as GHC
 import           System.Environment
 import           Test.Hspec
 
@@ -16,7 +15,7 @@ data WithPositionalArguments
     positionalArguments :: [String],
     someFlag :: Bool
   }
-  deriving (GHC.Generic, Show, Eq)
+  deriving (Generic, Show, Eq)
 
 data WithMultiplePositionalArguments
   = WithMultiplePositionalArguments {
@@ -24,7 +23,7 @@ data WithMultiplePositionalArguments
     positionalArgumentsB :: [String],
     someOtherFlag :: Bool
   }
-  deriving (GHC.Generic, Show, Eq)
+  deriving (Generic, Show, Eq)
 
 spec :: Spec
 spec = do

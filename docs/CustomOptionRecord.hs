@@ -4,7 +4,6 @@
 
 module CustomOptionRecord where
 
-import qualified GHC.Generics
 import           WithCli
 
 data File = File FilePath
@@ -18,7 +17,7 @@ data Options
   = Options {
     file :: File
   }
-  deriving (Show, GHC.Generics.Generic)
+  deriving (Show, Generic)
 
 instance HasArguments Options
 instance HasArguments File where

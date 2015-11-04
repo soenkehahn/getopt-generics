@@ -2,7 +2,6 @@
 
 module SimpleRecord where
 
-import qualified GHC.Generics
 import           System.Console.GetOpt.Generics
 
 data Options
@@ -11,7 +10,7 @@ data Options
     daemonize :: Bool,
     config :: Maybe FilePath
   }
-  deriving (Show, GHC.Generics.Generic)
+  deriving (Show, Generic)
 
 instance HasArguments Options
 

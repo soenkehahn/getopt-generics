@@ -65,7 +65,6 @@ parseError typ mMsg s = Errors $ pure $
 -- |
 -- >  {-# LANGUAGE DeriveGeneric #-}
 -- >
--- >  import qualified GHC.Generics
 -- >  import           System.Console.GetOpt.Generics
 -- >
 -- >  data Options
@@ -74,7 +73,7 @@ parseError typ mMsg s = Errors $ pure $
 -- >      daemonize :: Bool,
 -- >      config :: Maybe FilePath
 -- >    }
--- >    deriving (Show, GHC.Generics.Generic)
+-- >    deriving (Show, Generic)
 -- >
 -- >  instance HasArguments Options
 -- >

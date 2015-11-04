@@ -11,7 +11,6 @@ import           Prelude.Compat
 import           Control.Exception
 import           Data.Foldable (forM_)
 import           Data.List (isPrefixOf, isSuffixOf)
-import qualified GHC.Generics as GHC
 import           System.Environment
 import           System.Exit
 import           System.IO
@@ -36,12 +35,12 @@ data Foo
     baz :: String,
     bool :: Bool
   }
-  deriving (GHC.Generic, Show, Eq)
+  deriving (Generic, Show, Eq)
 
 data NotAllowed
   = NotAllowed1
   | NotAllowed2
-  deriving (GHC.Generic, Show, Eq)
+  deriving (Generic, Show, Eq)
 
 part1 :: Spec
 part1 = do
@@ -120,7 +119,7 @@ data ListOptions
   = ListOptions {
     multiple :: [Int]
   }
-  deriving (GHC.Generic, Show, Eq)
+  deriving (Generic, Show, Eq)
 
 part2 :: Spec
 part2 = do
@@ -138,7 +137,7 @@ data CamelCaseOptions
   = CamelCaseOptions {
     camelCase :: String
   }
-  deriving (GHC.Generic, Show, Eq)
+  deriving (Generic, Show, Eq)
 
 part3 :: Spec
 part3 = do
@@ -162,7 +161,7 @@ data WithUnderscore
   = WithUnderscore {
     _withUnderscore :: String
   }
-  deriving (GHC.Generic, Show, Eq)
+  deriving (Generic, Show, Eq)
 
 part4 :: Spec
 part4 = do
@@ -173,7 +172,7 @@ part4 = do
 
 data WithoutSelectors
   = WithoutSelectors String Bool Int
-  deriving (Eq, Show, GHC.Generic)
+  deriving (Eq, Show, Generic)
 
 part5 :: Spec
 part5 = do
