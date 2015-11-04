@@ -15,9 +15,6 @@ module WithCli (
   Modifier(..),
   -- * Useful Re-exports
   GHC.Generic,
-  SOP.GDatatypeInfo,
-  SOP.GCode,
-  SOP.All2,
   Typeable,
   Proxy(..),
   ) where
@@ -89,12 +86,12 @@ import           WithCli.Result
 
 -- ### End ###
 
-withCli :: forall main . WithCli main => main -> IO ()
+withCli :: WithCli main => main -> IO ()
 withCli = withCliModified []
 
 -- | This is a variant of 'withCli' that allows to tweak the generated
 --   command line interface by providing a list of 'Modifier's.
-withCliModified :: forall main . WithCli main => [Modifier] -> main -> IO ()
+withCliModified :: WithCli main => [Modifier] -> main -> IO ()
 withCliModified mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)
