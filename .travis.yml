@@ -1,9 +1,11 @@
 sudo: false
 
+language: c
+
 env:
   - GHCVER=7.6.3
   - GHCVER=7.8.4
-  - GHCVER=7.10.1
+  - GHCVER=7.10.2
 
 addons:
   apt:
@@ -12,18 +14,23 @@ addons:
     packages:
       - ghc-7.6.3
       - ghc-7.8.4
-      - ghc-7.10.1
+      - ghc-7.10.2
       - cabal-install-1.22
 
 before_install:
   - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.22/bin:$PATH
+  - (mkdir -p $HOME/.local/bin && cd $HOME/.local/bin && wget https://zalora-public.s3.amazonaws.com/tinc && chmod +x tinc)
   - ghc --version
   - cabal --version
   - travis_retry cabal update
+  - sed -i 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config
 
 install:
-  - cabal install --enable-tests --only-dep
+  - tinc
 
 script:
-  - cabal configure --enable-tests --ghc-options=-Werror && cabal build && cabal test
-  - cabal install --ghc-options=-Werror
+  - cabal configure --enable-tests --ghc-options=-Werror --disable-optimization && cabal build && cabal test
+
+cache:
+  directories:
+    - $HOME/.tinc/cache
