@@ -30,6 +30,7 @@ install:
 
 script:
   - cabal configure --enable-tests --ghc-options=-Werror --disable-optimization && cabal build && cabal test
+  - cabal install --ghc-options=-Werror
 
 cache:
   directories:
