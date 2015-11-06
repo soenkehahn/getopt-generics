@@ -1,5 +1,4 @@
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFunctor #-}
@@ -31,14 +30,16 @@ import           Data.Char
 import           Data.List.Compat
 import           Data.Proxy
 import           Data.Traversable
+import qualified GHC.Generics as GHC
 import           Generics.SOP as SOP
+import           Generics.SOP.GGP as SOP
 import           System.Console.GetOpt
 import           Text.Read
 
 import           System.Console.GetOpt.Generics.Modifier
-import           WithCli.Parser
-import           WithCli.Normalize
 import           WithCli.Argument
+import           WithCli.Normalize
+import           WithCli.Parser
 import           WithCli.Result
 
 parseArgumentResult :: forall a . Argument a => Maybe String -> String -> Result a
@@ -61,10 +62,10 @@ parseError typ mMsg s = Errors $ pure $
 -- ### Start "docs/SimpleRecord.hs" "module SimpleRecord where\n\n" Haddock ###
 
 -- |
+-- >  {-# LANGUAGE DeriveAnyClass #-}
 -- >  {-# LANGUAGE DeriveGeneric #-}
 -- >
--- >  import qualified GHC.Generics
--- >  import           System.Console.GetOpt.Generics
+-- >  import WithCli
 -- >
 -- >  data Options
 -- >    = Options {
@@ -72,11 +73,7 @@ parseError typ mMsg s = Errors $ pure $
 -- >      daemonize :: Bool,
 -- >      config :: Maybe FilePath
 -- >    }
--- >    deriving (Show, GHC.Generics.Generic)
--- >
--- >  instance Generic Options
--- >  instance HasDatatypeInfo Options
--- >  instance HasArguments Options
+-- >    deriving (Show, Generic, HasArguments)
 -- >
 -- >  main :: IO ()
 -- >  main = withCli run
@@ -113,7 +110,7 @@ parseError typ mMsg s = Errors $ pure $
 class HasArguments a where
   argumentsParser :: Modifiers -> Maybe String -> Result (Parser Unnormalized a)
   default argumentsParser ::
-    (SOP.Generic a, SOP.HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+    (GHC.Generic a, GTo a, SOP.GDatatypeInfo a, All2 HasArguments (GCode a)) =>
     Modifiers ->
     Maybe String -> Result (Parser Unnormalized a)
   argumentsParser = const . genericParser
@@ -278,10 +275,10 @@ parseBool s
 -- * generic HasArguments
 
 genericParser :: forall a .
-  (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+  (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
   Modifiers ->
   Result (Parser Unnormalized a)
-genericParser modifiers = fmap (fmap to) $ case datatypeInfo (Proxy :: Proxy a) of
+genericParser modifiers = fmap (fmap gto) $ case gdatatypeInfo (Proxy :: Proxy a) of
   ADT _ typeName (constructorInfo :* Nil) ->
     case constructorInfo of
       (Record _ fields) ->

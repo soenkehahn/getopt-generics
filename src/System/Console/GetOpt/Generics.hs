@@ -1,7 +1,8 @@
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module System.Console.GetOpt.Generics (
   -- * Simple IO API
@@ -18,21 +19,23 @@ module System.Console.GetOpt.Generics (
   -- * Pure API
   parseArguments,
   Result(..),
-  -- * Re-exports from "Generics.SOP"
-  Generics.SOP.Generic,
-  HasDatatypeInfo,
-  Code,
+  -- * Re-exports
+  GHC.Generic,
+  GDatatypeInfo,
+  GCode,
   All2,
  ) where
 
+import qualified GHC.Generics as GHC
 import           Generics.SOP
+import           Generics.SOP.GGP
 import           System.Environment
 
-import           WithCli
-import           WithCli.Parser
-import           WithCli.HasArguments
-import           WithCli.Result
 import           System.Console.GetOpt.Generics.Modifier
+import           WithCli
+import           WithCli.HasArguments
+import           WithCli.Parser
+import           WithCli.Result
 
 -- | Parses command line arguments (gotten from 'withArgs') and returns the
 --   parsed value. This function should be enough for simple use-cases.
@@ -48,10 +51,9 @@ import           System.Console.GetOpt.Generics.Modifier
 -- >
 -- >  module RecordType where
 -- >
--- >  import qualified GHC.Generics
--- >  import           System.Console.GetOpt.Generics
+-- >  import System.Console.GetOpt.Generics
 -- >
--- >  -- All you have to do is to define a type and derive some instances:
+-- >  -- All you have to do is to define a type and derive an instance for Generic:
 -- >
 -- >  data Options
 -- >    = Options {
@@ -59,10 +61,7 @@ import           System.Console.GetOpt.Generics.Modifier
 -- >      daemonize :: Bool,
 -- >      config :: Maybe FilePath
 -- >    }
--- >    deriving (Show, GHC.Generics.Generic)
--- >
--- >  instance Generic Options
--- >  instance HasDatatypeInfo Options
+-- >    deriving (Show, Generic)
 -- >
 -- >  -- Then you can use `getArguments` to create a command-line argument parser:
 -- >
@@ -97,12 +96,12 @@ import           System.Console.GetOpt.Generics.Modifier
 
 -- ### End ###
 
-getArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+getArguments :: forall a . (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
   IO a
 getArguments = modifiedGetArguments []
 
 -- | Like 'getArguments` but allows you to pass in 'Modifier's.
-modifiedGetArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+modifiedGetArguments :: forall a . (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
   [Modifier] -> IO a
 modifiedGetArguments modifiers = do
   args <- getArgs
@@ -112,7 +111,7 @@ modifiedGetArguments modifiers = do
 -- | Pure variant of 'modifiedGetArguments'.
 --
 --   Does not throw any exceptions.
-parseArguments :: forall a . (Generic a, HasDatatypeInfo a, All2 HasArguments (Code a)) =>
+parseArguments :: forall a . (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
      String -- ^ Name of the program (e.g. from 'getProgName').
   -> [Modifier] -- ^ List of 'Modifier's to manually tweak the command line interface.
   -> [String] -- ^ List of command line arguments to parse (e.g. from 'getArgs').

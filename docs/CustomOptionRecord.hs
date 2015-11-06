@@ -1,11 +1,10 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeFamilies #-}
 
 module CustomOptionRecord where
 
-import qualified GHC.Generics
-import           WithCli
+import WithCli
 
 data File = File FilePath
   deriving (Show, Typeable)
@@ -18,11 +17,8 @@ data Options
   = Options {
     file :: File
   }
-  deriving (Show, GHC.Generics.Generic)
+  deriving (Show, Generic, HasArguments)
 
-instance Generic Options
-instance HasDatatypeInfo Options
-instance HasArguments Options
 instance HasArguments File where
   argumentsParser = atomicArgumentsParser
 

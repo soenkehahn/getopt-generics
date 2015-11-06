@@ -3,7 +3,7 @@
 -- see: https://github.com/sol/hpack
 
 name:           getopt-generics
-version:        0.11.0.3
+version:        0.12
 synopsis:       Create command line interfaces with ease
 description:    Create command line interfaces with ease
 category:       Console, System
@@ -95,7 +95,7 @@ test-suite spec
       WithCli.Normalize
       WithCli.Parser
       WithCli.Result
-      ExamplesSpec
+      DocsSpec
       ModifiersSpec
       ModifiersSpec.RenameOptionsSpec
       ModifiersSpec.UseForPositionalArgumentsSpec

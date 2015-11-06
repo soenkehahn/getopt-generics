@@ -4,7 +4,6 @@ module ModifiersSpec.RenameOptionsSpec where
 
 import           Data.Char
 import           Data.List
-import qualified GHC.Generics
 import           Test.Hspec
 
 import           System.Console.GetOpt.Generics
@@ -15,10 +14,7 @@ data Foo
     foo :: Int,
     bar :: Int
   }
-  deriving (Eq, Show, GHC.Generics.Generic)
-
-instance Generic Foo
-instance HasDatatypeInfo Foo
+  deriving (Eq, Show, Generic)
 
 data CommonPrefixes
   = CP {
@@ -26,10 +22,7 @@ data CommonPrefixes
     prefixBar :: Int,
     notPrefixBaz :: Int
   }
-  deriving (Eq, Show, GHC.Generics.Generic)
-
-instance Generic CommonPrefixes
-instance HasDatatypeInfo CommonPrefixes
+  deriving (Eq, Show, Generic)
 
 spec :: Spec
 spec = do

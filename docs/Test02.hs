@@ -1,10 +1,9 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeFamilies #-}
 
 module Test02 where
 
-import qualified GHC.Generics
-import           WithCli
+import WithCli
 
 data Options
   = Options {
@@ -13,11 +12,7 @@ data Options
     config :: Maybe FilePath,
     args :: [String]
   }
-  deriving (Show, GHC.Generics.Generic)
-
-instance Generic Options
-instance HasDatatypeInfo Options
-instance HasArguments Options
+  deriving (Show, Generic, HasArguments)
 
 main :: IO ()
 main = withCli run

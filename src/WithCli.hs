@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
@@ -15,10 +14,7 @@ module WithCli (
   withCliModified,
   Modifier(..),
   -- * Useful Re-exports
-  SOP.Generic,
-  SOP.HasDatatypeInfo,
-  SOP.Code,
-  SOP.All2,
+  GHC.Generic,
   Typeable,
   Proxy(..),
   ) where
@@ -27,7 +23,7 @@ module WithCli (
 
 import           Data.Proxy
 import           Data.Typeable
-import qualified Generics.SOP as SOP
+import qualified GHC.Generics as GHC
 import           System.Environment
 
 import           System.Console.GetOpt.Generics.Modifier
@@ -88,12 +84,12 @@ import           WithCli.Result
 
 -- ### End ###
 
-withCli :: forall main . WithCli main => main -> IO ()
+withCli :: WithCli main => main -> IO ()
 withCli = withCliModified []
 
 -- | This is a variant of 'withCli' that allows to tweak the generated
 --   command line interface by providing a list of 'Modifier's.
-withCliModified :: forall main . WithCli main => [Modifier] -> main -> IO ()
+withCliModified :: WithCli main => [Modifier] -> main -> IO ()
 withCliModified mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)

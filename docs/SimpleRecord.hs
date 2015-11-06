@@ -1,9 +1,9 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module SimpleRecord where
 
-import qualified GHC.Generics
-import           System.Console.GetOpt.Generics
+import WithCli
 
 data Options
   = Options {
@@ -11,11 +11,7 @@ data Options
     daemonize :: Bool,
     config :: Maybe FilePath
   }
-  deriving (Show, GHC.Generics.Generic)
-
-instance Generic Options
-instance HasDatatypeInfo Options
-instance HasArguments Options
+  deriving (Show, Generic, HasArguments)
 
 main :: IO ()
 main = withCli run

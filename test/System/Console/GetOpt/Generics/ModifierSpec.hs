@@ -2,10 +2,9 @@
 
 module System.Console.GetOpt.Generics.ModifierSpec where
 
-import qualified GHC.Generics
-import           Generics.SOP
 import           Test.Hspec
 
+import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
 import           Util
 
@@ -25,17 +24,11 @@ data Foo
   = Foo {
     bar :: String
   }
-  deriving (GHC.Generics.Generic)
-
-instance Generic Foo
-instance HasDatatypeInfo Foo
+  deriving (Generic)
 
 data Overlap
   = Overlap {
     foo :: String,
     fooo :: String
   }
-  deriving (GHC.Generics.Generic)
-
-instance Generic Overlap
-instance HasDatatypeInfo Overlap
+  deriving (Generic)
