@@ -1,10 +1,12 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module WithCli.Flag where
 
 import           Prelude ()
 import           Prelude.Compat
 
+import           Data.Maybe
 import           Data.Monoid
 import           System.Console.GetOpt
 
@@ -34,12 +36,24 @@ versionOption :: String -> OptDescr (Flag a)
 versionOption version =
   Option ['v'] ["version"] (NoArg (Version version)) "show version and exit"
 
-usage :: String -> [String] -> [OptDescr ()] -> String
+usage :: String -> [(Bool, String)] -> [OptDescr ()] -> String
 usage progName fields options = usageInfo header options
   where
     header :: String
     header = unwords $
       progName :
       "[OPTIONS]" :
-       fields ++
+      fromMaybe [] (formatFields fields) ++
       []
+
+    formatFields :: [(Bool, String)] -> Maybe [String]
+    formatFields [] = Nothing
+    formatFields fields = Just $
+      let (map snd -> nonOptional, map snd -> optional) =
+            span (not . fst) fields
+      in nonOptional ++ [formatOptional optional]
+
+    formatOptional :: [String] -> String
+    formatOptional [] = ""
+    formatOptional [a] = "[" ++ a ++ "]"
+    formatOptional (a : r) = "[" ++ a ++ " " ++ formatOptional r ++ "]"

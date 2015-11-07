@@ -24,7 +24,9 @@ import           WithCli.Result
 data NonOptionsParser uninitialized =
   NonOptionsParser {
     nonOptionsType :: String,
-    nonOptionsParser :: [String] -> Result (uninitialized -> uninitialized, [String])
+    nonOptionsOptional :: Bool,
+    nonOptionsParser ::
+      [String] -> Result (uninitialized -> uninitialized, [String])
   }
 
 combineNonOptionsParser :: [NonOptionsParser u] -> [NonOptionsParser v]
@@ -34,8 +36,8 @@ combineNonOptionsParser a b =
   map (modMod second) b
   where
     modMod :: ((a -> a) -> (b -> b)) -> NonOptionsParser a -> NonOptionsParser b
-    modMod f (NonOptionsParser field parser) =
-      NonOptionsParser field (fmap (fmap (first f)) parser)
+    modMod f (NonOptionsParser field optional parser) =
+      NonOptionsParser field optional (fmap (fmap (first f)) parser)
 
 data Parser phase a where
   Parser :: {
@@ -108,18 +110,19 @@ fillInNonOptions [] nonOptions _ =
 fillInNonOptions _ [] u = return u
 
 runParser :: String -> Modifiers -> Parser Normalized a -> [String] -> Result a
-runParser progName modifiers Parser{..} args = do
+runParser progName modifiers Parser{..} args =
+  checkNonOptionParsers parserNonOptions |>
   let versionOptions = maybe []
         (\ v -> pure $ versionOption (progName ++ " version " ++ v))
         (getVersion modifiers)
       options = map (fmap NoHelp) parserOptions ++ [helpOption] ++ versionOptions
       (flags, nonOptions, errs) =
         Base.getOpt Base.Permute options args
-  case foldFlags flags of
+  in case foldFlags flags of
     Help -> OutputAndExit $
       let fields = case getPositionalArgumentType modifiers of
-            Nothing -> map nonOptionsType parserNonOptions
-            Just typ -> ["[" ++ typ ++ "]"]
+            Nothing -> map (\ p -> (nonOptionsOptional p, nonOptionsType p)) parserNonOptions
+            Just typ -> [(True, typ)]
       in usage progName fields (map void options)
     Version msg -> OutputAndExit msg
     NoHelp innerFlags ->
@@ -132,3 +135,9 @@ runParser progName modifiers Parser{..} args = do
     reportErrors = \ case
       [] -> return ()
       errs -> Errors errs
+
+    checkNonOptionParsers :: [NonOptionsParser a] -> Result ()
+    checkNonOptionParsers parsers =
+      case dropWhile nonOptionsOptional $ dropWhile (not . nonOptionsOptional) parsers of
+        [] -> return ()
+        (_ : _) -> Errors ["cannot use Maybes for optional arguments before any non-optional arguments"]

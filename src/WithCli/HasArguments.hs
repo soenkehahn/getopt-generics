@@ -172,7 +172,7 @@ atomicArgumentsParser =
       parserDefault = Nothing,
       parserOptions = [],
       parserNonOptions =
-        [NonOptionsParser typ (\ (s : r) -> fmap ((, r) . const . Just) $ parseArgumentResult Nothing s)],
+        [NonOptionsParser typ False (\ (s : r) -> fmap ((, r) . const . Just) $ parseArgumentResult Nothing s)],
       parserConvert = \ case
         Just a -> return a
         Nothing -> Errors $ pure $
@@ -214,7 +214,7 @@ positionalArgumentsParser :: forall a . Argument a =>
 positionalArgumentsParser = Parser {
   parserDefault = [],
   parserOptions = [],
-  parserNonOptions = [NonOptionsParser (argumentType (Proxy :: Proxy a)) parse],
+  parserNonOptions = [NonOptionsParser (argumentType (Proxy :: Proxy a)) True parse],
   parserConvert = return
 }
   where
@@ -229,7 +229,18 @@ positionalArgumentsParser = Parser {
 maybeParser :: forall a . Argument a =>
   Maybe String -> Result (Parser Unnormalized (Maybe a))
 maybeParser mLong = case mLong of
-  Nothing -> Errors ["cannot use Maybes for positional arguments"]
+  Nothing -> return $ Parser {
+    parserDefault = Nothing,
+    parserOptions = [],
+    parserNonOptions =
+      let parse :: [String] -> Result (Maybe a -> Maybe a, [String])
+          parse (a : r) = do
+            v <- parseArgumentResult (Just "optional") a
+            return (const (Just v), r)
+          parse [] = return (id, [])
+      in [NonOptionsParser (argumentType (Proxy :: Proxy a)) True parse],
+    parserConvert = return
+  }
   Just long -> return $ Parser {
     parserDefault = Nothing,
     parserOptions = pure $
@@ -248,7 +259,7 @@ boolParser mLong = return $ case mLong of
     parserDefault = Nothing,
     parserOptions = [],
     parserNonOptions = pure $
-      (NonOptionsParser "BOOL" (\ (s : r) -> (, r) <$> maybe (parseError "BOOL" Nothing s) (return . const . Just) (parseBool s))),
+      (NonOptionsParser "BOOL" False (\ (s : r) -> (, r) <$> maybe (parseError "BOOL" Nothing s) (return . const . Just) (parseBool s))),
     parserConvert = \ case
       Just x -> return x
       Nothing -> Errors $ pure $

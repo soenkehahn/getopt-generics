@@ -4,6 +4,7 @@
 
 module WithCli.Result (
   Result(..),
+  (|>),
   handleResult,
   sanitize,
  ) where
@@ -41,6 +42,12 @@ instance Applicative Result where
   Errors a <*> Errors b = Errors (a ++ b)
   Errors errs <*> Success _ = Errors errs
   Success _ <*> Errors errs = Errors errs
+
+(|>) :: Result a -> Result b -> Result b
+a |> b = case a of
+  Success _ -> a >> b
+  Errors errs -> Errors errs
+  OutputAndExit msg -> OutputAndExit msg
 
 instance Monad Result where
   return = pure

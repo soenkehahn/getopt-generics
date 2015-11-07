@@ -15,13 +15,13 @@ import           Util
 spec :: Spec
 spec = do
   describe "runParser" $ do
-    it "foo" $ do
+    it "foo" $ do -- fixme
       let fa :: Parser phase Int
           fa = Parser {
             parserDefault = Nothing,
             parserOptions = [],
             parserNonOptions =
-              (NonOptionsParser "type" (\ (s : r) -> (, r) <$> Success (const $ Just $ read s))) :
+              (NonOptionsParser "type" False (\ (s : r) -> (, r) <$> Success (const $ Just $ read s))) :
               [],
             parserConvert = \ (Just x) -> return x
           }

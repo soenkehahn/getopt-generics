@@ -20,6 +20,11 @@ spec = do
         (Errors ["foo"] >> Errors ["bar"] :: Result ())
           `shouldBe` Errors ["foo", "bar"]
 
+    describe "|>" $ do
+      it "shortcuts directly without collecting other errors" $ do
+        (Errors ["foo"] |> Errors ["bar"] :: Result ()) `shouldBe` Errors ["foo"]
+        return () |> return () `shouldBe` return ()
+
   describe "handleResult" $ do
     context "OutputAndExit" $ do
       it "throws ExitSuccess" $ do
