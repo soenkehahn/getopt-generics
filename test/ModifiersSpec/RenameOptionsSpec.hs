@@ -40,7 +40,7 @@ spec = do
     it "missing options messages show renamed options" $ do
       let Errors errs = modsParse
             [RenameOptions (Just . map toLower)] "" :: Result CommonPrefixes
-      errs `shouldSatisfy` ("missing option: --prefixfoo=INTEGER" `elem`)
+      lines errs `shouldSatisfy` ("missing option: --prefixfoo=INTEGER" `elem`)
 
     it "can be used to rename a single field" $ do
       let rename f = case f of

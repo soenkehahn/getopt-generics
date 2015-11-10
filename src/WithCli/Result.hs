@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ViewPatterns #-}
 
 module WithCli.Result (
@@ -7,6 +8,7 @@ module WithCli.Result (
   (|>),
   (|>=),
   handleResult,
+  sanitizeMessage,
   sanitize,
  ) where
 
@@ -14,7 +16,6 @@ import           Prelude ()
 import           Prelude.Compat
 
 import           Control.Arrow
-import           Data.List.Compat
 import           System.Exit
 import           System.IO
 
@@ -23,9 +24,8 @@ data Result a
   = Success a
     -- ^ The CLI was used correctly and a value of type @a@ was
     --   successfully constructed.
-  | Errors [String]
-    -- ^ The CLI was used incorrectly. The 'Result' contains a list of error
-    --   messages.
+  | Errors String
+    -- ^ The CLI was used incorrectly. The 'Result' contains error messages.
     --
     --   It can also happen that the data type you're trying to use isn't
     --   supported. See the
@@ -40,12 +40,12 @@ instance Applicative Result where
   OutputAndExit message <*> _ = OutputAndExit message
   _ <*> OutputAndExit message = OutputAndExit message
   Success f <*> Success x = Success (f x)
-  Errors a <*> Errors b = Errors (a ++ b)
-  Errors errs <*> Success _ = Errors errs
-  Success _ <*> Errors errs = Errors errs
+  Errors a <*> Errors b = Errors (a ++ "\n" ++ b)
+  Errors err <*> Success _ = Errors err
+  Success _ <*> Errors err = Errors err
 
 (|>) :: Result a -> Result b -> Result b
-a |> b = a |>= const b
+a |> b = a |>= const b -- fixme: use >>= ?
 
 (|>=) :: Result a -> (a -> Result b) -> Result b
 a |>= b = case a of
@@ -62,17 +62,23 @@ instance Monad Result where
   (>>) = (*>)
 
 handleResult :: Result a -> IO a
-handleResult result = case result of
+handleResult result = case sanitize result of
   Success a -> return a
   OutputAndExit message -> do
-    putStr $ sanitize message
+    putStr message
     exitWith ExitSuccess
-  Errors errs -> do
-    hPutStr stderr $ sanitize $ intercalate "\n" errs
+  Errors err -> do
+    hPutStr stderr err
     exitWith $ ExitFailure 1
 
-sanitize :: String -> String
-sanitize =
+sanitize :: Result a -> Result a
+sanitize = \ case
+  Success a -> Success a
+  OutputAndExit message -> OutputAndExit $ sanitizeMessage message
+  Errors messages -> Errors $ sanitizeMessage messages
+
+sanitizeMessage :: String -> String
+sanitizeMessage =
   lines >>>
   map stripTrailingSpaces >>>
   filter (not . null) >>>

@@ -48,7 +48,7 @@ parseArgumentResult mMsg s = case parseArgument s of
   Nothing -> parseError (argumentType (Proxy :: Proxy a)) mMsg s
 
 parseError :: String -> Maybe String -> String -> Result a
-parseError typ mMsg s = Errors $ pure $
+parseError typ mMsg s = Errors $
   "cannot parse as " ++ typ ++
   maybe "" (\ msg -> " (" ++ msg ++ ")") mMsg ++
   ": " ++ s
@@ -139,7 +139,7 @@ instance (HasArguments a, HasArguments b, HasArguments c) => HasArguments (a, b,
 wrapForPositionalArguments :: String -> (Modifiers -> Maybe String -> Result a) -> (Modifiers -> Maybe String -> Result a)
 wrapForPositionalArguments typ wrapped modifiers (Just field) =
   if isPositionalArgumentsField modifiers field
-    then Errors ["UseForPositionalArguments can only be used for fields of type [String] not " ++ typ]
+    then Errors ("UseForPositionalArguments can only be used for fields of type [String] not " ++ typ)
     else wrapped modifiers (Just field)
 wrapForPositionalArguments _ wrapped modifiers Nothing = wrapped modifiers Nothing
 
@@ -175,7 +175,7 @@ atomicArgumentsParser =
         [NonOptionsParser typ False (\ (s : r) -> fmap ((, r) . const . Just) $ parseArgumentResult Nothing s)],
       parserConvert = \ case
         Just a -> return a
-        Nothing -> Errors $ pure $
+        Nothing -> Errors $
           "missing argument of type " ++ typ
     }
 
@@ -189,7 +189,7 @@ atomicArgumentsParser =
       parserNonOptions = [],
       parserConvert = \ case
         Right a -> return a
-        Left () -> Errors $ pure $
+        Left () -> Errors $
           "missing option: --" ++ normalize (applyModifiersLong modifiers long) ++ "=" ++ typ
     }
 
@@ -262,7 +262,7 @@ boolParser mLong = return $ case mLong of
       (NonOptionsParser "BOOL" False (\ (s : r) -> (, r) <$> maybe (parseError "BOOL" Nothing s) (return . const . Just) (parseBool s))),
     parserConvert = \ case
       Just x -> return x
-      Nothing -> Errors $ pure $
+      Nothing -> Errors $
         "missing argument of type BOOL"
   }
   Just long -> Parser {
@@ -307,7 +307,7 @@ genericParser modifiers = fmap (fmap gto) $ case gdatatypeInfo (Proxy :: Proxy a
   Newtype _ typeName (Constructor _) ->
     err typeName "constructors without field labels"
   where
-    err typeName message = Errors $ pure $
+    err typeName message = Errors $
       "getopt-generics doesn't support " ++ message ++
       " (" ++ typeName ++ ")."
 

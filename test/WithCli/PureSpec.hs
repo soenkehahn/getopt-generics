@@ -21,7 +21,6 @@ spec = do
       let f :: Int -> String
           f = show
       withCliPure "progName" [] ["42"] f `shouldBe` Success "42"
-      pending
       withCliPure "progName" [] ["-h"] f `shouldBe` ((OutputAndExit $ unlines $
         "progName [OPTIONS] INTEGER" :
         "  -h  --help  show help and exit" :

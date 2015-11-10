@@ -15,10 +15,9 @@ import           WithCli.Result
 
 withCliPure :: WithCliPure function a => String -> [Modifier] -> [String]
   -> function -> Result a
-withCliPure progName modifiers args function = do
+withCliPure progName modifiers args function = sanitize $ do
   modifiers <- mkModifiers modifiers
   _run progName modifiers (return $ emptyParser ()) (\ () -> function) args
-
 
 class WithCliPure function output where
   _run :: String -> Modifiers -> Result (Parser Unnormalized input)

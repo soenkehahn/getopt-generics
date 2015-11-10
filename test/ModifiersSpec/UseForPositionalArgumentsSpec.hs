@@ -38,7 +38,7 @@ spec = do
       [UseForPositionalArguments "positionalArguments" "type"]
       "--positional-arguments foo"
         `shouldBe`
-      (Errors ["unrecognized option `--positional-arguments'\n"]
+      (Errors "unrecognized option `--positional-arguments'\n"
         :: Result WithPositionalArguments)
 
   it "complains about fields that don't have type [String]" $ do
@@ -46,7 +46,7 @@ spec = do
       [UseForPositionalArguments "someFlag" "type"]
       "doesn't matter"
         `shouldBe`
-      (Errors ["UseForPositionalArguments can only be used for fields of type [String] not Bool"]
+      (Errors "UseForPositionalArguments can only be used for fields of type [String] not Bool\n"
         :: Result WithPositionalArguments)
 
   it "includes the type of positional arguments in the help output in upper-case" $ do
@@ -61,7 +61,7 @@ spec = do
           UseForPositionalArguments "positionalArgumentsB" "bar" :
           []
     (modsParse modifiers [] :: Result WithMultiplePositionalArguments)
-      `shouldBe` Errors ["UseForPositionalArguments can only be used once"]
+      `shouldBe` Errors "UseForPositionalArguments can only be used once\n"
 
   context "when used without selector" $ do
     it "automatically uses positional arguments for [Int]" $ do

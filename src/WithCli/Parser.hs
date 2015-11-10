@@ -106,7 +106,7 @@ fillInNonOptions (parser : parsers) nonOptions@(_ : _) u = do
 fillInNonOptions [] [] u =
   return u
 fillInNonOptions [] nonOptions _ =
-  Errors (map ("unknown argument: " ++) nonOptions)
+  Errors $ unlines (map ("unknown argument: " ++) nonOptions)
 fillInNonOptions _ [] u = return u
 
 runParser :: String -> Modifiers -> Parser Normalized a -> [String] -> Result a
@@ -134,10 +134,10 @@ runParser progName modifiers Parser{..} args =
     reportErrors :: [String] -> Result ()
     reportErrors = \ case
       [] -> return ()
-      errs -> Errors errs
+      errs -> Errors $ unlines errs
 
     checkNonOptionParsers :: [NonOptionsParser a] -> Result ()
     checkNonOptionParsers parsers =
       case dropWhile nonOptionsOptional $ dropWhile (not . nonOptionsOptional) parsers of
         [] -> return ()
-        (_ : _) -> Errors ["cannot use Maybes for optional arguments before any non-optional arguments"]
+        (_ : _) -> Errors "cannot use Maybes for optional arguments before any non-optional arguments"

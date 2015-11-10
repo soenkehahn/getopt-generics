@@ -66,24 +66,24 @@ part1 = do
       it "prints out an error" $ do
         let Errors messages = parse "--no-such-option" :: Result Foo
         messages `shouldBe`
-          ["unrecognized option `--no-such-option'\n",
-           "missing option: --baz=STRING"]
+          "unrecognized option `--no-such-option'\n" ++
+          "missing option: --baz=STRING\n"
 
       it "prints errors for missing options" $ do
-        let Errors [message] = parse [] :: Result Foo
-        message `shouldBe` "missing option: --baz=STRING"
+        let Errors messages = parse [] :: Result Foo
+        messages `shouldBe` "missing option: --baz=STRING\n"
 
       it "prints out an error for unparseable options" $ do
-        let Errors [message] = parse "--bar foo --baz huhu" :: Result Foo
-        message `shouldBe` "cannot parse as INTEGER (optional): foo"
+        let Errors messages = parse "--bar foo --baz huhu" :: Result Foo
+        messages `shouldBe` "cannot parse as INTEGER (optional): foo\n"
 
       it "complains about unused positional arguments" $ do
         (parse "--baz foo unused" :: Result Foo)
-          `shouldBe` Errors ["unknown argument: unused"]
+          `shouldBe` Errors "unknown argument: unused\n"
 
       it "complains about invalid overwritten options" $ do
-        let Errors [message] = parse "--bar foo --baz huhu --bar 12" :: Result Foo
-        message `shouldBe` "cannot parse as INTEGER (optional): foo"
+        let Errors messages = parse "--bar foo --baz huhu --bar 12" :: Result Foo
+        messages `shouldBe` "cannot parse as INTEGER (optional): foo\n"
 
     context "--help" $ do
       it "implements --help" $ do
@@ -108,8 +108,8 @@ part1 = do
           line `shouldSatisfy` (not . (" " `isSuffixOf`))
 
       it "complains when the options datatype is not allowed" $ do
-        let Errors [message] = parse "--help" :: Result NotAllowed
-        message `shouldSatisfy` ("getopt-generics doesn't support sum types" `isPrefixOf`)
+        let Errors messages = parse "--help" :: Result NotAllowed
+        messages `shouldSatisfy` ("getopt-generics doesn't support sum types" `isPrefixOf`)
 
       it "outputs a header including \"[OPTIONS]\"" $ do
         let OutputAndExit output = parse "--help" :: Result Foo
@@ -131,7 +131,7 @@ part2 = do
     it "complains about invalid list arguments" $ do
       let Errors errs =
             parse "--multiple foo --multiple 13" :: Result ListOptions
-      errs `shouldBe` ["cannot parse as INTEGER (multiple possible): foo"]
+      errs `shouldBe` "cannot parse as INTEGER (multiple possible): foo\n"
 
 data CamelCaseOptions
   = CamelCaseOptions {
@@ -188,14 +188,13 @@ part5 = do
 
       it "has good error messages for missing positional arguments" $ do
         (parse "foo" :: Result WithoutSelectors)
-          `shouldBe` Errors (
-            "missing argument of type BOOL" :
-            "missing argument of type INTEGER" :
-            [])
+          `shouldBe` Errors
+            ("missing argument of type BOOL\n" ++
+             "missing argument of type INTEGER\n")
 
       it "complains about additional positional arguments" $ do
         (parse "foo true 5 bar" :: Result WithoutSelectors)
-          `shouldBe` Errors ["unknown argument: bar"]
+          `shouldBe` Errors "unknown argument: bar\n"
 
       it "allows to use tuples" $ do
         (parse "42 bar" :: Result (Int, String))

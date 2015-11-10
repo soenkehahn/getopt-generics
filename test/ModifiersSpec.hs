@@ -39,7 +39,7 @@ spec = do
 
       it "disregards the earlier renaming" $ do
         let Errors errs = parse' "--foo foo"
-        errs `shouldContain` ["unrecognized option `--foo'\n"]
+        errs `shouldContain` "unrecognized option `--foo'\n"
 
     it "contains renamed options in error messages" $ do
       let Errors errs = modsParse
@@ -57,7 +57,7 @@ spec = do
   describe "AddVersionFlag" $ do
     it "implements --version" $ do
       let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version" :: Result Foo
-      output `shouldBe` "prog-name version 1.0.0"
+      output `shouldBe` "prog-name version 1.0.0\n"
 
     it "--help takes precedence over --version" $ do
       let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--version --help" :: Result Foo

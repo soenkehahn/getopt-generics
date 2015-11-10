@@ -81,7 +81,7 @@ mkModifiers = foldM inner empty
         return $ Modifiers shorts (renaming `combineRenamings` newRenaming) args help version
       (UseForPositionalArguments option typ) -> case args of
         Nothing -> return $ Modifiers shorts renaming (Just (option, map toUpper typ)) help version
-        Just _ -> Errors ["UseForPositionalArguments can only be used once"]
+        Just _ -> Errors "UseForPositionalArguments can only be used once"
       (AddOptionHelp option helpText) ->
         return $ Modifiers shorts renaming args (insert option helpText help) version
       (AddVersionFlag v) ->

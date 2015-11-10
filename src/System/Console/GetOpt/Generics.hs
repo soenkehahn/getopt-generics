@@ -116,7 +116,7 @@ parseArguments :: forall a . (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArg
   -> [Modifier] -- ^ List of 'Modifier's to manually tweak the command line interface.
   -> [String] -- ^ List of command line arguments to parse (e.g. from 'getArgs').
   -> Result a
-parseArguments progName mods args = do
+parseArguments progName mods args = sanitize $ do
   modifiers <- mkModifiers mods
   parser <- genericParser modifiers
   runParser progName modifiers
