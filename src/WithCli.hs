@@ -28,6 +28,7 @@ import           System.Console.GetOpt.Generics.Modifier
 import           WithCli.Argument
 import           WithCli.HasArguments
 import           WithCli.Parser
+import qualified WithCli.Pure.Internal
 import           WithCli.Result
 
 -- | 'withCli' converts an IO operation into a program with a proper CLI.
@@ -91,22 +92,22 @@ withCliModified :: WithCli main => [Modifier] -> main -> IO ()
 withCliModified mods main = do
   args <- getArgs
   modifiers <- handleResult (mkModifiers mods)
-  _run modifiers (return $ emptyParser ()) (\ () -> main) args
+  run modifiers (return $ emptyParser ()) (\ () -> main) args
 
 -- | Everything that can be used as a @main@ function with 'withCli' needs to
 --   have an instance of 'WithCli'. You shouldn't need to implement your own
 --   instances.
 class WithCli main where
-  _run :: Modifiers -> Result (Parser Unnormalized a) -> (a -> main) -> [String] -> IO ()
+  run :: Modifiers -> Result (Parser Unnormalized a) -> (a -> main) -> [String] -> IO ()
 
 instance WithCli (IO ()) where
-  _run modifiers mkParser mkMain args = do
+  run modifiers mkParser mkMain args = do
     progName <- getProgName
-    parser <- handleResult mkParser
-    a <- handleResult $ runParser progName modifiers
-      (normalizeParser (applyModifiers modifiers parser)) args
-    mkMain a
+    let result = WithCli.Pure.Internal.run
+          progName modifiers mkParser mkMain args
+    action <- handleResult result
+    action
 
 instance (HasArguments a, WithCli rest) => WithCli (a -> rest) where
-  _run modifiers fa mkMain args =
-    _run modifiers (combine fa (argumentsParser modifiers Nothing)) (\ (a, r) -> mkMain a r) args
+  run modifiers fa mkMain args =
+    run modifiers (combine fa (argumentsParser modifiers Nothing)) (\ (a, r) -> mkMain a r) args

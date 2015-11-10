@@ -63,6 +63,7 @@ library
       WithCli.HasArguments
       WithCli.Normalize
       WithCli.Parser
+      WithCli.Pure.Internal
       WithCli.Result
   default-language: Haskell2010
 
@@ -96,6 +97,7 @@ test-suite spec
       WithCli.Normalize
       WithCli.Parser
       WithCli.Pure
+      WithCli.Pure.Internal
       WithCli.Result
       DocsSpec
       ModifiersSpec

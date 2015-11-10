@@ -62,7 +62,7 @@ instance Monad Result where
 -- - On @'Errors' errs@ it writes the error messages to 'stderr' and throws
 --   @'ExitFailure' 1@.
 --
--- This is used by 'withCli' to handle parse results.
+-- This is used by 'WithCli.withCli' to handle parse results.
 handleResult :: Result a -> IO a
 handleResult result = case sanitize result of
   Success a -> return a
