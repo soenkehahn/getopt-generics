@@ -53,6 +53,7 @@ library
     , tagged
   exposed-modules:
       WithCli
+      WithCli.Pure
       System.Console.GetOpt.Generics
   other-modules:
       System.Console.GetOpt.Generics.Modifier
@@ -94,6 +95,7 @@ test-suite spec
       WithCli.HasArguments
       WithCli.Normalize
       WithCli.Parser
+      WithCli.Pure
       WithCli.Result
       DocsSpec
       ModifiersSpec
@@ -107,6 +109,7 @@ test-suite spec
       WithCli.HasArgumentsSpec
       WithCli.NormalizeSpec
       WithCli.ParserSpec
+      WithCli.PureSpec
       WithCli.ResultSpec
       WithCliSpec
       CustomOption

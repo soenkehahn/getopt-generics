@@ -5,6 +5,7 @@
 module WithCli.Result (
   Result(..),
   (|>),
+  (|>=),
   handleResult,
   sanitize,
  ) where
@@ -44,8 +45,11 @@ instance Applicative Result where
   Success _ <*> Errors errs = Errors errs
 
 (|>) :: Result a -> Result b -> Result b
-a |> b = case a of
-  Success _ -> a >> b
+a |> b = a |>= const b
+
+(|>=) :: Result a -> (a -> Result b) -> Result b
+a |>= b = case a of
+  Success x -> b x
   Errors errs -> Errors errs
   OutputAndExit msg -> OutputAndExit msg
 

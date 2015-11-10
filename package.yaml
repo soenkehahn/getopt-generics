@@ -25,6 +25,7 @@ library:
     - src
   exposed-modules:
     - WithCli
+    - WithCli.Pure
     - System.Console.GetOpt.Generics
 
 tests:
