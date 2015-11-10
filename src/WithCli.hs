@@ -19,8 +19,6 @@ module WithCli (
   Proxy(..),
   ) where
 
--- todo: add pure api with withCli
-
 import           Data.Proxy
 import           Data.Typeable
 import qualified GHC.Generics as GHC

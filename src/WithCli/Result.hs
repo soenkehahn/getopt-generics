@@ -6,7 +6,6 @@
 module WithCli.Result (
   Result(..),
   (|>),
-  (|>=),
   handleResult,
   sanitizeMessage,
   sanitize,
@@ -45,13 +44,7 @@ instance Applicative Result where
   Success _ <*> Errors err = Errors err
 
 (|>) :: Result a -> Result b -> Result b
-a |> b = a |>= const b -- fixme: use >>= ?
-
-(|>=) :: Result a -> (a -> Result b) -> Result b
-a |>= b = case a of
-  Success x -> b x
-  Errors errs -> Errors errs
-  OutputAndExit msg -> OutputAndExit msg
+a |> b = a >>= const b
 
 instance Monad Result where
   return = pure

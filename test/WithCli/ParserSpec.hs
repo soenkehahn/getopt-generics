@@ -15,7 +15,7 @@ import           Util
 spec :: Spec
 spec = do
   describe "runParser" $ do
-    it "foo" $ do -- fixme
+    it "works" $ do
       let fa :: Parser phase Int
           fa = Parser {
             parserDefault = Nothing,

@@ -23,11 +23,11 @@ class WithCliPure function output where
   _run :: String -> Modifiers -> Result (Parser Unnormalized input)
     -> (input -> function) -> [String] -> Result output
 
-instance {-# OVERLAPPING #-} WithCliPure output output where
+instance WithCliPure output output where
   _run :: String -> Modifiers -> Result (Parser Unnormalized input) -> (input -> output)
     -> [String] -> Result output
   _run progName modifiers mkParser function args = do
-    mkParser |>= \ parser -> do
+    mkParser >>= \ parser -> do
       input <- runParser progName modifiers
         (normalizeParser (applyModifiers modifiers parser))
         args
