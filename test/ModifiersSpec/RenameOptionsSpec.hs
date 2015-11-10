@@ -6,8 +6,8 @@ import           Data.Char
 import           Data.List
 import           Test.Hspec
 
-import           System.Console.GetOpt.Generics
 import           Util
+import           WithCli.Pure
 
 data Foo
   = Foo {
@@ -16,6 +16,8 @@ data Foo
   }
   deriving (Eq, Show, Generic)
 
+instance HasArguments Foo
+
 data CommonPrefixes
   = CP {
     prefixFoo :: Int,
@@ -23,6 +25,8 @@ data CommonPrefixes
     notPrefixBaz :: Int
   }
   deriving (Eq, Show, Generic)
+
+instance HasArguments CommonPrefixes
 
 spec :: Spec
 spec = do

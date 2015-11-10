@@ -1,22 +1,28 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Util where
 
-import qualified GHC.Generics as GHC
-import           Generics.SOP.GGP
+import           Prelude ()
+import           Prelude.Compat
 
-import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
+import           WithCli.Pure
 
-parse :: (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
-  String -> Result a
+parse :: (HasArguments a) => String -> Result a
 parse = modsParse []
 
-modsParse :: (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
-  [Modifier] -> String -> Result a
-modsParse modifiers = parseArguments "prog-name" modifiers . words
+data Wrapped a
+  = Wrap {
+    unwrap :: a
+  }
+
+modsParse :: forall a . (HasArguments a) => [Modifier] -> String -> Result a
+modsParse modifiers args =
+  unwrap <$>
+  withCliPure "prog-name" modifiers (words args) (Wrap :: a -> Wrapped a)
 
 unsafeModifiers :: [Modifier] -> Modifiers
 unsafeModifiers mods = case mkModifiers mods of

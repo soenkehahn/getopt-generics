@@ -14,7 +14,6 @@ main = do
     "src/WithCli.hs" :
     "src/WithCli/HasArguments.hs" :
     "src/WithCli/Argument.hs" :
-    "src/System/Console/GetOpt/Generics.hs" :
     []
 
 process :: FilePath -> IO ()

@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module System.Console.GetOpt.GenericsSpec where
+module WithCli.Pure.RecordSpec where
 
 import           Prelude ()
 import           Prelude.Compat
@@ -11,15 +11,13 @@ import           Prelude.Compat
 import           Control.Exception
 import           Data.Foldable (forM_)
 import           Data.List (isPrefixOf, isSuffixOf)
-import           System.Environment
 import           System.Exit
 import           System.IO
 import           System.IO.Silently
 import           Test.Hspec
 
-import           System.Console.GetOpt.Generics
 import           Util
-import           WithCli.Result
+import           WithCli.Pure
 
 spec :: Spec
 spec = do
@@ -37,19 +35,18 @@ data Foo
   }
   deriving (Generic, Show, Eq)
 
+instance HasArguments Foo
+
 data NotAllowed
   = NotAllowed1
   | NotAllowed2
   deriving (Generic, Show, Eq)
 
+instance HasArguments NotAllowed
+
 part1 :: Spec
 part1 = do
-  describe "getArguments" $ do
-    it "parses command line arguments" $ do
-      withArgs (words "--bar 4 --baz foo") $
-        getArguments `shouldReturn` Foo (Just 4) "foo" False
-
-  describe "parseArguments" $ do
+  describe "withCliPure (record types)" $ do
     it "allows optional arguments" $ do
       parse "--baz foo" `shouldBe`
         Success (Foo Nothing "foo" False)
@@ -121,6 +118,8 @@ data ListOptions
   }
   deriving (Generic, Show, Eq)
 
+instance HasArguments ListOptions
+
 part2 :: Spec
 part2 = do
   describe "parseArguments" $ do
@@ -138,6 +137,8 @@ data CamelCaseOptions
     camelCase :: String
   }
   deriving (Generic, Show, Eq)
+
+instance HasArguments CamelCaseOptions
 
 part3 :: Spec
 part3 = do
@@ -163,6 +164,8 @@ data WithUnderscore
   }
   deriving (Generic, Show, Eq)
 
+instance HasArguments WithUnderscore
+
 part4 :: Spec
 part4 = do
   describe "parseArguments" $ do
@@ -173,6 +176,8 @@ part4 = do
 data WithoutSelectors
   = WithoutSelectors String Bool Int
   deriving (Eq, Show, Generic)
+
+instance HasArguments WithoutSelectors
 
 part5 :: Spec
 part5 = do

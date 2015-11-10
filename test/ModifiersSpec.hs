@@ -5,9 +5,9 @@ module ModifiersSpec where
 import           Data.List
 import           Test.Hspec
 
-import           System.Console.GetOpt.Generics
-import           System.Console.GetOpt.GenericsSpec
 import           Util
+import           WithCli.Pure
+import           WithCli.Pure.RecordSpec
 
 spec :: Spec
 spec = do

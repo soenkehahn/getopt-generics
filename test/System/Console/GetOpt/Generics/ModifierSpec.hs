@@ -4,9 +4,9 @@ module System.Console.GetOpt.Generics.ModifierSpec where
 
 import           Test.Hspec
 
-import           System.Console.GetOpt.Generics
 import           System.Console.GetOpt.Generics.Modifier
 import           Util
+import           WithCli
 
 spec :: Spec
 spec = do

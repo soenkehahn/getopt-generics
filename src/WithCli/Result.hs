@@ -18,7 +18,7 @@ import           Control.Arrow
 import           System.Exit
 import           System.IO
 
--- | Type to wrap results from the pure parsing functions.
+-- | Type to wrap results from 'WithCli.Pure.withCliPure'.
 data Result a
   = Success a
     -- ^ The CLI was used correctly and a value of type @a@ was

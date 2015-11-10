@@ -7,8 +7,9 @@ import           Data.List
 import           System.Environment
 import           Test.Hspec
 
-import           System.Console.GetOpt.Generics
 import           Util
+import           WithCli
+import           WithCli.Pure
 
 data WithPositionalArguments
   = WithPositionalArguments {
@@ -17,6 +18,8 @@ data WithPositionalArguments
   }
   deriving (Generic, Show, Eq)
 
+instance HasArguments WithPositionalArguments
+
 data WithMultiplePositionalArguments
   = WithMultiplePositionalArguments {
     positionalArgumentsA :: [String],
@@ -24,6 +27,8 @@ data WithMultiplePositionalArguments
     someOtherFlag :: Bool
   }
   deriving (Generic, Show, Eq)
+
+instance HasArguments WithMultiplePositionalArguments
 
 spec :: Spec
 spec = do

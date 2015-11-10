@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 
 module WithCliSpec where
 
@@ -8,6 +9,16 @@ import           System.IO.Silently
 import           Test.Hspec
 
 import           WithCli
+
+data Foo
+  = Foo {
+    bar :: Maybe Int,
+    baz :: String,
+    bool :: Bool
+  }
+  deriving (Eq, Show, Generic)
+
+instance HasArguments Foo
 
 spec :: Spec
 spec = do
@@ -38,6 +49,12 @@ spec = do
         output <- hCapture_ [stderr] (withArgs (words "12 foo") (withCli main)
           `shouldThrow` (== ExitFailure 1))
         output `shouldBe` "unknown argument: foo\n"
+
+      context "record types" $ do
+        it "parses command line arguments" $ do
+          withArgs (words "--bar 4 --baz foo") $
+            withCli $ \ foo -> do
+              foo `shouldBe` Foo (Just 4) "foo" False
 
     context "optional positional arguments with Maybe" $ do
       it "allows optional positional arguments" $ do

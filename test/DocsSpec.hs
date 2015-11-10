@@ -13,7 +13,6 @@ import           ShellProtocol
 
 import qualified Test01
 import qualified CustomOption
-import qualified RecordType
 import qualified Simple
 #if MIN_VERSION_base(4,8,0)
 import qualified Test02
@@ -27,7 +26,6 @@ examples :: [(IO (), String)]
 examples =
   (Test01.main, "Test01") :
   (CustomOption.main, "CustomOption") :
-  (RecordType.main, "RecordType") :
   (Simple.main, "Simple") :
 #if MIN_VERSION_base(4,8,0)
   (Test02.main, "Test02") :

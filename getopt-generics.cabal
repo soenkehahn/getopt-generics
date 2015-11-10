@@ -22,8 +22,6 @@ extra-source-files:
     docs/CustomOption.shell-protocol
     docs/CustomOptionRecord.hs
     docs/CustomOptionRecord.shell-protocol
-    docs/RecordType.hs
-    docs/RecordType.shell-protocol
     docs/Simple.hs
     docs/Simple.shell-protocol
     docs/SimpleRecord.hs
@@ -54,7 +52,6 @@ library
   exposed-modules:
       WithCli
       WithCli.Pure
-      System.Console.GetOpt.Generics
   other-modules:
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Modifier.Types
@@ -87,7 +84,6 @@ test-suite spec
     , filepath
     , safe
   other-modules:
-      System.Console.GetOpt.Generics
       System.Console.GetOpt.Generics.Modifier
       System.Console.GetOpt.Generics.Modifier.Types
       WithCli
@@ -105,18 +101,17 @@ test-suite spec
       ModifiersSpec.UseForPositionalArgumentsSpec
       ShellProtocol
       System.Console.GetOpt.Generics.ModifierSpec
-      System.Console.GetOpt.GenericsSpec
       Util
       WithCli.ArgumentSpec
       WithCli.HasArgumentsSpec
       WithCli.NormalizeSpec
       WithCli.ParserSpec
+      WithCli.Pure.RecordSpec
       WithCli.PureSpec
       WithCli.ResultSpec
       WithCliSpec
       CustomOption
       CustomOptionRecord
-      RecordType
       Simple
       SimpleRecord
       Test01
