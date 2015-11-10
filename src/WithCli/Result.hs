@@ -54,6 +54,15 @@ instance Monad Result where
 
   (>>) = (*>)
 
+-- | Handles an input of type @'Result' a@:
+--
+-- - On @'Success' a@ it returns the value @a@.
+-- - On @'OutputAndExit' message@ it writes the message to 'stdout' and throws
+--   'ExitSuccess'.
+-- - On @'Errors' errs@ it writes the error messages to 'stderr' and throws
+--   @'ExitFailure' 1@.
+--
+-- This is used by 'withCli' to handle parse results.
 handleResult :: Result a -> IO a
 handleResult result = case sanitize result of
   Success a -> return a
