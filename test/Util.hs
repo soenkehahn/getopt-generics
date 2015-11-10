@@ -8,7 +8,7 @@ module Util where
 import           Prelude ()
 import           Prelude.Compat
 
-import           System.Console.GetOpt.Generics.Modifier
+import           WithCli.Modifier
 import           WithCli.Pure
 
 parse :: (HasArguments a) => String -> Result a

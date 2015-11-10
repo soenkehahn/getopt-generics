@@ -19,9 +19,9 @@ import           Data.Proxy
 import           Data.Typeable
 import           GHC.Generics as GHC
 
-import           System.Console.GetOpt.Generics.Modifier
 import           WithCli.Argument
 import           WithCli.HasArguments
+import           WithCli.Modifier
 import           WithCli.Parser
 import           WithCli.Pure.Internal
 import           WithCli.Result

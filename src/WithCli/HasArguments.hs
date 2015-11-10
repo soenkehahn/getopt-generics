@@ -36,8 +36,8 @@ import           Generics.SOP.GGP as SOP
 import           System.Console.GetOpt
 import           Text.Read
 
-import           System.Console.GetOpt.Generics.Modifier
 import           WithCli.Argument
+import           WithCli.Modifier
 import           WithCli.Normalize
 import           WithCli.Parser
 import           WithCli.Result

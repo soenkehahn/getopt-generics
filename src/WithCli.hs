@@ -24,9 +24,9 @@ import           Data.Typeable
 import qualified GHC.Generics as GHC
 import           System.Environment
 
-import           System.Console.GetOpt.Generics.Modifier
 import           WithCli.Argument
 import           WithCli.HasArguments
+import           WithCli.Modifier
 import           WithCli.Parser
 import qualified WithCli.Pure.Internal
 import           WithCli.Result

@@ -1,5 +1,5 @@
 
-module System.Console.GetOpt.Generics.Modifier.Types where
+module WithCli.Modifier.Types where
 
 data Modifiers = Modifiers {
   shortOptions :: [(String, [Char])],

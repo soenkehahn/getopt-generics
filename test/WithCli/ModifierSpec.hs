@@ -1,12 +1,12 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module System.Console.GetOpt.Generics.ModifierSpec where
+module WithCli.ModifierSpec where
 
 import           Test.Hspec
 
-import           System.Console.GetOpt.Generics.Modifier
 import           Util
 import           WithCli
+import           WithCli.Modifier
 
 spec :: Spec
 spec = do

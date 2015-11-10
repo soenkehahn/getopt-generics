@@ -53,11 +53,11 @@ library
       WithCli
       WithCli.Pure
   other-modules:
-      System.Console.GetOpt.Generics.Modifier
-      System.Console.GetOpt.Generics.Modifier.Types
       WithCli.Argument
       WithCli.Flag
       WithCli.HasArguments
+      WithCli.Modifier
+      WithCli.Modifier.Types
       WithCli.Normalize
       WithCli.Parser
       WithCli.Pure.Internal
@@ -84,12 +84,12 @@ test-suite spec
     , filepath
     , safe
   other-modules:
-      System.Console.GetOpt.Generics.Modifier
-      System.Console.GetOpt.Generics.Modifier.Types
       WithCli
       WithCli.Argument
       WithCli.Flag
       WithCli.HasArguments
+      WithCli.Modifier
+      WithCli.Modifier.Types
       WithCli.Normalize
       WithCli.Parser
       WithCli.Pure
@@ -100,10 +100,10 @@ test-suite spec
       ModifiersSpec.RenameOptionsSpec
       ModifiersSpec.UseForPositionalArgumentsSpec
       ShellProtocol
-      System.Console.GetOpt.Generics.ModifierSpec
       Util
       WithCli.ArgumentSpec
       WithCli.HasArgumentsSpec
+      WithCli.ModifierSpec
       WithCli.NormalizeSpec
       WithCli.ParserSpec
       WithCli.Pure.RecordSpec

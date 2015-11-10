@@ -16,8 +16,8 @@ import           Control.Arrow
 import           Control.Monad
 import           System.Console.GetOpt as Base
 
-import           System.Console.GetOpt.Generics.Modifier.Types
 import           WithCli.Flag
+import           WithCli.Modifier.Types
 import           WithCli.Normalize
 import           WithCli.Result
 

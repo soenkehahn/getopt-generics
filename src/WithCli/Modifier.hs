@@ -4,7 +4,7 @@
 {-# LANGUAGE TupleSections    #-}
 {-# LANGUAGE ViewPatterns     #-}
 
-module System.Console.GetOpt.Generics.Modifier (
+module WithCli.Modifier (
   Modifier(..),
   Modifiers,
   mkModifiers,
@@ -29,9 +29,9 @@ import           Data.List (foldl')
 import           Data.Maybe
 import           System.Console.GetOpt
 
-import           System.Console.GetOpt.Generics.Modifier.Types
-import           WithCli.Parser
+import           WithCli.Modifier.Types
 import           WithCli.Normalize
+import           WithCli.Parser
 import           WithCli.Result
 
 -- | 'Modifier's can be used to customize the command line parser.

@@ -4,8 +4,8 @@
 
 module WithCli.Pure.Internal where
 
-import           System.Console.GetOpt.Generics.Modifier
 import           WithCli.HasArguments
+import           WithCli.Modifier
 import           WithCli.Parser
 import           WithCli.Result
 
