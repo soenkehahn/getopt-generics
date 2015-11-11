@@ -59,7 +59,7 @@ parseError typ mMsg s = Errors $
 --   'HasArguments' also allows to conjure up instances for record types
 --   to create more complex command line interfaces. Here's an example:
 
--- ### Start "docs/SimpleRecord.hs" "module SimpleRecord where\n\n" Haddock ###
+-- ### Start "docs/RecordType.hs" "module RecordType where\n\n" Haddock ###
 
 -- |
 -- >  {-# LANGUAGE DeriveAnyClass #-}
@@ -85,7 +85,7 @@ parseError typ mMsg s = Errors $
 
 -- | In a shell this program behaves like this:
 
--- ### Start "docs/SimpleRecord.shell-protocol" "" Haddock ###
+-- ### Start "docs/RecordType.shell-protocol" "" Haddock ###
 
 -- |
 -- >  $ program --port 8080 --config some/path

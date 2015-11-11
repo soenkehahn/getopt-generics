@@ -18,7 +18,7 @@ import qualified Simple
 import qualified Test02
 import qualified Test03
 import qualified Test04
-import qualified SimpleRecord
+import qualified RecordType
 import qualified CustomOptionRecord
 #endif
 
@@ -31,7 +31,7 @@ examples =
   (Test02.main, "Test02") :
   (Test03.main, "Test03") :
   (Test04.main, "Test04") :
-  (SimpleRecord.main, "SimpleRecord") :
+  (RecordType.main, "RecordType") :
   (CustomOptionRecord.main, "CustomOptionRecord") :
 #endif
   []

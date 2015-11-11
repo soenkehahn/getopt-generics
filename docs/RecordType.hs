@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module SimpleRecord where
+module RecordType where
 
 import WithCli
 

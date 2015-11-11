@@ -22,10 +22,10 @@ extra-source-files:
     docs/CustomOption.shell-protocol
     docs/CustomOptionRecord.hs
     docs/CustomOptionRecord.shell-protocol
+    docs/RecordType.hs
+    docs/RecordType.shell-protocol
     docs/Simple.hs
     docs/Simple.shell-protocol
-    docs/SimpleRecord.hs
-    docs/SimpleRecord.shell-protocol
     docs/Test01.hs
     docs/Test01.shell-protocol
     docs/Test02.hs
@@ -112,8 +112,8 @@ test-suite spec
       WithCliSpec
       CustomOption
       CustomOptionRecord
+      RecordType
       Simple
-      SimpleRecord
       Test01
       Test02
       Test03
