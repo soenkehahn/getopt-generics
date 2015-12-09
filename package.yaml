@@ -1,5 +1,5 @@
 name: getopt-generics
-version: "0.12"
+version: "0.13"
 category: "Console, System"
 synopsis:    Create command line interfaces with ease
 description: Create command line interfaces with ease
