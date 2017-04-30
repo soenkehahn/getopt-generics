@@ -1,0 +1,10 @@
+resolver: lts-2.22
+packages:
+  - '.'
+extra-deps:
+  - base-compat-0.9.3
+  - base-orphans-0.6
+  - hspec-2.1.8
+  - hspec-core-2.1.8
+  - hspec-discover-2.1.8
+  - hspec-expectations-0.7.0
