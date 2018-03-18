@@ -6,8 +6,8 @@ module WithCli.Flag where
 import           Prelude ()
 import           Prelude.Compat
 
+import           Data.List
 import           Data.Maybe
-import           Data.Monoid
 import           System.Console.GetOpt
 
 data Flag a
@@ -16,17 +16,19 @@ data Flag a
   | NoHelp a
   deriving (Functor)
 
-instance Monoid a => Monoid (Flag a) where
-  mappend a b = case (a, b) of
-    (Help, _) -> Help
-    (_, Help) -> Help
-    (Version s, _) -> Version s
-    (_, Version s) -> Version s
-    (NoHelp a, NoHelp b) -> NoHelp (a <> b)
-  mempty = NoHelp mempty
+flagConcat :: Monoid a => [Flag a] -> Flag a
+flagConcat = foldl' flagAppend (NoHelp mempty)
+  where
+    flagAppend :: Monoid a => Flag a -> Flag a -> Flag a
+    flagAppend a b = case (a, b) of
+      (Help, _) -> Help
+      (_, Help) -> Help
+      (Version s, _) -> Version s
+      (_, Version s) -> Version s
+      (NoHelp a, NoHelp b) -> NoHelp (mappend a b)
 
 foldFlags :: [Flag a] -> Flag [a]
-foldFlags flags = mconcat $ map (fmap pure) flags
+foldFlags flags = flagConcat $ map (fmap pure) flags
 
 helpOption :: OptDescr (Flag a)
 helpOption =
