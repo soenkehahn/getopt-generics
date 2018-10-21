@@ -1,8 +1,10 @@
--- This file has been generated from package.yaml by hpack version 0.20.0.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: abf4e8f0f1099d8b59aa00485728092abae08230a22f2e54917e955bc4a2b80e
+-- hash: ed35a25348c4bba496b0700ad21cdeec8aea59a184ae1ecdb7025c8fa6a00563
 
 name:           getopt-generics
 version:        0.13.0.2
@@ -17,8 +19,6 @@ copyright:      Zalora South East Asia Pte Ltd
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
-cabal-version:  >= 1.10
-
 extra-source-files:
     docs/CustomOption.hs
     docs/CustomOption.shell-protocol
@@ -42,15 +42,6 @@ source-repository head
   location: https://github.com/soenkehahn/getopt-generics
 
 library
-  hs-source-dirs:
-      src
-  ghc-options: -Wall -fno-warn-name-shadowing
-  build-depends:
-      base ==4.*
-    , base-compat >=0.8
-    , base-orphans
-    , generics-sop >=0.1 && <0.4
-    , tagged
   exposed-modules:
       WithCli
       WithCli.Pure
@@ -65,27 +56,20 @@ library
       WithCli.Pure.Internal
       WithCli.Result
       Paths_getopt_generics
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -fno-warn-name-shadowing
+  build-depends:
+      base ==4.*
+    , base-compat >=0.8
+    , base-orphans
+    , generics-sop >=0.1 && <0.4
+    , tagged
   default-language: Haskell2010
 
 test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
-  hs-source-dirs:
-      src
-      test
-      docs
-  ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0
-  build-depends:
-      QuickCheck
-    , base ==4.*
-    , base-compat >=0.8
-    , base-orphans
-    , filepath
-    , generics-sop >=0.1 && <0.4
-    , hspec >=2.1.8
-    , safe
-    , silently
-    , tagged
   other-modules:
       WithCli
       WithCli.Argument
@@ -122,4 +106,20 @@ test-suite spec
       Test03
       Test04
       Paths_getopt_generics
+  hs-source-dirs:
+      src
+      test
+      docs
+  ghc-options: -Wall -fno-warn-name-shadowing -threaded -O0
+  build-depends:
+      QuickCheck
+    , base ==4.*
+    , base-compat >=0.8
+    , base-orphans
+    , filepath
+    , generics-sop >=0.1 && <0.4
+    , hspec >=2.1.8
+    , safe
+    , silently
+    , tagged
   default-language: Haskell2010
