@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3875e1d29e827e3c2f1a7fa793efb48d75c3f4d1c7444e4416fcb8c176d1af91
+-- hash: a8f8322b2416d58ac189c12c7f304a9e93419217f59a6b53375ab335009c9bc3
 
 name:           getopt-generics
-version:        0.13.0.2
+version:        0.13.0.3
 synopsis:       Create command line interfaces with ease
 description:    Create command line interfaces with ease
 category:       Console, System
