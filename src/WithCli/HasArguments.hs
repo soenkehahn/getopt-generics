@@ -1,4 +1,5 @@
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFunctor #-}
@@ -289,27 +290,34 @@ genericParser :: forall a .
   (GHC.Generic a, GTo a, GDatatypeInfo a, All2 HasArguments (GCode a)) =>
   Modifiers ->
   Result (Parser Unnormalized a)
-genericParser modifiers = fmap (fmap gto) $ case gdatatypeInfo (Proxy :: Proxy a) of
-  ADT _ typeName (constructorInfo :* Nil) ->
-    case constructorInfo of
-      (Record _ fields) ->
-        fmap (fmap (SOP . Z)) (fieldsParser modifiers fields)
-      Constructor{} ->
-        fmap (fmap (SOP . Z)) (noSelectorsParser modifiers shape)
-      Infix{} ->
-        err typeName "infix constructors"
-  ADT _ typeName Nil ->
-    err typeName "empty data types"
-  ADT _ typeName (_ :* _ :* _) ->
-    err typeName "sum types"
-  Newtype _ _ (Record _ fields) ->
-    fmap (fmap (SOP . Z)) (fieldsParser modifiers fields)
-  Newtype _ typeName (Constructor _) ->
-    err typeName "constructors without field labels"
+genericParser modifiers = fmap (fmap gto) $
+  let datatypeInfo = gdatatypeInfo (Proxy :: Proxy a)
+      err :: forall a . String -> Result a
+      err message = Errors $
+        "getopt-generics doesn't support " ++ message ++
+        " (" ++ datatypeName datatypeInfo ++ ")."
+  in case constructorInfo datatypeInfo of
+    firstConstructor :* Nil ->
+      case firstConstructor of
+        Record _ fields ->
+          fmap (fmap (SOP . Z)) (fieldsParser modifiers fields)
+        Constructor{} ->
+          fmap (fmap (SOP . Z)) (noSelectorsParser modifiers shape)
+        Infix{} -> err "infix constructors"
+    Nil -> err "empty data types"
+    _ :* _ :* _ -> err "sum types"
   where
-    err typeName message = Errors $
-      "getopt-generics doesn't support " ++ message ++
-      " (" ++ typeName ++ ")."
+#if !MIN_VERSION_generics_sop(0,2,3)
+    datatypeName :: DatatypeInfo xss -> DatatypeName
+    datatypeName datatypeInfo = case datatypeInfo of
+      ADT _ name _ -> name
+      Newtype _ name _ -> name
+
+    constructorInfo :: DatatypeInfo xss -> NP ConstructorInfo xss
+    constructorInfo datatypeInfo = case datatypeInfo of
+      ADT _ _ constructorInfo -> constructorInfo
+      Newtype _ _ constructorInfo -> constructorInfo :* Nil
+#endif
 
 fieldsParser :: All HasArguments xs =>
   Modifiers -> NP FieldInfo xs -> Result (Parser Unnormalized (NP I xs))
@@ -323,6 +331,6 @@ noSelectorsParser :: All HasArguments xs =>
   Modifiers -> Shape xs -> Result (Parser Unnormalized (NP I xs))
 noSelectorsParser modifiers = \ case
   ShapeNil -> return $ emptyParser Nil
-  ShapeCons rest -> 
+  ShapeCons rest ->
     fmap (fmap (\ (a, r) -> a :* r)) $
       combine (fmap (fmap I) $ (argumentsParser modifiers Nothing)) (noSelectorsParser modifiers rest)

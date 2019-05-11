@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.0.
+-- This file has been generated from package.yaml by hpack version 0.31.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a8f8322b2416d58ac189c12c7f304a9e93419217f59a6b53375ab335009c9bc3
+-- hash: 943128ad17f7b91eaa1738b42188b379290752a15be8199fb8b17c77f86e280f
 
 name:           getopt-generics
 version:        0.13.0.3
@@ -63,7 +63,7 @@ library
       base ==4.*
     , base-compat >=0.8
     , base-orphans
-    , generics-sop >=0.1 && <0.5
+    , generics-sop >=0.1 && <0.6
     , tagged
   default-language: Haskell2010
 
@@ -117,7 +117,7 @@ test-suite spec
     , base-compat >=0.8
     , base-orphans
     , filepath
-    , generics-sop >=0.1 && <0.5
+    , generics-sop >=0.1 && <0.6
     , hspec >=2.1.8
     , safe
     , silently

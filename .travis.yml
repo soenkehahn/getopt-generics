@@ -7,8 +7,9 @@ env:
   - STACK_YAML=stack-ghc-7.10.yaml
   - STACK_YAML=stack-ghc-8.0.yaml
   - STACK_YAML=stack-ghc-8.2.yaml
-  - STACK_YAML=stack.yaml
+  - STACK_YAML=stack-ghc-8.4.yaml
   - STACK_YAML=stack-ghc-8.6.yaml
+  - STACK_YAML=stack-generics-sop-0.5.0.0.yaml
 
 addons:
   apt:

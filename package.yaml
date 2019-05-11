@@ -17,7 +17,7 @@ dependencies:
   - base == 4.*
   - base-compat >= 0.8
   - base-orphans
-  - generics-sop >= 0.1 && < 0.5
+  - generics-sop >= 0.1 && < 0.6
   - tagged
 
 library:
