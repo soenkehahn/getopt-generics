@@ -3,7 +3,6 @@ sudo: false
 language: c
 
 env:
-  - STACK_YAML=stack-ghc-7.8.yaml
   - STACK_YAML=stack-ghc-7.10.yaml
   - STACK_YAML=stack-ghc-8.0.yaml
   - STACK_YAML=stack-ghc-8.2.yaml
