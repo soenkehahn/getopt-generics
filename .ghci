@@ -1,3 +1,0 @@
-:set -isrc -itest -idocs
-:set -Wall -fno-warn-name-shadowing
-:set -optP-include -optP.stack-work/dist/x86_64-linux-nopie/Cabal-2.0.1.0/build/autogen/cabal_macros.h
