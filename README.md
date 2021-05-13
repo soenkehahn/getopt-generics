@@ -1,9 +1,5 @@
 # getopt-generics
 
-## Status
-
-This library is experimental.
-
 ## Usage
 
 `getopt-generics` tries to make it very simple to create command line
