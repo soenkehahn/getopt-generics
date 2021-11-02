@@ -22,8 +22,11 @@ jobs:
     strategy:
       matrix:
         stack_yaml:
-          - stack.yaml
+          - stack-ghc-7.10.yaml
+          - stack-ghc-8.0.yaml
+          - stack-ghc-8.2.yaml
           - stack-ghc-8.4.yaml
+          - stack.yaml
     steps:
       - name: Set STACK_YAML
         run: echo STACK_YAML=${{ matrix.stack_yaml }} >> $GITHUB_ENV
@@ -41,6 +44,7 @@ jobs:
         run: |
           stack --version
           stack ghc -- --version
+          cat $STACK_YAML | grep resolver
 
       - name: Setup
         run: stack setup
