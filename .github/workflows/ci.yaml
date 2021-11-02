@@ -40,14 +40,14 @@ jobs:
             ~/.stack
           key: stack-${{ env.CACHE_KEY }}-${{ hashFiles('stack*') }}
 
+      - name: Setup
+        run: stack setup
+
       - name: Info
         run: |
           stack --version
           stack ghc -- --version
           cat $STACK_YAML | grep resolver
-
-      - name: Setup
-        run: stack setup
 
       - name: Install Dependencies
         run: stack build --test --only-dependencies --haddock-deps
