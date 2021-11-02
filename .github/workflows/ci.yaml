@@ -38,7 +38,8 @@ jobs:
         with:
           path: |
             ~/.stack
-          key: stack-${{ env.CACHE_KEY }}-${{ hashFiles('stack*') }}
+          key: ${{ env.CACHE_KEY }}-${{ github.sha }}
+          restore-keys: ${{ env.CACHE_KEY }}
 
       - name: Setup
         run: stack setup
