@@ -25,6 +25,7 @@ jobs:
           - stack-ghc-8.4.yaml
           - stack-ghc-8.6.yaml
           - stack-ghc-8.8.yaml
+          - stack-ghc-8.10.yaml
           - stack.yaml
     steps:
       - name: Set STACK_YAML
