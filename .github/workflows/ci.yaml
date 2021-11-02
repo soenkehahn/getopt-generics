@@ -30,13 +30,6 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.stack
-          key: ${{ matrix.stack_yaml }}
-
       - name: Setup
         run: stack setup
 
