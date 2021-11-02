@@ -38,7 +38,7 @@ jobs:
         with:
           path: |
             ~/.stack
-          key: stack-${{ env.CACHE_KEY }}-${{ runner.os }}-${{ hashFiles('stack.yaml*') }}
+          key: stack-${{ env.CACHE_KEY }}-${{ hashFiles('stack*') }}
 
       - name: Info
         run: |
