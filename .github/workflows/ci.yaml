@@ -19,7 +19,15 @@ jobs:
   all:
     name: All
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack_yaml:
+          - stack.yaml
+          - stack-ghc-8.4.yaml
     steps:
+      - name: Set STACK_YAML
+        run: echo STACK_YAML=${{ matrix.stack_yaml }} >> $GITHUB_ENV
+
       - uses: actions/checkout@v2
 
       - name: Cache
@@ -30,7 +38,9 @@ jobs:
           key: stack-${{ env.CACHE_KEY }}-${{ runner.os }}-${{ hashFiles('stack.yaml*') }}
 
       - name: Info
-        run: stack --version
+        run: |
+          stack --version
+          stack ghc -- --version
 
       - name: Setup
         run: stack setup
