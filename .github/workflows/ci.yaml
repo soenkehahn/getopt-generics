@@ -1,0 +1,49 @@
+name: Ci
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "*"
+  pull_request: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  all:
+    name: All
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack_yaml:
+          - stack-ghc-7.10.yaml
+          - stack-ghc-8.0.yaml
+          - stack-ghc-8.2.yaml
+          - stack-ghc-8.4.yaml
+          - stack.yaml
+    steps:
+      - name: Set STACK_YAML
+        run: echo STACK_YAML=${{ matrix.stack_yaml }} >> $GITHUB_ENV
+
+      - uses: actions/checkout@v2
+
+      - name: Setup
+        run: stack setup
+
+      - name: Info
+        run: |
+          stack --version
+          stack ghc -- --version
+          cat $STACK_YAML | grep resolver
+
+      - name: Install Dependencies
+        run: stack build --test --only-dependencies --haddock-deps
+
+      - name: Test
+        run: stack test --ghc-options=-Werror
+
+      - name: Docs
+        run: stack haddock
