@@ -19,7 +19,6 @@ jobs:
     strategy:
       matrix:
         stack_yaml:
-          - stack-ghc-7.10.yaml
           - stack-ghc-8.0.yaml
           - stack-ghc-8.2.yaml
           - stack-ghc-8.4.yaml
