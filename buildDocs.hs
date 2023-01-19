@@ -1,4 +1,10 @@
-#!/usr/bin/env runhaskell
+#!/usr/bin/env stack
+{-
+stack script
+  --resolver nightly-2021-10-29
+  --package base
+  --package deepseq
+-}
 
 import           Control.Applicative
 import           Control.DeepSeq
