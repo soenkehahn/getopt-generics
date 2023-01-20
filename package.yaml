@@ -1,7 +1,7 @@
 name: getopt-generics
-version: "0.13.0.4"
+version: "0.13.1.0"
 category: "Console, System"
-synopsis:    Create command line interfaces with ease
+synopsis: Create command line interfaces with ease
 description: Create command line interfaces with ease
 license: "BSD3"
 author: "Linh Nguyen, Sönke Hahn"
