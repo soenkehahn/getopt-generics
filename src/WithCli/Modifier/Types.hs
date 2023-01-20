@@ -5,7 +5,7 @@ data Modifiers = Modifiers {
   shortOptions :: [(String, [Char])],
   renaming :: String -> String,
   positionalArgumentsField :: Maybe (String, String),
-  _helpTexts :: [(String, String)],
+  helpTexts :: [(String, String)],
   version :: Maybe String
  }
 

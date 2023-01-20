@@ -111,7 +111,8 @@ insert key value ((a, b) : r) =
 applyModifiers :: Modifiers -> Parser Unnormalized a -> Parser Unnormalized a
 applyModifiers modifiers =
   addShortOptions >>>
-  renameOptions
+  renameOptions >>>
+  modParserOptions (map (addOptionHelp modifiers))
   where
     addShortOptions = modParserOptions $ map $
       \ option ->
@@ -135,3 +136,11 @@ addShort short (Option shorts longs argDescrs help) =
 modLongs :: (String -> String) -> OptDescr a -> OptDescr a
 modLongs f (Option shorts longs descrs help) =
   Option shorts (map f longs) descrs help
+
+addOptionHelp :: Modifiers -> OptDescr x -> OptDescr x
+addOptionHelp modifiers (Option shorts longs argDescr help) =
+  Option shorts longs argDescr newHelp
+  where
+    newHelp = case mapMaybe (\ long -> lookup long (helpTexts modifiers)) longs of
+      [] -> help
+      h : _ -> h

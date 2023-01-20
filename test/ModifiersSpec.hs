@@ -2,6 +2,7 @@
 
 module ModifiersSpec where
 
+import           Data.Char
 import           Data.List
 import           Test.Hspec
 
@@ -45,7 +46,6 @@ spec = do
       let Errors errs = modsParse
             [RenameOption "camelCase" "foo"]
             "" :: Result CamelCaseOptions
-      -- _ <- error $ show errs
       show errs `shouldNotContain` "camelCase"
       show errs `shouldNotContain` "camel-case"
       show errs `shouldContain` "foo"
@@ -66,3 +66,25 @@ spec = do
     it "--version shows up in help output" $ do
       let OutputAndExit output = modsParse [AddVersionFlag "1.0.0"] "--help" :: Result Foo
       output `shouldSatisfy` ("show version and exit" `isInfixOf`)
+
+  describe "AddOptionHelp" $ do
+    it "allows to specify a flag specific help" $ do
+      let mods = [AddOptionHelp "baz" "baz help text"]
+          OutputAndExit output =
+            modsParse mods "--help" :: Result Foo
+          barLine =
+            map (dropWhile isSpace) $
+            filter ("--baz" `isInfixOf`) $ lines output
+      barLine `shouldBe` ["--baz=STRING              baz help text"]
+
+    it "uses the last AddOptionHelp if multiple are given" $ do
+      let mods =
+            AddOptionHelp "baz" "baz help text" :
+            AddOptionHelp "baz" "later baz help text" :
+            []
+          OutputAndExit output =
+            modsParse mods "--help" :: Result Foo
+          barLine =
+            map (dropWhile isSpace) $
+            filter ("--baz" `isInfixOf`) $ lines output
+      barLine `shouldBe` ["--baz=STRING              later baz help text"]
