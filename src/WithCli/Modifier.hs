@@ -108,39 +108,35 @@ insert key value ((a, b) : r) =
 
 -- * transforming Parsers
 
-applyModifiers :: Modifiers -> Parser Unnormalized a -> Parser Unnormalized a
-applyModifiers modifiers =
-  addShortOptions >>>
-  renameOptions >>>
-  modParserOptions (map (addOptionHelp modifiers))
-  where
-    addShortOptions = modParserOptions $ map $
-      \ option ->
-        case filter (\ (needle, _) -> needle `elem` longs option) (shortOptions modifiers) of
-          [] -> option
-          (concat . map snd -> newShorts) ->
-            foldl' (flip addShort) option newShorts
-    renameOptions =
-      modParserOptions $ map $ modLongs $ renaming modifiers
-
 applyModifiersLong :: Modifiers -> String -> String
 applyModifiersLong modifiers long = (renaming modifiers) long
 
-longs :: OptDescr a -> [String]
-longs (Option _ ls _ _) = ls
-
-addShort :: Char -> OptDescr a -> OptDescr a
-addShort short (Option shorts longs argDescrs help) =
-  Option (shorts ++ [short]) longs argDescrs help
-
-modLongs :: (String -> String) -> OptDescr a -> OptDescr a
-modLongs f (Option shorts longs descrs help) =
-  Option shorts (map f longs) descrs help
-
-addOptionHelp :: Modifiers -> OptDescr x -> OptDescr x
-addOptionHelp modifiers (Option shorts longs argDescr help) =
-  Option shorts longs argDescr newHelp
+applyModifiers :: Modifiers -> Parser Unnormalized a -> Parser Unnormalized a
+applyModifiers modifiers =
+  modParserOptions $ map $
+    addShortOptions >>>
+    addOptionHelp modifiers >>>
+    renameOptions modifiers
   where
-    newHelp = case mapMaybe (\ long -> lookup long (helpTexts modifiers)) longs of
-      [] -> help
-      h : _ -> h
+    addShortOptions :: OptDescr a -> OptDescr a
+    addShortOptions = \ option@(Option _ longs _ _) ->
+      case filter (\ (needle, _) -> needle `elem` longs) (shortOptions modifiers) of
+        [] -> option
+        (concat . map snd -> newShorts) ->
+          foldl' (flip addShort) option newShorts
+
+    addShort :: Char -> OptDescr a -> OptDescr a
+    addShort short (Option shorts longs argDescrs help) =
+      Option (shorts ++ [short]) longs argDescrs help
+
+    renameOptions :: Modifiers -> OptDescr a -> OptDescr a
+    renameOptions modifiers (Option shorts longs descrs help) =
+      Option shorts (map (renaming modifiers) longs) descrs help
+
+    addOptionHelp :: Modifiers -> OptDescr x -> OptDescr x
+    addOptionHelp modifiers (Option shorts longs argDescr help) =
+      Option shorts longs argDescr newHelp
+      where
+        newHelp = case mapMaybe (\ long -> lookup long (helpTexts modifiers)) longs of
+          [] -> help
+          h : _ -> h
