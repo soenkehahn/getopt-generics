@@ -86,7 +86,7 @@ import           WithCli.Result
 withCli :: WithCli main => main -> IO ()
 withCli = withCliModified []
 
--- | This is a variant of 'withCli' that allows to tweak the generated
+-- | This is a variant of 'withCli' that allows tweaking the generated
 --   command line interface by providing a list of 'Modifier's.
 withCliModified :: WithCli main => [Modifier] -> main -> IO ()
 withCliModified mods main = do

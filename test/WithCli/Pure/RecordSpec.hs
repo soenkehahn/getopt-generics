@@ -55,7 +55,7 @@ part1 = do
       parse "--bool --baz foo" `shouldBe`
         Success (Foo Nothing "foo" True)
 
-    it "allows to overwrite String options" $ do
+    it "allows overwriting String options" $ do
       parse "--baz one --baz two"
         `shouldBe` Success (Foo Nothing "two" False)
 
@@ -123,7 +123,7 @@ instance HasArguments ListOptions
 part2 :: Spec
 part2 = do
   describe "parseArguments" $ do
-    it "allows to interpret multiple uses of the same option as lists" $ do
+    it "allows interpreting multiple uses of the same option as lists" $ do
       parse "--multiple 23 --multiple 42"
         `shouldBe` Success (ListOptions [23, 42])
 
@@ -201,6 +201,6 @@ part5 = do
         (parse "foo true 5 bar" :: Result WithoutSelectors)
           `shouldBe` Errors "unknown argument: bar\n"
 
-      it "allows to use tuples" $ do
+      it "allows using tuples" $ do
         (parse "42 bar" :: Result (Int, String))
           `shouldBe` Success (42, "bar")
