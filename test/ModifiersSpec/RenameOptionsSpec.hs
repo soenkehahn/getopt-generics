@@ -31,7 +31,7 @@ instance HasArguments CommonPrefixes
 spec :: Spec
 spec = do
   describe "RenameOptions" $ do
-    it "allows to rename all flags" $ do
+    it "allows renaming all flags" $ do
       modsParse [RenameOptions (Just . reverse)] "--oof 1 --rab 2"
         `shouldBe` Success (Foo 1 2)
 
@@ -53,7 +53,7 @@ spec = do
       modsParse [RenameOptions rename] "--renamed 1 --bar 2"
         `shouldBe` Success (Foo 1 2)
 
-    it "allows to strip a common prefix" $ do
+    it "allows stripping a common prefix" $ do
       modsParse [RenameOptions (stripPrefix "prefix")]
           "--foo 1 --bar 2 --not-prefix-baz 3"
         `shouldBe` Success (CP 1 2 3)

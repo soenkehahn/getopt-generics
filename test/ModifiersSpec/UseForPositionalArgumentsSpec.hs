@@ -38,7 +38,7 @@ spec = do
       "foo bar --some-flag"
         `shouldBe` Success (WithPositionalArguments ["foo", "bar"] True)
 
-  it "disallows to specify the option used for positional arguments" $ do
+  it "disallows specifying the option used for positional arguments" $ do
     modsParse
       [UseForPositionalArguments "positionalArguments" "type"]
       "--positional-arguments foo"

@@ -28,7 +28,7 @@ spec = do
       output `shouldContain` "-x STRING"
 
   describe "RenameOption" $ do
-    it "allows to rename options" $ do
+    it "allows renaming options" $ do
       modsParse [RenameOption "camelCase" "bla"] "--bla foo"
         `shouldBe` Success (CamelCaseOptions "foo")
 
@@ -68,7 +68,7 @@ spec = do
       output `shouldSatisfy` ("show version and exit" `isInfixOf`)
 
   describe "AddOptionHelp" $ do
-    it "allows to specify a flag specific help" $ do
+    it "allows specifying a flag specific help" $ do
       let mods = [AddOptionHelp "baz" "baz help text"]
           OutputAndExit output =
             modsParse mods "--help" :: Result Foo
